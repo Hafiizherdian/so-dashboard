@@ -76,63 +76,68 @@ export interface FilterOptions {
 
 export interface DashboardData {
   summary: {
-    total_penjualan: number;
-    total_so: number;
-    total_outstanding: number;
-    qty_penjualan: number;
-    qty_so: number;
-    transaksi: number;
-    pct_outstanding: number;
+    total_penjualan:   number;
+    total_so:          number;
+    total_outstanding: number; // FIX: tambah field ini — SUM(qty_sisa) dari so_outstanding
+    total_terkirim:    number; // SUM(qty_terkirim) dari sales_transactions
+    qty_penjualan:     number; // alias total_terkirim (qty terkirim dari sales_transactions)
+    qty_so:            number; // alias total_so (qty order dari so_outstanding)
+    transaksi:         number;
+    pct_outstanding:   number; // (qty_sisa / qty_order) * 100
   };
   monthly: MonthlyTrend[];
   weekly: WeeklyTrend[];
   categories: CategoryBreakdown[];
   topCustomers: TopCustomer[];
   topProducts: TopProduct[];
-  typeCustomerBreakdown: { type_customer: string; penjualan: number; pct: number }[];
+  typeCustomerBreakdown: { type_customer: string; penjualan: number; pct: number; transaksi: number }[];
   keteranganBreakdown: { keterangan: string; penjualan: number; count: number }[];
+  topOutstanding?: {
+    nomor_so: string;
+    pelanggan: string;
+    qty_sisa: number;
+  }[];
+  allYears?: number[];
 }
 
 // Interface khusus untuk baris data di tabel so_outstanding
 export interface SoOutstandingRow {
   id: string | number;
   file_id: string;
-  week: string | number;            // Contoh: "W1", "W2"
-  tanggal: string;         // Format: YYYY-MM-DD
-  ref_po: string;          // Referensi PO dari Customer
-  nomor_so: string;           // Nomor Sales Order (Key untuk JOIN)
+  week: string | number;
+  tanggal: string;
+  ref_po: string;
+  nomor_so: string;
   pelanggan: string;
-  produk: string;          // Deskripsi produk
-  
+  produk: string;
+
   // Spesifikasi Fisik
   panjang: number;
   lebar: number;
   tinggi: number;
   berat: number;
-  
+
   // Metrik Transaksi
   harga: number;
-  uom: string;             // Unit of Measurement (Pcs, Set, dll)
-  qty_order: number;       // Total yang dipesan
-  qty_delivered: number;   // Yang sudah terkirim (realisasi)
-  qty_sisa: number;        // Outstanding (qty_order - qty_delivered)
-  
+  uom: string;
+  qty_order: number;
+  qty_delivered: number;
+  qty_sisa: number;
+
   created_at: string;
 }
 
-// Interface untuk Detail Gabungan (biasanya dipakai di tabel laporan/monitoring)
+// Interface untuk Detail Gabungan
 export interface SoDetailRow {
   nomor_so: string;
   tanggal: string;
   customer: string;
   produk: string;
-  
-  // Perbandingan Data
-  qty_order: number;       // Dari table so_outstanding
-  qty_delivered: number;   // Dari table sales_transactions
-  qty_sisa: number;        // Kalkulasi sisa
-  
-  // Tambahan informasi pengiriman terakhir
+
+  qty_order: number;
+  qty_delivered: number;
+  qty_sisa: number;
+
   last_delivery_date?: string;
-  nomor_penjualan?: string; // No Invoice terakhir jika sudah ada pengiriman
+  nomor_penjualan?: string;
 }

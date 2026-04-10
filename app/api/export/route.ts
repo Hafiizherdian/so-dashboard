@@ -89,7 +89,7 @@ export async function GET(req: NextRequest) {
     // Build Excel
     const wb = XLSX.utils.book_new();
     const ws = XLSX.utils.json_to_sheet(rows);
-    // Column widths
+    // Lebar coloumn disesuaikan dengan panjang data (min 14)
     const colWidths = Object.keys(rows[0] || {}).map(k => ({ wch: Math.max(k.length + 2, 14) }));
     ws['!cols'] = colWidths;
     XLSX.utils.book_append_sheet(wb, ws, 'Data');

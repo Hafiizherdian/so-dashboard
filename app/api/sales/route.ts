@@ -2,170 +2,151 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getTokenFromRequest } from '@/lib/auth';
 import { query, initDb } from '@/lib/db';
 
-/**
- * Helper: tambah kondisi ke WHERE yang sudah ada, atau buat WHERE baru.
- */
 function andWhere(existing: string, cond: string): string {
   return existing ? `${existing} AND ${cond}` : `WHERE ${cond}`;
 }
 
-/**
- * WHERE untuk sales_transactions
- * Kolom tersedia: tanggal, week, type_customer, kategori, salesman, kota
- */
+// WHERE untuk sales_transactions
+// Kolom: tanggal, week, type_customer, kategori, salesman, kota
 function buildWhereSales(p: URLSearchParams) {
   const conds: string[] = [];
   const vals: unknown[] = [];
   let i = 1;
 
   const tahun = p.get('tahun');
-  if (tahun && tahun !== 'all') {
-    conds.push(`EXTRACT(YEAR FROM tanggal)=$${i++}`);
-    vals.push(Number(tahun));
-  }
+  if (tahun && tahun !== 'all') { conds.push(`EXTRACT(YEAR FROM tanggal)=$${i++}`); vals.push(Number(tahun)); }
 
   const bulan = p.get('bulan');
-  if (bulan && bulan !== 'all') {
-    conds.push(`EXTRACT(MONTH FROM tanggal)=$${i++}`);
-    vals.push(Number(bulan));
-  }
+  if (bulan && bulan !== 'all') { conds.push(`EXTRACT(MONTH FROM tanggal)=$${i++}`); vals.push(Number(bulan)); }
 
   const minggu = p.get('minggu');
-  if (minggu && minggu !== 'all') {
-    conds.push(`week=$${i++}`);
-    vals.push(Number(minggu));
-  }
+  if (minggu && minggu !== 'all') { conds.push(`week=$${i++}`); vals.push(Number(minggu)); }
 
   const typeCustomer = p.get('type_customer');
-  if (typeCustomer && typeCustomer !== 'all') {
-    conds.push(`type_customer=$${i++}`);
-    vals.push(typeCustomer);
-  }
+  if (typeCustomer && typeCustomer !== 'all') { conds.push(`type_customer=$${i++}`); vals.push(typeCustomer); }
 
   const kategori = p.get('kategori');
-  if (kategori && kategori !== 'all') {
-    conds.push(`kategori=$${i++}`);
-    vals.push(kategori);
-  }
+  if (kategori && kategori !== 'all') { conds.push(`kategori=$${i++}`); vals.push(kategori); }
 
   const salesman = p.get('salesman');
-  if (salesman && salesman !== 'all') {
-    conds.push(`salesman=$${i++}`);
-    vals.push(salesman);
-  }
+  if (salesman && salesman !== 'all') { conds.push(`salesman=$${i++}`); vals.push(salesman); }
 
   const kota = p.get('kota');
-  if (kota && kota !== 'all') {
-    conds.push(`kota=$${i++}`);
-    vals.push(kota);
-  }
+  if (kota && kota !== 'all') { conds.push(`kota=$${i++}`); vals.push(kota); }
 
-  return {
-    where: conds.length ? 'WHERE ' + conds.join(' AND ') : '',
-    vals,
-  };
+  return { where: conds.length ? 'WHERE ' + conds.join(' AND ') : '', vals };
 }
 
-/**
- * WHERE untuk so_outstanding
- * Kolom tersedia HANYA: tanggal, week
- */
+// WHERE untuk so_outstanding
+// Kolom tersedia: tanggal, week, pelanggan, produk
+// type_customer & kategori TIDAK ada di so_outstanding → filter via nomor_so JOIN ke sales_transactions
 function buildWhereSO(p: URLSearchParams) {
   const conds: string[] = [];
   const vals: unknown[] = [];
   let i = 1;
 
   const tahun = p.get('tahun');
-  if (tahun && tahun !== 'all') {
-    conds.push(`EXTRACT(YEAR FROM tanggal)=$${i++}`);
-    vals.push(Number(tahun));
-  }
+  if (tahun && tahun !== 'all') { conds.push(`EXTRACT(YEAR FROM tanggal)=$${i++}`); vals.push(Number(tahun)); }
 
   const bulan = p.get('bulan');
-  if (bulan && bulan !== 'all') {
-    conds.push(`EXTRACT(MONTH FROM tanggal)=$${i++}`);
-    vals.push(Number(bulan));
-  }
+  if (bulan && bulan !== 'all') { conds.push(`EXTRACT(MONTH FROM tanggal)=$${i++}`); vals.push(Number(bulan)); }
 
   const minggu = p.get('minggu');
-  if (minggu && minggu !== 'all') {
-    conds.push(`week=$${i++}`);
-    vals.push(Number(minggu));
+  if (minggu && minggu !== 'all') { conds.push(`week=$${i++}`); vals.push(Number(minggu)); }
+
+  // Filter type_customer & kategori via subquery ke sales_transactions
+  const typeCustomer = p.get('type_customer');
+  if (typeCustomer && typeCustomer !== 'all') {
+    conds.push(`nomor_so IN (SELECT DISTINCT nomor_so FROM sales_transactions WHERE type_customer=$${i++} AND nomor_so IS NOT NULL AND nomor_so != '')`);
+    vals.push(typeCustomer);
   }
 
-  return {
-    where: conds.length ? 'WHERE ' + conds.join(' AND ') : '',
-    vals,
-  };
+  const kategori = p.get('kategori');
+  if (kategori && kategori !== 'all') {
+    conds.push(`nomor_so IN (SELECT DISTINCT nomor_so FROM sales_transactions WHERE kategori=$${i++} AND nomor_so IS NOT NULL AND nomor_so != '')`);
+    vals.push(kategori);
+  }
+
+  return { where: conds.length ? 'WHERE ' + conds.join(' AND ') : '', vals };
 }
 
-/**
- * WHERE multi-tahun untuk chart: tahun terpilih + 2 tahun sebelumnya.
- * Filter lain (bulan, minggu, dll) diabaikan agar chart selalu full 12 bulan per tahun.
- */
+// WHERE multi-tahun untuk chart (tahun terpilih + 2 tahun sebelumnya)
 function buildWhereMultiYear(p: URLSearchParams, table: 'sales' | 'so') {
   const tahun = p.get('tahun');
 
-  if (!tahun || tahun === 'all') {
-    // Tidak ada filter tahun → ambil 3 tahun terakhir dari data
-    if (table === 'sales') {
-      return {
-        where: '',
-        vals: [] as unknown[],
-        yearFilter: `EXTRACT(YEAR FROM tanggal) >= (SELECT MAX(EXTRACT(YEAR FROM tanggal)) - 2 FROM sales_transactions WHERE tanggal IS NOT NULL)`,
-      };
-    } else {
-      return {
-        where: '',
-        vals: [] as unknown[],
-        yearFilter: `EXTRACT(YEAR FROM tanggal) >= (SELECT MAX(EXTRACT(YEAR FROM tanggal)) - 2 FROM so_outstanding WHERE tanggal IS NOT NULL)`,
-      };
-    }
-  }
-
-  const selectedYear = Number(tahun);
-  // Ambil tahun terpilih dan 2 tahun sebelumnya
-  const years = [selectedYear - 2, selectedYear - 1, selectedYear];
-
-  // Filter tambahan dari sales (type_customer, kategori, dll) — hanya untuk sales
-  const extraConds: string[] = [];
-  const extraVals: unknown[] = [];
-  let i = years.length + 1; // placeholder index setelah year params
+  const extraSalesConds: string[] = [];
+  const extraSalesVals: unknown[] = [];
 
   if (table === 'sales') {
     const typeCustomer = p.get('type_customer');
-    if (typeCustomer && typeCustomer !== 'all') {
-      extraConds.push(`type_customer=$${i++}`);
-      extraVals.push(typeCustomer);
-    }
+    if (typeCustomer && typeCustomer !== 'all') { extraSalesConds.push(`type_customer=$EXTRA${extraSalesVals.length}`); extraSalesVals.push(typeCustomer); }
     const kategori = p.get('kategori');
-    if (kategori && kategori !== 'all') {
-      extraConds.push(`kategori=$${i++}`);
-      extraVals.push(kategori);
-    }
+    if (kategori && kategori !== 'all') { extraSalesConds.push(`kategori=$EXTRA${extraSalesVals.length}`); extraSalesVals.push(kategori); }
     const salesman = p.get('salesman');
-    if (salesman && salesman !== 'all') {
-      extraConds.push(`salesman=$${i++}`);
-      extraVals.push(salesman);
-    }
+    if (salesman && salesman !== 'all') { extraSalesConds.push(`salesman=$EXTRA${extraSalesVals.length}`); extraSalesVals.push(salesman); }
     const kota = p.get('kota');
-    if (kota && kota !== 'all') {
-      extraConds.push(`kota=$${i++}`);
-      extraVals.push(kota);
-    }
+    if (kota && kota !== 'all') { extraSalesConds.push(`kota=$EXTRA${extraSalesVals.length}`); extraSalesVals.push(kota); }
   }
 
+  // SO extra filter via subquery
+  const extraSOConds: string[] = [];
+  const extraSOVals: unknown[] = [];
+
+  if (table === 'so') {
+    const typeCustomer = p.get('type_customer');
+    if (typeCustomer && typeCustomer !== 'all') { extraSOConds.push(`nomor_so IN (SELECT DISTINCT nomor_so FROM sales_transactions WHERE type_customer=$EXTRA${extraSOVals.length} AND nomor_so IS NOT NULL AND nomor_so != '')`); extraSOVals.push(typeCustomer); }
+    const kategori = p.get('kategori');
+    if (kategori && kategori !== 'all') { extraSOConds.push(`nomor_so IN (SELECT DISTINCT nomor_so FROM sales_transactions WHERE kategori=$EXTRA${extraSOVals.length} AND nomor_so IS NOT NULL AND nomor_so != '')`); extraSOVals.push(kategori); }
+  }
+
+  const extraConds = table === 'sales' ? extraSalesConds : extraSOConds;
+  const extraVals  = table === 'sales' ? extraSalesVals  : extraSOVals;
+
+  if (!tahun || tahun === 'all') {
+    const tbl = table === 'sales' ? 'sales_transactions' : 'so_outstanding';
+    const yearFilter = `EXTRACT(YEAR FROM tanggal) >= (SELECT MAX(EXTRACT(YEAR FROM tanggal)) - 2 FROM ${tbl} WHERE tanggal IS NOT NULL)`;
+
+    if (extraConds.length === 0) {
+      return { where: '', vals: [] as unknown[], yearFilter };
+    }
+
+    // Rebuild dengan index mulai 1
+    const rebuildConds: string[] = [];
+    const rebuildVals: unknown[] = [];
+    let idx = 1;
+    extraConds.forEach((c, i) => {
+      const rebuilt = c.replace(`$EXTRA${i}`, `$${idx++}`);
+      rebuildConds.push(rebuilt);
+      rebuildVals.push(extraVals[i]);
+    });
+
+    return {
+      where: `WHERE ${yearFilter} AND ${rebuildConds.join(' AND ')}`,
+      vals: rebuildVals,
+      yearFilter,
+    };
+  }
+
+  const selectedYear = Number(tahun);
+  const years = [selectedYear - 2, selectedYear - 1, selectedYear];
   const yearPlaceholders = years.map((_, idx) => `$${idx + 1}`).join(',');
   const yearCond = `EXTRACT(YEAR FROM tanggal) IN (${yearPlaceholders})`;
-  const allConds = extraConds.length
-    ? `WHERE ${yearCond} AND ${extraConds.join(' AND ')}`
+
+  // Rebuild extra conds dengan index setelah year params
+  const rebuildConds: string[] = [];
+  const rebuildVals: unknown[] = [...years];
+  let idx = years.length + 1;
+  extraConds.forEach((c, i) => {
+    const rebuilt = c.replace(`$EXTRA${i}`, `$${idx++}`);
+    rebuildConds.push(rebuilt);
+    rebuildVals.push(extraVals[i]);
+  });
+
+  const allConds = rebuildConds.length
+    ? `WHERE ${yearCond} AND ${rebuildConds.join(' AND ')}`
     : `WHERE ${yearCond}`;
 
-  return {
-    where: allConds,
-    vals: [...years, ...extraVals] as unknown[],
-    yearFilter: yearCond,
-  };
+  return { where: allConds, vals: rebuildVals, yearFilter: yearCond };
 }
 
 const MONTH_LABELS = ['','Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'];
@@ -193,20 +174,22 @@ export async function GET(req: NextRequest) {
         FROM sales_transactions ${wSales}
       `, vSales),
 
-      query<{ total_order_so: string; total_sisa: string }>(`
+      query<{ total_order_so: string; total_delivered: string; total_sisa: string }>(`
         SELECT
-          COALESCE(SUM(qty_order),0) AS total_order_so,
-          COALESCE(SUM(qty_sisa),0)  AS total_sisa
+          COALESCE(SUM(qty_order),0)     AS total_order_so,
+          COALESCE(SUM(qty_delivered),0) AS total_delivered,
+          COALESCE(SUM(qty_sisa),0)      AS total_sisa
         FROM so_outstanding ${wSO}
       `, vSO),
     ]);
 
-    const qtyOrder    = Number(soSummary[0].total_order_so);
-    const qtySisa     = Number(soSummary[0].total_sisa);
-    const qtyTerkirim = Number(salesSummary[0].total_terkirim);
-    const pctSisa     = qtyOrder > 0 ? (qtySisa / qtyOrder) * 100 : 0;
+    const qtyOrder     = Number(soSummary[0].total_order_so);
+    const qtyDelivered = Number(soSummary[0].total_delivered);
+    const qtySisa      = Number(soSummary[0].total_sisa);
+    const qtyTerkirim  = Number(salesSummary[0].total_terkirim);
+    const pctSisa      = qtyOrder > 0 ? (qtySisa / qtyOrder) * 100 : 0;
 
-    // ── 2. MONTHLY MULTI-YEAR (untuk chart tren 3 tahun) ─────────────────────
+    // ── 2. MONTHLY MULTI-YEAR ─────────────────────────────────────────────────
     const { where: wMySales, vals: vMySales } = buildWhereMultiYear(p, 'sales');
     const { where: wMySO,    vals: vMySO    } = buildWhereMultiYear(p, 'so');
 
@@ -222,25 +205,24 @@ export async function GET(req: NextRequest) {
         ORDER BY tahun, bln
       `, vMySales),
 
-      query<{ tahun: string; bln: string; order_qty: string; sisa_qty: string }>(`
+      query<{ tahun: string; bln: string; order_qty: string; delivered_qty: string; sisa_qty: string }>(`
         SELECT
           EXTRACT(YEAR FROM tanggal)::INTEGER  AS tahun,
           EXTRACT(MONTH FROM tanggal)::INTEGER AS bln,
-          SUM(qty_order) AS order_qty,
-          SUM(qty_sisa)  AS sisa_qty
+          SUM(qty_order)     AS order_qty,
+          SUM(qty_delivered) AS delivered_qty,
+          SUM(qty_sisa)      AS sisa_qty
         FROM so_outstanding ${wMySO}
         GROUP BY tahun, bln
         ORDER BY tahun, bln
       `, vMySO),
     ]);
 
-    // Kumpulkan semua tahun yang ada di data
     const allYears = Array.from(new Set([
       ...monthlySales.map(r => Number(r.tahun)),
       ...monthlySO.map(r => Number(r.tahun)),
     ])).sort();
 
-    // Index data per tahun+bulan
     type SalesRow = typeof monthlySales[0];
     type SORow    = typeof monthlySO[0];
     const salesIdx: Record<string, SalesRow> = {};
@@ -248,7 +230,6 @@ export async function GET(req: NextRequest) {
     monthlySales.forEach(r => { salesIdx[`${r.tahun}-${r.bln}`] = r; });
     monthlySO.forEach(r    => { soIdx[`${r.tahun}-${r.bln}`]    = r; });
 
-    // Build array: satu entry per bulan per tahun, label = "Jan 2024"
     const monthly = allYears.flatMap(tahun =>
       Array.from({ length: 12 }, (_, idx) => {
         const m   = idx + 1;
@@ -257,32 +238,45 @@ export async function GET(req: NextRequest) {
         const so  = soIdx[key];
         return {
           tahun,
-          bulan:       m,
-          label:       `${MONTH_LABELS[m]} ${tahun}`,
-          labelShort:  MONTH_LABELS[m],
-          penjualan:   Number(st?.penjualan    ?? 0),
-          so:          Number(so?.order_qty    ?? 0),
-          outstanding: Number(so?.sisa_qty     ?? 0),
-          terkirim:    Number(st?.terkirim_qty ?? 0),
+          bulan:        m,
+          label:        `${MONTH_LABELS[m]} ${tahun}`,
+          labelShort:   MONTH_LABELS[m],
+          penjualan:    Number(st?.penjualan    ?? 0),
+          so:           Number(so?.order_qty    ?? 0),
+          outstanding:  Number(so?.sisa_qty     ?? 0),
+          delivered:    Number(so?.delivered_qty ?? 0), // qty_delivered dari so_outstanding
+          terkirim:     Number(st?.terkirim_qty ?? 0),
         };
       })
     );
 
-    // ── 3. WEEKLY (Sales Only) ────────────────────────────────────────────────
-    const weeklyRows = await query<{ week: string; penjualan: string }>(`
-      SELECT week, COALESCE(SUM(sub_total),0) AS penjualan
+    // ── 3. WEEKLY ─────────────────────────────────────────────────────────────
+    const weeklyRows = await query<{ week: string; penjualan: string; qty_terkirim: string }>(`
+      SELECT week,
+             COALESCE(SUM(sub_total),0)    AS penjualan,
+             COALESCE(SUM(qty_terkirim),0) AS qty_terkirim
       FROM sales_transactions ${wSales}
       GROUP BY week ORDER BY week
     `, vSales);
 
-    // ── 4. CATEGORIES (Sales Only) ────────────────────────────────────────────
+    // ── 4. WEEKLY SO (qty_delivered dari so_outstanding) ──────────────────────
+    const weeklySORows = await query<{ week: string; qty_order: string; qty_delivered: string; qty_sisa: string }>(`
+      SELECT week,
+             COALESCE(SUM(qty_order),0)     AS qty_order,
+             COALESCE(SUM(qty_delivered),0) AS qty_delivered,
+             COALESCE(SUM(qty_sisa),0)      AS qty_sisa
+      FROM so_outstanding ${wSO}
+      GROUP BY week ORDER BY week
+    `, vSO);
+
+    // ── 5. CATEGORIES ─────────────────────────────────────────────────────────
     const catRows = await query<{ kategori: string; penjualan: string }>(`
       SELECT kategori, COALESCE(SUM(sub_total),0) AS penjualan
       FROM sales_transactions ${wSales}
       GROUP BY kategori ORDER BY penjualan DESC LIMIT 10
     `, vSales);
 
-    // ── 5. TOP CUSTOMERS (Sales Only) ─────────────────────────────────────────
+    // ── 6. TOP CUSTOMERS ──────────────────────────────────────────────────────
     const custRows = await query<{
       pelanggan:     string;
       type_customer: string;
@@ -297,7 +291,7 @@ export async function GET(req: NextRequest) {
       ORDER BY penjualan DESC LIMIT 10
     `, vSales);
 
-    // ── 6. TOP OUTSTANDING SO ─────────────────────────────────────────────────
+    // ── 7. TOP OUTSTANDING SO ─────────────────────────────────────────────────
     const soOutstandingRows = await query<{
       nomor_so:  string;
       pelanggan: string;
@@ -310,7 +304,7 @@ export async function GET(req: NextRequest) {
       ORDER BY sisa DESC LIMIT 5
     `, vSO);
 
-    // ── 7. TYPE CUSTOMER BREAKDOWN ────────────────────────────────────────────
+    // ── 8. TYPE CUSTOMER BREAKDOWN ────────────────────────────────────────────
     const typeRows = await query<{
       type_customer: string;
       penjualan:     string;
@@ -326,7 +320,7 @@ export async function GET(req: NextRequest) {
     const totalTypePenjualan =
       typeRows.reduce((acc, r) => acc + Number(r.penjualan), 0) || 1;
 
-    // ── 8. PRODUK OUTSTANDING ─────────────────────────────────────────────────
+    // ── 9. PRODUK OUTSTANDING ─────────────────────────────────────────────────
     const ketRows = await query<{ label: string; qty: string; count: string }>(`
       SELECT produk        AS label,
              SUM(qty_sisa) AS qty,
@@ -346,16 +340,25 @@ export async function GET(req: NextRequest) {
           total_so:          qtyOrder,
           total_outstanding: qtySisa,
           total_terkirim:    qtyTerkirim,
+          total_delivered:   qtyDelivered,   // qty_delivered dari so_outstanding
           transaksi:         Number(salesSummary[0].transaksi),
           qty_so:            qtyOrder,
           qty_penjualan:     qtyTerkirim,
+          qty_delivered:     qtyDelivered,   // alias untuk kemudahan akses
           pct_outstanding:   pctSisa,
         },
-        monthly,          // array multi-tahun, label = "Jan 2024"
-        allYears,         // [2023, 2024, 2025] — untuk legend chart
+        monthly,
+        allYears,
         weekly: weeklyRows.map(r => ({
-          minggu:    r.week,
-          penjualan: Number(r.penjualan),
+          minggu:       r.week,
+          penjualan:    Number(r.penjualan),
+          qty_terkirim: Number(r.qty_terkirim),
+        })),
+        weeklySO: weeklySORows.map(r => ({
+          minggu:        r.week,
+          qty_order:     Number(r.qty_order),
+          qty_delivered: Number(r.qty_delivered),
+          qty_sisa:      Number(r.qty_sisa),
         })),
         categories: catRows.map(r => ({
           kategori:        r.kategori || '(Lainnya)',

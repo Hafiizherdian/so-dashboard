@@ -46,6 +46,7 @@ export async function GET(req: NextRequest) {
       })),
       total_users: users.length,
       login_hint: 'Gunakan username: admin, password: admin123',
+      H_H: 'Hayo lapo we', 
     });
   } catch (e: any) {
     return NextResponse.json({

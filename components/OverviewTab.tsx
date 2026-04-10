@@ -20,7 +20,6 @@ const YEAR_BAR_COLORS: { bar: string; border: string }[] = [
   { bar: '#f59e0b', border: '#d97706' },
   { bar: '#ec4899', border: '#db2777' },
 ];
-// Warna bar mode SO & Outstanding (lebih muted)
 const SO_BAR_COLORS:  { bar: string; border: string }[] = [
   { bar: '#94a3b855', border: '#64748b' },
   { bar: '#6366f155', border: '#4f46e5' },
@@ -81,7 +80,6 @@ export default function OverviewTab({ data, theme, availH }: Props) {
   const KPI_H = 106;
   const bodyH = availH - KPI_H - GAP * 4;
   const rowH  = Math.max(100, Math.floor((bodyH - GAP) / 2));
-  // chartH sekarang menggunakan hampir seluruh tinggi card (dikurangi header + legend + tabs + stat row)
   const chartH = Math.max(80, rowH - 80);
 
   const outstandingPct = summary.pct_outstanding;
@@ -108,7 +106,6 @@ export default function OverviewTab({ data, theme, availH }: Props) {
   }));
 
   // ── Pivot data monthly → per-bulan, per-tahun ──
-  // Format: [{ bulan: 'Jan', 2023: val, 2024: val, ... }, ...]
   const BULAN_NAMES = ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agt','Sep','Okt','Nov','Des'];
 
   const pivotPenj: Record<string, any>[] = BULAN_NAMES.map(b => ({ bulan: b }));
@@ -116,7 +113,7 @@ export default function OverviewTab({ data, theme, availH }: Props) {
 
   monthly.forEach((m: any) => {
     const yr  = m.tahun;
-    const idx = (m.bulan ?? 1) - 1; // bulan 1-indexed
+    const idx = (m.bulan ?? 1) - 1;
     if (idx < 0 || idx > 11) return;
     pivotPenj[idx][yr] = Number(m.penjualan  ?? 0);
     pivotSO[idx][yr]   = Number(m.so         ?? 0);
@@ -153,7 +150,6 @@ export default function OverviewTab({ data, theme, availH }: Props) {
     </button>
   );
 
-  // Stat pills — tertinggi & rata-rata dinamis per mode
   const pillTertinggi = chartMode === 'penj'
     ? fmtRp(Math.max(0, ...monthly.map((m: any) => Number(m.penjualan ?? 0))))
     : Math.max(0, ...monthly.map((m: any) => Number(m.so ?? 0))).toLocaleString('id-ID') + ' qty';
@@ -161,6 +157,9 @@ export default function OverviewTab({ data, theme, availH }: Props) {
   const pillRataRata = chartMode === 'penj'
     ? (monthly.length > 0 ? fmtRp(monthly.reduce((s: number, m: any) => s + Number(m.penjualan ?? 0), 0) / monthly.length) : '—')
     : (monthly.length > 0 ? (monthly.reduce((s: number, m: any) => s + Number(m.so ?? 0), 0) / monthly.length).toFixed(0) + ' qty' : '—');
+
+  // FIX: qty terkirim dari so_outstanding = qty_so - total_outstanding
+  const qtyTerkirimSO = summary.qty_so - summary.total_outstanding;
 
   return (
     <div style={{ height: availH, display: 'flex', flexDirection: 'column', gap: GAP, overflow: 'hidden' }}>
@@ -192,7 +191,7 @@ export default function OverviewTab({ data, theme, availH }: Props) {
           bg={t.card4bg} border={t.card4border} labelColor={t.card4text} accent={t.card4accent}
           label="Total Transaksi"
           value={summary.transaksi.toLocaleString('id-ID')}
-          sub={`Qty Terkirim: ${summary.qty_penjualan.toLocaleString('id-ID')}`}
+          // sub={`Qty Terkirim: ${summary.qty_penjualan.toLocaleString('id-ID')}`}
           icon={<Package size={14} />} theme={theme}
         />
       </div>
@@ -200,7 +199,7 @@ export default function OverviewTab({ data, theme, availH }: Props) {
       {/* ── Row 1 ── */}
       <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr', gap: GAP, height: rowH, flexShrink: 0 }}>
 
-        {/* ── Tren Bulanan — Grouped Bar Chart ── */}
+        {/* ── Tren Bulanan ── */}
         <Card
           theme={theme}
           title="Tren Bulanan"
@@ -212,7 +211,6 @@ export default function OverviewTab({ data, theme, availH }: Props) {
               : `${monthly.length} bulan`
           }
         >
-          {/* Legend + Tab dalam satu baris */}
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0, marginBottom: 4 }}>
             <YearLegend />
             <div style={{ display: 'flex', gap: 2, background: t.inputBg, borderRadius: 6, padding: 2, flexShrink: 0 }}>
@@ -221,7 +219,6 @@ export default function OverviewTab({ data, theme, availH }: Props) {
             </div>
           </div>
 
-          {/* ── Grouped Bar Chart ── */}
           <ResponsiveContainer width="100%" height={chartH}>
             <BarChart
               data={chartMode === 'penj' ? pivotPenj : pivotSO}
@@ -286,12 +283,11 @@ export default function OverviewTab({ data, theme, availH }: Props) {
             </BarChart>
           </ResponsiveContainer>
 
-          {/* ── Stat pills ── */}
           <div style={{ display: 'flex', gap: 6, flexShrink: 0, marginTop: 4 }}>
             {[
-              { label: 'Tertinggi',      value: pillTertinggi,                        color: '#6366f1' },
-              { label: 'Rata-rata/bulan', value: pillRataRata,                         color: '#10b981' },
-              { label: 'Outstanding',    value: `${outstandingPct.toFixed(1)}%`,       color: outColor  },
+              { label: 'Tertinggi',      value: pillTertinggi,                  color: '#6366f1' },
+              { label: 'Rata-rata/bulan', value: pillRataRata,                   color: '#10b981' },
+              { label: 'Outstanding',    value: `${outstandingPct.toFixed(1)}%`, color: outColor  },
             ].map(pill => (
               <div key={pill.label} style={{ flex: 1, background: t.inputBg, borderRadius: 6, padding: '4px 8px', display: 'flex', flexDirection: 'column', gap: 1 }}>
                 <span style={{ fontSize: 8, color: t.textMuted, fontFamily: FONT_MONO }}>{pill.label}</span>
@@ -344,9 +340,11 @@ export default function OverviewTab({ data, theme, availH }: Props) {
             <ProgressBar pct={outstandingPct} color={outColor} bg={t.borderCard} height={6} />
             <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
               {[
-                { label: 'Qty Order',  value: summary.qty_so.toLocaleString('id-ID'),        color: '#6366f1' },
-                { label: 'Qty Kirim',  value: summary.qty_penjualan.toLocaleString('id-ID'), color: '#10b981' },
-                { label: 'Sisa (Qty)', value: (summary.qty_so - summary.qty_penjualan).toLocaleString('id-ID'), color: outColor },
+                { label: 'Qty Order',  value: summary.qty_so.toLocaleString('id-ID'),               color: '#6366f1' },
+                // FIX: Qty Kirim = qty_so - total_outstanding (konsisten dengan sumber so_outstanding)
+                { label: 'Qty Kirim',  value: qtyTerkirimSO.toLocaleString('id-ID'),                color: '#10b981' },
+                // FIX: Sisa = total_outstanding langsung dari DB (sama dengan KPI card)
+                { label: 'Sisa (Qty)', value: summary.total_outstanding.toLocaleString('id-ID'),    color: outColor  },
               ].map(row => (
                 <div key={row.label} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>

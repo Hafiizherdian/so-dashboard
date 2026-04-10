@@ -31,9 +31,25 @@ const ALL_TABS = [
 type TabId = typeof ALL_TABS[number]['id'];
 
 const EMPTY: DashboardData = {
-  summary: { total_penjualan:0, total_so:0, total_outstanding:0, qty_penjualan:0, qty_so:0, transaksi:0, pct_outstanding:0 },
-  monthly:[], weekly:[], categories:[], topCustomers:[], topProducts:[],
-  typeCustomerBreakdown:[], keteranganBreakdown:[],
+  summary: {
+    total_penjualan:   0,
+    total_so:          0,
+    total_outstanding: 0, 
+    total_terkirim:    0, 
+    qty_penjualan:     0,
+    qty_so:            0,
+    transaksi:         0,
+    pct_outstanding:   0,
+  },
+  monthly:               [],
+  weekly:                [],
+  categories:            [],
+  topCustomers:          [],
+  topProducts:           [],
+  typeCustomerBreakdown: [],
+  keteranganBreakdown:   [],
+  topOutstanding:        [],
+  allYears:              [],
 };
 
 function useBreakpoint() {
@@ -81,8 +97,8 @@ function Sidebar({ activeTab, setActiveTab, collapsed, setCollapsed, theme, setT
             <div style={{display:'flex',alignItems:'center',gap:9}}>
               <div style={{width:28,height:28,borderRadius:8,background:'linear-gradient(135deg,#6366f1,#818cf8)',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0,boxShadow:'0 3px 8px rgba(99,102,241,0.35)'}}><BarChart3 size={14} color="#fff"/></div>
               <div>
-                <div style={{color:t.text,fontSize:12,fontWeight:800,fontFamily:FONT_MONO,lineHeight:1.15,letterSpacing:'-0.02em'}}>SO Dashboard</div>
-                <div style={{color:t.textMuted,fontSize:8,fontFamily:FONT_MONO,letterSpacing:'0.1em',textTransform:'uppercase'}}>Sales Management</div>
+                <div style={{color:t.text,fontSize:12,fontWeight:800,fontFamily:FONT_MONO,lineHeight:1.15,letterSpacing:'-0.02em'}}>SO & OS Dashboard</div>
+                <div style={{color:t.textMuted,fontSize:8,fontFamily:FONT_MONO,letterSpacing:'0.1em',textTransform:'uppercase'}}>S3 Management</div>
               </div>
             </div>
             <button onClick={()=>setCollapsed(true)} style={{background:t.inputBg,border:`1px solid ${t.borderInput}`,cursor:'pointer',color:t.textMuted,borderRadius:6,width:22,height:22,display:'flex',alignItems:'center',justifyContent:'center'}}>

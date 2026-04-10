@@ -62,7 +62,7 @@ function LoginForm() {
           <div style={{ width: 56, height: 56, borderRadius: 16, margin: '0 auto 14px', background: 'linear-gradient(135deg,#6366f1,#818cf8)', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 8px 24px rgba(99,102,241,0.4)' }}>
             <BarChart3 size={26} color="#fff" />
           </div>
-          <div style={{ fontSize: 22, fontWeight: 800, color: 'rgba(255,255,255,0.92)', fontFamily: '"IBM Plex Mono",monospace', letterSpacing: '-0.03em' }}>SO Dashboard</div>
+          <div style={{ fontSize: 22, fontWeight: 800, color: 'rgba(255,255,255,0.92)', fontFamily: '"IBM Plex Mono",monospace', letterSpacing: '-0.03em' }}>SO & Outstanding Dashboard</div>
           <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.3)', fontFamily: '"IBM Plex Mono",monospace', letterSpacing: '0.14em', textTransform: 'uppercase', marginTop: 5 }}>Sales · Penjualan · Outstanding</div>
         </div>
 
