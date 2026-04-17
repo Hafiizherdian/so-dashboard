@@ -123,6 +123,32 @@ export async function initDb(): Promise<void> {
       )
     `);
 
+    // Tabel kertas stok
+await query(`
+  CREATE TABLE IF NOT EXISTS kertas_stok (
+    id          BIGSERIAL PRIMARY KEY,
+    produk      TEXT NOT NULL,
+    jenis_kertas VARCHAR(200),
+    gramasi     NUMERIC(8, 2) DEFAULT 0,
+    merk        VARCHAR(200),
+    ukuran_kertas VARCHAR(100),
+    lebar       NUMERIC(8, 2) DEFAULT 0,
+    panjang     NUMERIC(8, 2) DEFAULT 0,
+    unit        VARCHAR(20) DEFAULT 'lbr',
+    saldo_awal  NUMERIC(15, 2) DEFAULT 0,
+    masuk       NUMERIC(15, 2) DEFAULT 0,
+    keluar      NUMERIC(15, 2) DEFAULT 0,
+    saldo_akhir NUMERIC(15, 2) DEFAULT 0,
+    periode     VARCHAR(7),
+    keterangan  TEXT DEFAULT '',
+    created_at  TIMESTAMPTZ DEFAULT NOW()
+  )
+`);
+await query(`CREATE INDEX IF NOT EXISTS idx_ks_jenis   ON kertas_stok(jenis_kertas)`);
+await query(`CREATE INDEX IF NOT EXISTS idx_ks_merk    ON kertas_stok(merk)`);
+await query(`CREATE INDEX IF NOT EXISTS idx_ks_periode ON kertas_stok(periode)`);
+
+
     // Indexing untuk Sales
     await query(`CREATE INDEX IF NOT EXISTS idx_st_tanggal ON sales_transactions(tanggal)`);
     await query(`CREATE INDEX IF NOT EXISTS idx_st_pelanggan ON sales_transactions(pelanggan)`);

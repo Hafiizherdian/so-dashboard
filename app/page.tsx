@@ -1,8 +1,8 @@
 'use client';
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
-  TrendingUp, ShoppingCart, Receipt, AlertCircle, Upload,
-  Sun, Moon, LogOut, ChevronLeft, BarChart3, Users, Settings,
+  TrendingUp, ShoppingCart, Receipt, AlertCircle, Upload, Layers,
+  Sun, Moon, LogOut, ChevronLeft, BarChart3, Users, Settings, Package,
 } from 'lucide-react';
 import { AuthProvider, useAuth } from '@/lib/AuthContext';
 import { Theme, tk, FONT_MONO, FONT_SANS } from '@/lib/theme';
@@ -16,6 +16,7 @@ import UploadTabComp from '@/components/UploadTab';
 import UserManagement from '@/components/UserManagement';
 import SettingsTab from '@/components/SettingsTab';
 import { apiJson } from '@/lib/apiFetch';
+import KertasTab from '@/components/KertasTab';
 
 const MONTHS = [{ value: 'all', label: 'Semua Bulan' }, ...['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'].map((l,i) => ({ value: String(i+1), label: l }))];
 
@@ -24,6 +25,7 @@ const ALL_TABS = [
   { id: 'penjualan',   label: 'Penjualan',    shortLabel: 'Jual',      Icon: Receipt,      roles: ['root','admin','user'] },
   { id: 'so',          label: 'Sales Order',  shortLabel: 'SO',        Icon: ShoppingCart, roles: ['root','admin','user'] },
   { id: 'outstanding', label: 'Outstanding',  shortLabel: 'Out.',      Icon: AlertCircle,  roles: ['root','admin','user'] },
+  { id: 'kertas', label: 'Alokasi Kertas', shortLabel: 'Kertas', Icon: Layers, roles: ['root', 'admin', 'user'] },
   { id: 'upload',      label: 'Upload Data',  shortLabel: 'Upload',    Icon: Upload,       roles: ['root','admin'] },
   { id: 'users',       label: 'Manajemen User', shortLabel: 'User',    Icon: Users,        roles: ['root','admin'] },
   { id: 'settings',    label: 'Pengaturan',   shortLabel: 'Setting',   Icon: Settings,     roles: ['root','admin','user'] },
@@ -308,6 +310,7 @@ function DashboardInner() {
       case 'outstanding': return <OutstandingTab data={data} theme={theme}/>;
       case 'upload':      return userRole!=='user'?<UploadTabComp theme={theme}/>:null;
       case 'users':       return userRole!=='user'?<UserManagement theme={theme}/>:null;
+      case 'kertas':      return <KertasTab theme={theme} />;
       case 'settings':    return <SettingsTab theme={theme} currentFilters={filtersForExport}/>;
       default:            return <OverviewTab data={data} theme={theme} availH={availH}/>;
     }
