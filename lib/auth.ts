@@ -57,3 +57,7 @@ export async function getTokenFromRequest(req: NextRequest): Promise<JwtPayload 
 }
 
 export { COOKIE_NAME };
+
+export function clearCookieHeader(): string {
+  return `${COOKIE_NAME}=; Path=/; HttpOnly; Secure; SameSite=Strict; Max-Age=0; Expires=Thu, 01 Jan 1970 00:00:00 GMT`;
+}
