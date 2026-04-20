@@ -5,7 +5,8 @@ import { query, initDb } from '@/lib/db';
 
 export async function GET(req: NextRequest) {
   try {
-    const payload = getTokenFromRequest(req);
+    // 1. Tambahkan await
+    const payload = await getTokenFromRequest(req);
     if (!payload) return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
     if (payload.role !== 'root' && payload.role !== 'admin') {
       return NextResponse.json({ success: false, error: 'Forbidden' }, { status: 403 });
@@ -22,7 +23,8 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   try {
-    const payload = getTokenFromRequest(req);
+    // 2. Tambahkan await
+    const payload = await getTokenFromRequest(req);
     if (!payload) return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
     if (payload.role !== 'root' && payload.role !== 'admin') {
       return NextResponse.json({ success: false, error: 'Forbidden' }, { status: 403 });
@@ -30,7 +32,7 @@ export async function POST(req: NextRequest) {
     await initDb();
     const { username, password, role, areas } = await req.json();
     if (!username || !password) return NextResponse.json({ success: false, error: 'Username dan password wajib' }, { status: 400 });
-    // admin cannot create root
+    
     if (payload.role === 'admin' && role === 'root') {
       return NextResponse.json({ success: false, error: 'Admin tidak bisa membuat akun root' }, { status: 403 });
     }
@@ -48,7 +50,8 @@ export async function POST(req: NextRequest) {
 
 export async function PUT(req: NextRequest) {
   try {
-    const payload = getTokenFromRequest(req);
+    // 3. Tambahkan await
+    const payload = await getTokenFromRequest(req);
     if (!payload) return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
     if (payload.role !== 'root' && payload.role !== 'admin') {
       return NextResponse.json({ success: false, error: 'Forbidden' }, { status: 403 });
@@ -80,7 +83,8 @@ export async function PUT(req: NextRequest) {
 
 export async function DELETE(req: NextRequest) {
   try {
-    const payload = getTokenFromRequest(req);
+    // 4. Tambahkan await
+    const payload = await getTokenFromRequest(req);
     if (!payload) return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
     if (payload.role !== 'root') return NextResponse.json({ success: false, error: 'Hanya root yang bisa menghapus user' }, { status: 403 });
     await initDb();
