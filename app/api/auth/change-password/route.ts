@@ -5,7 +5,7 @@ import { query, initDb } from '@/lib/db';
 
 export async function POST(req: NextRequest) {
   try {
-    const payload = getTokenFromRequest(req);
+    const payload = await getTokenFromRequest(req);
     if (!payload) return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
     await initDb();
     const { currentPassword, newPassword } = await req.json();
