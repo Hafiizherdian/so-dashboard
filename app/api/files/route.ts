@@ -4,7 +4,7 @@ import { query, initDb } from '@/lib/db';
 
 export async function GET(req: NextRequest) {
   try {
-    const payload = getTokenFromRequest(req);
+    const payload = await getTokenFromRequest(req);
     if (!payload) return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
     await initDb();
     const rows = await query(
@@ -19,8 +19,11 @@ export async function GET(req: NextRequest) {
 
 export async function DELETE(req: NextRequest) {
   try {
-    const payload = getTokenFromRequest(req);
+    const payload = await getTokenFromRequest(req);
+    
     if (!payload) return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
+    
+    // Sekarang payload.role sudah bisa diakses
     if (payload.role === 'user') return NextResponse.json({ success: false, error: 'Forbidden' }, { status: 403 });
     await initDb();
     const id = req.nextUrl.searchParams.get('id');
