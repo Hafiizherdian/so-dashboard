@@ -8,7 +8,7 @@ export const maxDuration = 60;
 
 export async function POST(req: NextRequest) {
   try {
-    const payload = getTokenFromRequest(req);
+    const payload = await getTokenFromRequest(req);
     if (!payload || payload.role === 'user') return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
 
     await initDb();
