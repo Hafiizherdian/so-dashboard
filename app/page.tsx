@@ -25,7 +25,7 @@ const ALL_TABS = [
   { id: 'penjualan',   label: 'Penjualan',    shortLabel: 'Jual',      Icon: Receipt,      roles: ['root','admin','user'] },
   { id: 'so',          label: 'Sales Order',  shortLabel: 'SO',        Icon: ShoppingCart, roles: ['root','admin','user'] },
   { id: 'outstanding', label: 'Outstanding',  shortLabel: 'Out.',      Icon: AlertCircle,  roles: ['root','admin','user'] },
-  { id: 'kertas', label: 'Alokasi Kertas', shortLabel: 'Kertas', Icon: Layers, roles: ['root', 'admin', 'user'] },
+  { id: 'kertas', label: 'Stok Level', shortLabel: 'Kertas', Icon: Layers, roles: ['root', 'admin', 'user'] },
   { id: 'upload',      label: 'Upload Data',  shortLabel: 'Upload',    Icon: Upload,       roles: ['root','admin'] },
   { id: 'users',       label: 'Manajemen User', shortLabel: 'User',    Icon: Users,        roles: ['root','admin'] },
   { id: 'settings',    label: 'Pengaturan',   shortLabel: 'Setting',   Icon: Settings,     roles: ['root','admin','user'] },

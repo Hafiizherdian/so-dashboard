@@ -590,14 +590,15 @@ const summaryLocal = {
           <table style={{ minWidth: 900, width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
             <thead>
               <tr>
-                <th style={{ ...thS, cursor: 'pointer' }} onClick={() => toggleSort('produk')}>
+                {/* <th style={{ ...thS, cursor: 'pointer' }} onClick={() => toggleSort('produk')}>
                   <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3 }}>Produk <SortIcon k="produk" /></span>
-                </th>
+                </th> */}
+                <th style={thS}>Merk</th>
                 <th style={thS}>Jenis</th>
                 <th style={{ ...thS, cursor: 'pointer', textAlign: 'right' }} onClick={() => toggleSort('gramasi')}>
                   <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3, float: 'right' }}>Gramasi <SortIcon k="gramasi" /></span>
                 </th>
-                <th style={thS}>Merk</th>
+                
                 <th style={{ ...thS, textAlign: 'right' }}>Ukuran (L×P)</th>
                 <th style={thS}>Unit</th>
                 <th style={{ ...thS, textAlign: 'right' }}>Saldo Awal</th>
@@ -627,16 +628,17 @@ const summaryLocal = {
                     onMouseEnter={e => (e.currentTarget.style.background = t.rowHover)}
                     onMouseLeave={e => (e.currentTarget.style.background = i % 2 === 1 ? t.tableAlt : 'transparent')}
                   >
-                    <td style={{ padding: '8px 10px', color: t.text, fontFamily: FONT_MONO, fontSize: 10, maxWidth: 280, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    {/* <td style={{ padding: '8px 10px', color: t.text, fontFamily: FONT_MONO, fontSize: 10, maxWidth: 280, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                       {row.produk}
-                    </td>
+                    </td> */}
+                    <td style={{ padding: '8px 10px', color: t.textSub, fontFamily: FONT_MONO, fontSize: 11 }}>{row.merk}</td>
                     <td style={{ padding: '8px 10px' }}>
                       <span style={{ padding: '2px 7px', borderRadius: 8, fontSize: 9, fontWeight: 600, fontFamily: FONT_MONO, background: jenisColor + '18', color: jenisColor, border: `1px solid ${jenisColor}30` }}>
                         {row.jenis_kertas}
                       </span>
                     </td>
                     <td style={{ padding: '8px 10px', textAlign: 'right', color: t.textSub, fontFamily: FONT_MONO, fontSize: 11 }}>{row.gramasi} gr</td>
-                    <td style={{ padding: '8px 10px', color: t.textSub, fontFamily: FONT_MONO, fontSize: 11 }}>{row.merk}</td>
+                    
                     <td style={{ padding: '8px 10px', textAlign: 'right', color: t.textMuted, fontFamily: FONT_MONO, fontSize: 10 }}>
                       {row.lebar} × {row.panjang}
                     </td>
