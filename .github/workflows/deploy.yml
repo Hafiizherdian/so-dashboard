@@ -26,13 +26,19 @@ jobs:
             echo "=== Masuk ke direktori app ==="
             cd ~/app
 
-            echo "=== Pull kode terbaru ==="
+            echo "=== Mengambil pembaharuan list branch dari GitHub ==="
+            git fetch origin
+
+            echo "=== Pull kode terbaru dari branch main ==="
+            # Menggunakan flag -f atau set upstream jika sebelumnya server berada di branch lain
+            git checkout main || git checkout -b main origin/main
             git pull origin main
 
             echo "=== Install dependencies ==="
             npm ci 
 
             echo "=== Build Next.js ==="
+            # Ditambahkan limit memory 2GB biar server 4GB RAM kamu aman saat build
             npm run build
 
             echo "=== Restart PM2 ==="
