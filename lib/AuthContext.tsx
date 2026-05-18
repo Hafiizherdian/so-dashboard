@@ -94,7 +94,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } catch {}
     
     setUser(null);
-    window.location.href = '/login';
+    setTimeout(() => {
+      window.location.href = '/login';
+    }, 100);
   };
 
   return (
