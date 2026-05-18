@@ -24,7 +24,7 @@ jobs:
             set -e
 
             echo "=== Masuk ke direktori app ==="
-            cd ~/app
+            cd ~/so-dashboard
 
             echo "=== Mengambil pembaharuan list branch dari GitHub ==="
             git fetch origin
