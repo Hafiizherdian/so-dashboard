@@ -17,6 +17,7 @@ import UserManagement from '@/components/UserManagement';
 import SettingsTab from '@/components/SettingsTab';
 import { apiJson } from '@/lib/apiFetch';
 import KertasTab from '@/components/KertasTab';
+import UploadKertasTab from '@/components/UploadKertasTab';
 
 const MONTHS = [{ value: 'all', label: 'Semua Bulan' }, ...['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'].map((l,i) => ({ value: String(i+1), label: l }))];
 
@@ -27,6 +28,7 @@ const ALL_TABS = [
   { id: 'outstanding', label: 'Outstanding',  shortLabel: 'Out.',      Icon: AlertCircle,  roles: ['root','admin','user'] },
   { id: 'kertas', label: 'Stok Level', shortLabel: 'Kertas', Icon: Layers, roles: ['root', 'admin', 'user'] },
   { id: 'upload',      label: 'Upload Data',  shortLabel: 'Upload',    Icon: Upload,       roles: ['root','admin'] },
+  { id: 'kertas_upload', label: 'Upload Stok Kertas', shortLabel: 'Up. Kertas', Icon: Package, roles: ['root','admin'] },
   { id: 'users',       label: 'Manajemen User', shortLabel: 'User',    Icon: Users,        roles: ['root','admin'] },
   { id: 'settings',    label: 'Pengaturan',   shortLabel: 'Setting',   Icon: Settings,     roles: ['root','admin','user'] },
 ] as const;
@@ -309,6 +311,7 @@ function DashboardInner() {
       case 'so':          return <SalesOrderTab data={data} theme={theme}/>;
       case 'outstanding': return <OutstandingTab data={data} theme={theme}/>;
       case 'upload':      return userRole!=='user'?<UploadTabComp theme={theme}/>:null;
+      case 'kertas_upload': return userRole!=='user'?<UploadKertasTab theme={theme}/>:null;
       case 'users':       return userRole!=='user'?<UserManagement theme={theme}/>:null;
       case 'kertas':      return <KertasTab theme={theme} />;
       case 'settings':    return <SettingsTab theme={theme} currentFilters={filtersForExport}/>;
