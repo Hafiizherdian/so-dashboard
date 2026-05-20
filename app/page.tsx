@@ -3,6 +3,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
   TrendingUp, ShoppingCart, Receipt, AlertCircle, Upload, Layers,
   Sun, Moon, LogOut, ChevronLeft, BarChart3, Users, Settings, Package,
+  ClipboardList,
 } from 'lucide-react';
 import { AuthProvider, useAuth } from '@/lib/AuthContext';
 import { Theme, tk, FONT_MONO, FONT_SANS } from '@/lib/theme';
@@ -18,19 +19,23 @@ import SettingsTab from '@/components/SettingsTab';
 import { apiJson } from '@/lib/apiFetch';
 import KertasTab from '@/components/KertasTab';
 import UploadKertasTab from '@/components/UploadKertasTab';
+import WipTab from '@/components/WipTab';
+import UploadWIPTab from '@/components/UploadWIPTab';
 
 const MONTHS = [{ value: 'all', label: 'Semua Bulan' }, ...['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'].map((l,i) => ({ value: String(i+1), label: l }))];
 
 const ALL_TABS = [
-  { id: 'overview',    label: 'Ringkasan',    shortLabel: 'Ringkasan', Icon: TrendingUp,   roles: ['root','admin','user'] },
-  { id: 'penjualan',   label: 'Penjualan',    shortLabel: 'Jual',      Icon: Receipt,      roles: ['root','admin','user'] },
-  { id: 'so',          label: 'Sales Order',  shortLabel: 'SO',        Icon: ShoppingCart, roles: ['root','admin','user'] },
-  { id: 'outstanding', label: 'Outstanding',  shortLabel: 'Out.',      Icon: AlertCircle,  roles: ['root','admin','user'] },
-  { id: 'kertas', label: 'Stok Level', shortLabel: 'Kertas', Icon: Layers, roles: ['root', 'admin', 'user'] },
-  { id: 'upload',      label: 'Upload Data',  shortLabel: 'Upload',    Icon: Upload,       roles: ['root','admin'] },
-  { id: 'kertas_upload', label: 'Upload Stok Kertas', shortLabel: 'Up. Kertas', Icon: Package, roles: ['root','admin'] },
-  { id: 'users',       label: 'Manajemen User', shortLabel: 'User',    Icon: Users,        roles: ['root','admin'] },
-  { id: 'settings',    label: 'Pengaturan',   shortLabel: 'Setting',   Icon: Settings,     roles: ['root','admin','user'] },
+  { id: 'overview',      label: 'Ringkasan',          shortLabel: 'Ringkasan',  Icon: TrendingUp,   roles: ['root','admin','user'] },
+  { id: 'penjualan',     label: 'Penjualan',           shortLabel: 'Jual',       Icon: Receipt,      roles: ['root','admin','user'] },
+  { id: 'so',            label: 'Sales Order',         shortLabel: 'SO',         Icon: ShoppingCart, roles: ['root','admin','user'] },
+  { id: 'outstanding',   label: 'Outstanding',         shortLabel: 'Out.',       Icon: AlertCircle,  roles: ['root','admin','user'] },
+  { id: 'kertas',        label: 'Stok Level',          shortLabel: 'Kertas',     Icon: Layers,       roles: ['root','admin','user'] },
+  { id: 'wip',           label: 'WIP Produksi',        shortLabel: 'WIP',        Icon: ClipboardList,roles: ['root','admin','user'] },
+  { id: 'upload',        label: 'Upload Data',         shortLabel: 'Upload',     Icon: Upload,       roles: ['root','admin'] },
+  { id: 'kertas_upload', label: 'Upload Stok Kertas',  shortLabel: 'Up. Kertas', Icon: Package,      roles: ['root','admin'] },
+  { id: 'wip_upload',    label: 'Upload WIP Produksi', shortLabel: 'Up. WIP',    Icon: Package,      roles: ['root','admin'] },
+  { id: 'users',         label: 'Manajemen User',      shortLabel: 'User',       Icon: Users,        roles: ['root','admin'] },
+  { id: 'settings',      label: 'Pengaturan',          shortLabel: 'Setting',    Icon: Settings,     roles: ['root','admin'] },
 ] as const;
 type TabId = typeof ALL_TABS[number]['id'];
 
@@ -113,7 +118,6 @@ function Sidebar({ activeTab, setActiveTab, collapsed, setCollapsed, theme, setT
       </div>
 
       <nav style={{flex:1,padding:'8px 4px',overflowY:'auto'}}>
-        {/* Dividers for sections */}
         {tabs.map((tab, idx) => {
           const { id, label, Icon } = tab;
           const active = activeTab === id;
@@ -207,7 +211,6 @@ function FilterBar({ filters, setFilters, opts, onApply, onReset, loading, theme
   const dirty=filters.bulan!=='all'||filters.minggu!=='all'||filters.area!=='all'||filters.type_customer!=='all'||filters.kategori!=='all';
   const WEEKS=[{value:'all',label:'Semua Minggu'},...Array.from({length:52},(_,i)=>({value:String(i+1),label:`W${i+1}`}))];
   const YEARS=[{value:'all',label:'Semua Tahun'},...opts.years.map(y=>({value:String(y),label:String(y)}))];
-  // const AREAS=[{value:'all',label:'Semua Area'},...opts.areas.map(a=>({value:a,label:a}))];
   const TYPES=[{value:'all',label:'Semua Tipe'},...opts.typeCustomers.map(a=>({value:a,label:a}))];
   const KATS=[{value:'all',label:'Semua Kategori'},...opts.kategoris.map(a=>({value:a,label:a}))];
   return (
@@ -217,7 +220,6 @@ function FilterBar({ filters, setFilters, opts, onApply, onReset, loading, theme
         <Sel value={filters.bulan} onChange={v=>setFilters(f=>({...f,bulan:v}))} options={MONTHS} theme={theme} style={{minWidth:78}}/>
         <Sel value={filters.minggu} onChange={v=>setFilters(f=>({...f,minggu:v}))} options={WEEKS} theme={theme} style={{minWidth:70}}/>
         <div style={{width:1,height:12,background:t.border,flexShrink:0,margin:'0 1px'}}/>
-        {/* <Sel value={filters.area} onChange={v=>setFilters(f=>({...f,area:v}))} options={AREAS} theme={theme} style={{minWidth:100}}/> */}
         <Sel value={filters.type_customer} onChange={v=>setFilters(f=>({...f,type_customer:v}))} options={TYPES} theme={theme} style={{minWidth:90}}/>
         <Sel value={filters.kategori} onChange={v=>setFilters(f=>({...f,kategori:v}))} options={KATS} theme={theme} style={{minWidth:110}}/>
         <div style={{flex:1}}/>
@@ -307,15 +309,17 @@ function DashboardInner() {
 
   const renderTab=()=>{
     switch(tab){
-      case 'penjualan':   return <PenjualanTab data={data} theme={theme}/>;
-      case 'so':          return <SalesOrderTab data={data} theme={theme}/>;
-      case 'outstanding': return <OutstandingTab data={data} theme={theme}/>;
-      case 'upload':      return userRole!=='user'?<UploadTabComp theme={theme}/>:null;
+      case 'penjualan':     return <PenjualanTab data={data} theme={theme}/>;
+      case 'so':            return <SalesOrderTab data={data} theme={theme}/>;
+      case 'outstanding':   return <OutstandingTab data={data} theme={theme}/>;
+      case 'upload':        return userRole!=='user'?<UploadTabComp theme={theme}/>:null;
       case 'kertas_upload': return userRole!=='user'?<UploadKertasTab theme={theme}/>:null;
-      case 'users':       return userRole!=='user'?<UserManagement theme={theme}/>:null;
-      case 'kertas':      return <KertasTab theme={theme} />;
-      case 'settings':    return <SettingsTab theme={theme} currentFilters={filtersForExport}/>;
-      default:            return <OverviewTab data={data} theme={theme} availH={availH}/>;
+      case 'wip_upload':    return userRole!=='user'?<UploadWIPTab theme={theme}/>:null;
+      case 'users':         return userRole!=='user'?<UserManagement theme={theme}/>:null;
+      case 'kertas':        return <KertasTab theme={theme}/>;
+      case 'wip':           return <WipTab theme={theme}/>;
+      case 'settings':      return <SettingsTab theme={theme} currentFilters={filtersForExport}/>;
+      default:              return <OverviewTab data={data} theme={theme} availH={availH}/>;
     }
   };
 

@@ -78,6 +78,50 @@ CREATE TABLE IF NOT EXISTS sales_transactions (
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
+-- Tabel header / batch upload WIP
+CREATE TABLE IF NOT EXISTS wip_uploads (
+  id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  nama_mesin  VARCHAR(200) NOT NULL,         -- "MESIN KOMORI", "MESIN HEIDELBERG", dll
+  minggu_awal DATE,                          -- tanggal pertama di header (18-May-26)
+  minggu_akhir DATE,                         -- tanggal terakhir di header
+  file_name   VARCHAR(500),
+  uploaded_by INTEGER REFERENCES users(id),
+  created_at  TIMESTAMPTZ DEFAULT NOW()
+);
+ 
+-- Tabel baris JOP
+CREATE TABLE IF NOT EXISTS wip_jobs (
+  id          BIGSERIAL PRIMARY KEY,
+  upload_id   UUID REFERENCES wip_uploads(id) ON DELETE CASCADE,
+  no_urut     INTEGER,
+  nomor_jop   VARCHAR(200),
+  nama_produk TEXT,
+  ukuran_kertas VARCHAR(300),
+  up          INTEGER DEFAULT 1,
+  qty_jop     NUMERIC(15,2) DEFAULT 0,
+  qty_cetak   NUMERIC(15,2) DEFAULT 0,
+  created_at  TIMESTAMPTZ DEFAULT NOW()
+);
+ 
+CREATE INDEX IF NOT EXISTS idx_wip_jobs_upload  ON wip_jobs(upload_id);
+CREATE INDEX IF NOT EXISTS idx_wip_jobs_nomor   ON wip_jobs(nomor_jop);
+ 
+-- Tabel detail shift per tanggal (tall/normalized)
+-- Satu baris = 1 job × 1 tanggal × 1 shift
+CREATE TABLE IF NOT EXISTS wip_shifts (
+  id        BIGSERIAL PRIMARY KEY,
+  job_id    BIGINT REFERENCES wip_jobs(id) ON DELETE CASCADE,
+  upload_id UUID REFERENCES wip_uploads(id) ON DELETE CASCADE,
+  tanggal   DATE NOT NULL,
+  shift     SMALLINT NOT NULL CHECK (shift IN (1, 2)),  -- 1 = Shift I, 2 = Shift II
+  qty       NUMERIC(15,2) DEFAULT 0,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+ 
+CREATE INDEX IF NOT EXISTS idx_wip_shifts_job    ON wip_shifts(job_id);
+CREATE INDEX IF NOT EXISTS idx_wip_shifts_upload ON wip_shifts(upload_id);
+CREATE INDEX IF NOT EXISTS idx_wip_shifts_tgl    ON wip_shifts(tanggal);
+
 -- Index yang berguna
 CREATE INDEX IF NOT EXISTS idx_st_tanggal ON sales_transactions(tanggal);
 CREATE INDEX IF NOT EXISTS idx_st_week ON sales_transactions(week);
