@@ -30,7 +30,7 @@ const ALL_TABS = [
   { id: 'so',            label: 'Sales Order',         shortLabel: 'SO',         Icon: ShoppingCart, roles: ['root','admin','user'] },
   { id: 'outstanding',   label: 'Outstanding',         shortLabel: 'Out.',       Icon: AlertCircle,  roles: ['root','admin','user'] },
   { id: 'kertas',        label: 'Stok Level',          shortLabel: 'Kertas',     Icon: Layers,       roles: ['root','admin','user'] },
-  { id: 'wip',           label: 'WIP Produksi',        shortLabel: 'WIP',        Icon: ClipboardList,roles: ['root','admin','user'] },
+  { id: 'Plan',           label: 'Plan Produksi',        shortLabel: 'Plan',        Icon: ClipboardList,roles: ['root','admin','user'] },
   { id: 'upload',        label: 'Upload Data',         shortLabel: 'Upload',     Icon: Upload,       roles: ['root','admin'] },
   { id: 'kertas_upload', label: 'Upload Stok Kertas',  shortLabel: 'Up. Kertas', Icon: Package,      roles: ['root','admin'] },
   { id: 'Plan_upload',    label: 'Upload Plan Produksi', shortLabel: 'Up. Plan',    Icon: Package,      roles: ['root','admin'] },
@@ -317,7 +317,7 @@ function DashboardInner() {
       case 'Plan_upload':    return userRole!=='user'?<UploadWIPTab theme={theme}/>:null;
       case 'users':         return userRole!=='user'?<UserManagement theme={theme}/>:null;
       case 'kertas':        return <KertasTab theme={theme}/>;
-      case 'wip':           return <WipTab theme={theme}/>;
+      case 'Plan':           return <WipTab theme={theme}/>;
       case 'settings':      return <SettingsTab theme={theme} currentFilters={filtersForExport}/>;
       default:              return <OverviewTab data={data} theme={theme} availH={availH}/>;
     }
