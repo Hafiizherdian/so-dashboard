@@ -33,7 +33,7 @@ const ALL_TABS = [
   { id: 'wip',           label: 'WIP Produksi',        shortLabel: 'WIP',        Icon: ClipboardList,roles: ['root','admin','user'] },
   { id: 'upload',        label: 'Upload Data',         shortLabel: 'Upload',     Icon: Upload,       roles: ['root','admin'] },
   { id: 'kertas_upload', label: 'Upload Stok Kertas',  shortLabel: 'Up. Kertas', Icon: Package,      roles: ['root','admin'] },
-  { id: 'wip_upload',    label: 'Upload WIP Produksi', shortLabel: 'Up. WIP',    Icon: Package,      roles: ['root','admin'] },
+  { id: 'Plan_upload',    label: 'Upload Plan Produksi', shortLabel: 'Up. Plan',    Icon: Package,      roles: ['root','admin'] },
   { id: 'users',         label: 'Manajemen User',      shortLabel: 'User',       Icon: Users,        roles: ['root','admin'] },
   { id: 'settings',      label: 'Pengaturan',          shortLabel: 'Setting',    Icon: Settings,     roles: ['root','admin'] },
 ] as const;
@@ -314,7 +314,7 @@ function DashboardInner() {
       case 'outstanding':   return <OutstandingTab data={data} theme={theme}/>;
       case 'upload':        return userRole!=='user'?<UploadTabComp theme={theme}/>:null;
       case 'kertas_upload': return userRole!=='user'?<UploadKertasTab theme={theme}/>:null;
-      case 'wip_upload':    return userRole!=='user'?<UploadWIPTab theme={theme}/>:null;
+      case 'Plan_upload':    return userRole!=='user'?<UploadWIPTab theme={theme}/>:null;
       case 'users':         return userRole!=='user'?<UserManagement theme={theme}/>:null;
       case 'kertas':        return <KertasTab theme={theme}/>;
       case 'wip':           return <WipTab theme={theme}/>;
