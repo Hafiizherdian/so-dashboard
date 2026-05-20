@@ -118,7 +118,7 @@ export default function UploadWipTab({ theme }: Props) {
 
       {/* ── Format hint ── */}
       <div style={{ padding: '10px 14px', borderRadius: 10, background: t.infoBg, border: `1px solid ${t.infoBorder}`, fontSize: 10, color: t.infoText, fontFamily: FONT_MONO, lineHeight: 1.8 }}>
-        <div style={{ fontWeight: 700, marginBottom: 4 }}>Format Excel WIP yang diharapkan:</div>
+        <div style={{ fontWeight: 700, marginBottom: 4 }}>Format Excel Plan yang diharapkan:</div>
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: '3px 8px' }}>
           {[
             'Baris 1: Nama Mesin (cth: MESIN KOMORI)',
@@ -137,7 +137,7 @@ export default function UploadWipTab({ theme }: Props) {
           <div style={{ width: 24, height: 24, borderRadius: 7, background: 'rgba(99,102,241,0.1)', border: '1px solid rgba(99,102,241,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <Upload size={12} color="#818cf8" />
           </div>
-          <div style={{ fontSize: 12, fontWeight: 700, color: t.text }}>Upload File WIP Baru</div>
+          <div style={{ fontSize: 12, fontWeight: 700, color: t.text }}>Upload File Plan Baru</div>
         </div>
 
         <div style={{ padding: 16 }}>
@@ -191,7 +191,7 @@ export default function UploadWipTab({ theme }: Props) {
             >
               {uploading ? (
                 <><svg style={{ animation: 'spin 0.8s linear infinite', width: 12, height: 12 }} viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" opacity="0.2" /><path d="M4 12a8 8 0 018-8" stroke="currentColor" strokeWidth="3" fill="none" strokeLinecap="round" /></svg>Mengupload…</>
-              ) : <><Upload size={12} />Upload WIP</>}
+              ) : <><Upload size={12} />Upload Plan</>}
             </button>
           </div>
         </div>
@@ -203,7 +203,7 @@ export default function UploadWipTab({ theme }: Props) {
           <div style={{ width: 24, height: 24, borderRadius: 7, background: '#10b98115', border: '1px solid #10b98128', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <ClipboardList size={12} color="#10b981" />
           </div>
-          <div style={{ fontSize: 12, fontWeight: 700, color: t.text }}>File WIP Terupload</div>
+          <div style={{ fontSize: 12, fontWeight: 700, color: t.text }}>File Plan Terupload</div>
           <div style={{ fontSize: 10, color: t.textMuted, fontFamily: FONT_MONO, marginLeft: 4 }}>{uploads.length} file</div>
         </div>
 
@@ -252,7 +252,7 @@ export default function UploadWipTab({ theme }: Props) {
               {uploads.length === 0 && (
                 <tr>
                   <td colSpan={6} style={{ padding: 32, textAlign: 'center', color: t.textMuted, fontSize: 12, fontFamily: FONT_MONO }}>
-                    Belum ada file WIP diupload
+                    Belum ada file Plan diupload
                   </td>
                 </tr>
               )}
@@ -270,7 +270,7 @@ export default function UploadWipTab({ theme }: Props) {
                 <Trash2 size={18} color={t.negText} />
               </div>
               <div>
-                <div style={{ fontSize: 14, fontWeight: 700, color: t.text, marginBottom: 5 }}>Hapus File WIP</div>
+                <div style={{ fontSize: 14, fontWeight: 700, color: t.text, marginBottom: 5 }}>Hapus File Plan</div>
                 <div style={{ fontSize: 12, color: t.textSub, lineHeight: 1.6 }}>
                   Yakin menghapus <strong>"{delTarget.file_name}"</strong>?<br />
                   Mesin: <strong>{delTarget.nama_mesin}</strong> · Periode: {fmtDate(delTarget.minggu_awal)} – {fmtDate(delTarget.minggu_akhir)}<br />

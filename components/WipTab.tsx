@@ -242,12 +242,12 @@ export default function WipTab({ theme }: Props) {
       </div>
 
       {/* ── KPI Cards ── */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 12 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 12 }}>
         {[
           { label: 'Total JOP',       value: String(data.jobs.length),                     sub: data.nama_mesin || '—',              color: t.card1text, bg: t.card1bg, border: t.card1border },
           { label: 'Qty JOP',         value: totalQtyJop.toLocaleString('id-ID'),           sub: 'target cetak',                      color: t.card2text, bg: t.card2bg, border: t.card2border },
           { label: 'Qty Cetak',       value: totalQtyCetak.toLocaleString('id-ID'),         sub: `${progressPct.toFixed(1)}% dari JOP`, color: '#10b981',   bg: t.card2bg, border: t.card2border },
-          { label: 'Realisasi Shift', value: totalShiftQty.toLocaleString('id-ID'),         sub: `${data.dates.length * 2} slot shift`, color: t.card4text, bg: t.card4bg, border: t.card4border },
+        //   { label: 'Realisasi Shift', value: totalShiftQty.toLocaleString('id-ID'),         sub: `${data.dates.length * 2} slot shift`, color: t.card4text, bg: t.card4bg, border: t.card4border },
         ].map(card => (
           <div key={card.label} style={{ borderRadius: 13, padding: '14px 16px', background: card.bg, border: `1px solid ${card.border}` }}>
             <div style={{ fontSize: 9, fontFamily: FONT_MONO, textTransform: 'uppercase', letterSpacing: '0.1em', color: card.color, fontWeight: 700, marginBottom: 7 }}>{card.label}</div>
@@ -291,8 +291,8 @@ export default function WipTab({ theme }: Props) {
             <div style={{ padding: 32, textAlign: 'center', color: t.textMuted, fontFamily: FONT_MONO, fontSize: 11 }}>Memuat data…</div>
           ) : data.jobs.length === 0 ? (
             <div style={{ padding: 48, textAlign: 'center', color: t.textMuted, fontFamily: FONT_MONO, fontSize: 12 }}>
-              Belum ada data WIP.<br />
-              <span style={{ fontSize: 10 }}>Upload file Excel WIP di tab "Upload WIP".</span>
+              Belum ada data Plan.<br />
+              <span style={{ fontSize: 10 }}>Upload file Excel Plan di tab "Upload Plan".</span>
             </div>
           ) : (
             <table style={{ borderCollapse: 'collapse', fontSize: 12, minWidth: '100%' }}>
@@ -424,7 +424,7 @@ export default function WipTab({ theme }: Props) {
                 <Trash2 size={16} color={t.negText} />
               </div>
               <div>
-                <div style={{ fontSize: 13, fontWeight: 700, color: t.text, marginBottom: 5 }}>Hapus Data WIP</div>
+                <div style={{ fontSize: 13, fontWeight: 700, color: t.text, marginBottom: 5 }}>Hapus Data Plan</div>
                 <div style={{ fontSize: 11, color: t.textSub, lineHeight: 1.6 }}>
                   Yakin menghapus <strong>{delTarget.nama_mesin}</strong> periode{' '}
                   {fmtDate(delTarget.minggu_awal)}–{fmtDate(delTarget.minggu_akhir)}?<br />
