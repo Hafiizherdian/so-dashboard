@@ -328,7 +328,7 @@ export async function GET(req: NextRequest) {
       FROM so_outstanding
       ${andWhere(wSO, 'qty_sisa > 0')}
       GROUP BY produk
-      ORDER BY qty DESC LIMIT 10
+      ORDER BY qty DESC 
     `, vSO);
 
     // ── RESPONSE ──────────────────────────────────────────────────────────────
