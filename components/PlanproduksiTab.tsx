@@ -222,12 +222,12 @@ export default function PlanProduksiTab({ theme }: Props) {
       </div>
 
       {/* ── KPI Cards ── */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 12 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 12 }}>
         {[
           { label: 'Total JOP',         value: String(data.jobs.length),               sub: data.nama_mesin || '—',               color: t.card1text, bg: t.card1bg, border: t.card1border },
           { label: 'Qty Plan',          value: totalQtyJop.toLocaleString('id-ID'),     sub: 'target cetak',                       color: t.card2text, bg: t.card2bg, border: t.card2border },
           { label: 'Qty Cetak',         value: totalQtyCetak.toLocaleString('id-ID'),   sub: `${progressPct.toFixed(1)}% dari plan`, color: '#10b981',   bg: t.card2bg, border: t.card2border },
-          { label: 'Realisasi Shift',   value: totalShiftQty.toLocaleString('id-ID'),   sub: `${data.dates.length * 2} slot shift`, color: t.card4text, bg: t.card4bg, border: t.card4border },
+          // { label: 'Realisasi Shift',   value: totalShiftQty.toLocaleString('id-ID'),   sub: `${data.dates.length * 2} slot shift`, color: t.card4text, bg: t.card4bg, border: t.card4border },
         ].map(card => (
           <div key={card.label} style={{ borderRadius: 13, padding: '14px 16px', background: card.bg, border: `1px solid ${card.border}` }}>
             <div style={{ fontSize: 9, fontFamily: FONT_MONO, textTransform: 'uppercase', letterSpacing: '0.1em', color: card.color, fontWeight: 700, marginBottom: 7 }}>{card.label}</div>
