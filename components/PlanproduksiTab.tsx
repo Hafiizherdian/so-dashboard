@@ -1,7 +1,7 @@
 'use client';
 import React, { useState, useEffect, useMemo } from 'react';
 import {
-  FileSpreadsheet, Trash2, Filter, RefreshCw,
+  Trash2, Filter, RefreshCw,
   CheckCircle, X, ClipboardList,
 } from 'lucide-react';
 import { Theme, tk, FONT_MONO } from '@/lib/theme';
@@ -9,7 +9,7 @@ import { apiJson } from '@/lib/apiFetch';
 
 interface Props { theme: Theme; }
 
-interface WipJob {
+interface PlanJob {
   job_id:        string;
   no_urut:       number;
   nomor_jop:     string;
@@ -20,20 +20,20 @@ interface WipJob {
   qty_cetak:     number;
 }
 
-interface WipShift {
+interface PlanShift {
   job_id:  string;
   tanggal: string;
   shift:   number;
   qty:     number;
 }
 
-interface WipData {
+interface PlanData {
   nama_mesin:   string;
   minggu_awal:  string | null;
   minggu_akhir: string | null;
   upload_id:    string | null;
-  jobs:         WipJob[];
-  shifts:       WipShift[];
+  jobs:         PlanJob[];
+  shifts:       PlanShift[];
   dates:        string[];
 }
 
@@ -47,48 +47,29 @@ interface UploadRow {
   total_jobs:   number;
 }
 
-const EMPTY_DATA: WipData = {
+const EMPTY_DATA: PlanData = {
   nama_mesin: '', minggu_awal: null, minggu_akhir: null,
   upload_id: null, jobs: [], shifts: [], dates: [],
 };
 
 function fmtDate(iso: string): string {
-  if (!iso) return '—';
-  
-  let d: Date;
-
-  // Jika string mengandung format waktu lengkap UTC (ada huruf T dan Z)
-  if (iso.includes('T') && iso.endsWith('Z')) {
-    // Buat objek date langsung dari string ISO. Browser otomatis
-    // mengonversi kembali 17 Mei 17:00 UTC menjadi 18 Mei 00:00 Lokal (WIB)
-    d = new Date(iso);
-  } else {
-    // Jika string berupa tanggal bersih 'YYYY-MM-DD' (seperti data shift)
-    const cleanIso = iso.includes('T') ? iso.split('T')[0] : iso;
-    d = new Date(cleanIso + 'T00:00:00');
-  }
-  
-  // Cek validitas date agar terhindar dari NaN
-  if (isNaN(d.getTime())) return '—';
-
-  // Ambil komponen tanggal lokal (menggunakan get component biasa, BUKAN getUTC)
+  if (!iso) return '';
+  const d = new Date(iso + 'T00:00:00');
   const dd  = String(d.getDate()).padStart(2, '0');
   const mon = ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'][d.getMonth()];
-  const yy  = String(d.getFullYear()).slice(2);
-  
-  return `${dd}-${mon}-${yy}`;
+  return `${dd}-${mon}`;
 }
 
 function fmtNum(n: number): string {
   if (!n) return '';
-//   if (n >= 1000) return `${(n / 1000).toFixed(0)}rb`;
+  if (n >= 1000) return `${(n / 1000).toFixed(0)}rb`;
   return n.toLocaleString('id-ID');
 }
 
-export default function WipTab({ theme }: Props) {
+export default function PlanProduksiTab({ theme }: Props) {
   const t = tk[theme];
 
-  const [data,           setData]           = useState<WipData>(EMPTY_DATA);
+  const [data,           setData]           = useState<PlanData>(EMPTY_DATA);
   const [uploads,        setUploads]        = useState<UploadRow[]>([]);
   const [mesinList,      setMesinList]      = useState<string[]>([]);
   const [loading,        setLoading]        = useState(true);
@@ -104,7 +85,7 @@ export default function WipTab({ theme }: Props) {
   };
 
   const loadUploads = async () => {
-    const r = await apiJson('/api/wip?list=1');
+    const r = await apiJson('/api/plan?list=1');
     if (r.success) {
       setUploads(r.data ?? []);
       setMesinList(r.mesin_list ?? []);
@@ -117,7 +98,7 @@ export default function WipTab({ theme }: Props) {
       const p = new URLSearchParams();
       if (uploadId) p.set('upload_id', uploadId);
       else if (mesin && mesin !== 'all') p.set('mesin', mesin);
-      const r = await apiJson(`/api/wip?${p}`);
+      const r = await apiJson(`/api/plan?${p}`);
       if (r.success) setData(r.data ?? EMPTY_DATA);
     } finally { setLoading(false); }
   };
@@ -136,7 +117,7 @@ export default function WipTab({ theme }: Props) {
     if (!delTarget) return;
     setDeleting(true);
     try {
-      const r = await apiJson(`/api/wip?id=${delTarget.id}`, { method: 'DELETE' });
+      const r = await apiJson(`/api/plan?id=${delTarget.id}`, { method: 'DELETE' });
       if (r.success) {
         showToast('ok', 'Data berhasil dihapus');
         setDelTarget(null);
@@ -147,11 +128,10 @@ export default function WipTab({ theme }: Props) {
     } finally { setDeleting(false); }
   };
 
-  // ── FIX: normalize semua job_id ke string agar lookup tidak miss ──────────
+  // ── shiftIndex: key = "jobId_tanggal_shift" ──────────────────────────────
   const shiftIndex = useMemo(() => {
     const idx: Record<string, number> = {};
     data.shifts.forEach(s => {
-      // key: "jobId_tanggal_shift"
       idx[`${String(s.job_id)}_${s.tanggal}_${Number(s.shift)}`] = Number(s.qty);
     });
     return idx;
@@ -163,7 +143,7 @@ export default function WipTab({ theme }: Props) {
   const totalShiftQty = data.shifts.reduce((s, sh) => s + Number(sh.qty),   0);
   const progressPct   = totalQtyJop > 0 ? (totalQtyCetak / totalQtyJop) * 100 : 0;
 
-  // Total per (tanggal, shift)
+  // Total per kolom (tanggal, shift)
   const colTotals = useMemo(() => {
     const tot: Record<string, number> = {};
     data.shifts.forEach(s => {
@@ -202,7 +182,7 @@ export default function WipTab({ theme }: Props) {
         </div>
       )}
 
-      {/* ── Toolbar filter ── */}
+      {/* ── Toolbar ── */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', background: t.cardbg, border: `1px solid ${t.borderCard}`, borderRadius: 12, padding: '10px 14px' }}>
         <Filter size={11} color={t.textMuted} />
         <span style={{ fontSize: 10, color: t.textMuted, fontFamily: FONT_MONO }}>Filter</span>
@@ -212,7 +192,7 @@ export default function WipTab({ theme }: Props) {
           {mesinList.map(m => <option key={m} value={m}>{m}</option>)}
         </select>
 
-        <select style={{ ...selS, minWidth: 230 }} value={selectedUpload} onChange={e => setSelectedUpload(e.target.value)}>
+        <select style={{ ...selS, minWidth: 250 }} value={selectedUpload} onChange={e => setSelectedUpload(e.target.value)}>
           <option value="">{filteredUploads.length ? 'Terbaru' : '— Belum ada upload —'}</option>
           {filteredUploads.map(u => (
             <option key={u.id} value={u.id}>
@@ -242,12 +222,12 @@ export default function WipTab({ theme }: Props) {
       </div>
 
       {/* ── KPI Cards ── */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 12 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 12 }}>
         {[
-          { label: 'Total JOP',       value: String(data.jobs.length),                     sub: data.nama_mesin || '—',              color: t.card1text, bg: t.card1bg, border: t.card1border },
-          { label: 'Qty JOP',         value: totalQtyJop.toLocaleString('id-ID'),           sub: 'target cetak',                      color: t.card2text, bg: t.card2bg, border: t.card2border },
-          { label: 'Qty Cetak',       value: totalQtyCetak.toLocaleString('id-ID'),         sub: `${progressPct.toFixed(1)}% dari JOP`, color: '#10b981',   bg: t.card2bg, border: t.card2border },
-        //   { label: 'Realisasi Shift', value: totalShiftQty.toLocaleString('id-ID'),         sub: `${data.dates.length * 2} slot shift`, color: t.card4text, bg: t.card4bg, border: t.card4border },
+          { label: 'Total JOP',         value: String(data.jobs.length),               sub: data.nama_mesin || '—',               color: t.card1text, bg: t.card1bg, border: t.card1border },
+          { label: 'Qty Plan',          value: totalQtyJop.toLocaleString('id-ID'),     sub: 'target cetak',                       color: t.card2text, bg: t.card2bg, border: t.card2border },
+          { label: 'Qty Cetak',         value: totalQtyCetak.toLocaleString('id-ID'),   sub: `${progressPct.toFixed(1)}% dari plan`, color: '#10b981',   bg: t.card2bg, border: t.card2border },
+          { label: 'Realisasi Shift',   value: totalShiftQty.toLocaleString('id-ID'),   sub: `${data.dates.length * 2} slot shift`, color: t.card4text, bg: t.card4bg, border: t.card4border },
         ].map(card => (
           <div key={card.label} style={{ borderRadius: 13, padding: '14px 16px', background: card.bg, border: `1px solid ${card.border}` }}>
             <div style={{ fontSize: 9, fontFamily: FONT_MONO, textTransform: 'uppercase', letterSpacing: '0.1em', color: card.color, fontWeight: 700, marginBottom: 7 }}>{card.label}</div>
@@ -257,7 +237,7 @@ export default function WipTab({ theme }: Props) {
         ))}
       </div>
 
-      {/* ── Progress bar global ── */}
+      {/* ── Progress bar ── */}
       {totalQtyJop > 0 && (
         <div style={{ background: t.cardbg, border: `1px solid ${t.borderCard}`, borderRadius: 10, padding: '10px 14px' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 5 }}>
@@ -277,11 +257,11 @@ export default function WipTab({ theme }: Props) {
             <ClipboardList size={12} color="#818cf8" />
           </div>
           <div>
-            <div style={{ fontSize: 11, fontWeight: 700, color: t.text }}>{data.nama_mesin || 'WIP Produksi'}</div>
+            <div style={{ fontSize: 11, fontWeight: 700, color: t.text }}>{data.nama_mesin || 'Plan Produksi'}</div>
             <div style={{ fontSize: 9, color: t.textMuted, fontFamily: FONT_MONO }}>
               {data.minggu_awal && data.minggu_akhir
                 ? `${fmtDate(data.minggu_awal)} – ${fmtDate(data.minggu_akhir)} · ${data.jobs.length} JOP · ${data.dates.length} hari`
-                : 'Belum ada data — upload file Excel WIP di tab Upload WIP'}
+                : 'Belum ada data — upload file Excel di tab Upload Plan Produksi'}
             </div>
           </div>
         </div>
@@ -291,8 +271,8 @@ export default function WipTab({ theme }: Props) {
             <div style={{ padding: 32, textAlign: 'center', color: t.textMuted, fontFamily: FONT_MONO, fontSize: 11 }}>Memuat data…</div>
           ) : data.jobs.length === 0 ? (
             <div style={{ padding: 48, textAlign: 'center', color: t.textMuted, fontFamily: FONT_MONO, fontSize: 12 }}>
-              Belum ada data Plan.<br />
-              <span style={{ fontSize: 10 }}>Upload file Excel Plan di tab "Upload Plan".</span>
+              Belum ada data Plan Produksi.<br />
+              <span style={{ fontSize: 10 }}>Upload file Excel di tab "Upload Plan Produksi".</span>
             </div>
           ) : (
             <table style={{ borderCollapse: 'collapse', fontSize: 12, minWidth: '100%' }}>
@@ -355,29 +335,12 @@ export default function WipTab({ theme }: Props) {
                         </div>
                       </td>
 
-                      {/* ── Kolom shift — menggunakan shiftIndex yang sudah di-fix ── */}
                       {data.dates.map((d, di) => (
                         <React.Fragment key={d}>
                           {[1, 2].map(sh => {
-                            const lookupKey = `${jobIdStr}_${d}_${sh}`;
-                            const qty = shiftIndex[lookupKey] ?? 0;
+                            const qty = shiftIndex[`${jobIdStr}_${d}_${sh}`] ?? 0;
                             return (
-                              <td
-                                key={sh}
-                                style={{
-                                  ...tdS,
-                                  textAlign: 'center',
-                                  borderRight: sh === 2 ? `1px solid ${t.border}` : undefined,
-                                  background: qty > 0
-                                    ? (di % 2 === 0 ? 'rgba(99,102,241,0.07)' : 'rgba(16,185,129,0.06)')
-                                    : undefined,
-                                  color: qty > 0
-                                    ? (di % 2 === 0 ? t.card1text : t.card2text)
-                                    : t.textFaint,
-                                  fontSize: 10,
-                                  fontWeight: qty > 0 ? 700 : 400,
-                                }}
-                              >
+                              <td key={sh} style={{ ...tdS, textAlign: 'center', borderRight: sh === 2 ? `1px solid ${t.border}` : undefined, background: qty > 0 ? (di % 2 === 0 ? 'rgba(99,102,241,0.07)' : 'rgba(16,185,129,0.06)') : undefined, color: qty > 0 ? (di % 2 === 0 ? t.card1text : t.card2text) : t.textFaint, fontSize: 10, fontWeight: qty > 0 ? 700 : 400 }}>
                                 {qty > 0 ? fmtNum(qty) : '—'}
                               </td>
                             );
@@ -424,7 +387,7 @@ export default function WipTab({ theme }: Props) {
                 <Trash2 size={16} color={t.negText} />
               </div>
               <div>
-                <div style={{ fontSize: 13, fontWeight: 700, color: t.text, marginBottom: 5 }}>Hapus Data Plan</div>
+                <div style={{ fontSize: 13, fontWeight: 700, color: t.text, marginBottom: 5 }}>Hapus Data Plan Produksi</div>
                 <div style={{ fontSize: 11, color: t.textSub, lineHeight: 1.6 }}>
                   Yakin menghapus <strong>{delTarget.nama_mesin}</strong> periode{' '}
                   {fmtDate(delTarget.minggu_awal)}–{fmtDate(delTarget.minggu_akhir)}?<br />
