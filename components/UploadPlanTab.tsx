@@ -87,7 +87,7 @@ export default function UploadPlanTab({ theme }: Props) {
   };
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 16, maxWidth: 780 }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 16, maxWidth: '100%' }}>
 
       {/* ── Format hint ── */}
       <div style={{ padding: '10px 14px', borderRadius: 10, background: t.infoBg, border: `1px solid ${t.infoBorder}`, fontSize: 10, color: t.infoText, fontFamily: FONT_MONO, lineHeight: 1.8 }}>
