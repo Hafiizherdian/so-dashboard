@@ -19,8 +19,8 @@ import SettingsTab from '@/components/SettingsTab';
 import { apiJson } from '@/lib/apiFetch';
 import KertasTab from '@/components/KertasTab';
 import UploadKertasTab from '@/components/UploadKertasTab';
-import WipTab from '@/components/WipTab';
-import UploadWIPTab from '@/components/UploadWIPTab';
+import WipTab from '@/components/PlanproduksiTab';
+import UploadWIPTab from '@/components/UploadPlanTab';
 
 const MONTHS = [{ value: 'all', label: 'Semua Bulan' }, ...['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'].map((l,i) => ({ value: String(i+1), label: l }))];
 
