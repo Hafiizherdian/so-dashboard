@@ -52,12 +52,29 @@ const EMPTY_DATA: PlanData = {
   upload_id: null, jobs: [], shifts: [], dates: [],
 };
 
-function fmtDate(iso: string): string {
-  if (!iso) return '';
-  const d = new Date(iso + 'T00:00:00');
+function fmtDate(iso: string | Date | null | undefined): string {
+  if (!iso) return '—';
+
+  let d: Date;
+
+  // Jika inputnya adalah objek Date asli
+  if (iso instanceof Date) {
+    d = iso;
+  } else {
+    // Jika inputnya string, pastikan kita handle string tanggal murni (YYYY-MM-DD)
+    // PostgreSQL DATE seringkali dikirim hanya 10 karakter pertama
+    const cleanIso = typeof iso === 'string' ? iso.substring(0, 10) : iso;
+    d = new Date(cleanIso + 'T00:00:00');
+  }
+
+  // Validasi apakah hasil konversi Date-nya valid
+  if (isNaN(d.getTime())) return '—';
+
   const dd  = String(d.getDate()).padStart(2, '0');
   const mon = ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'][d.getMonth()];
-  return `${dd}-${mon}`;
+  const yy  = String(d.getFullYear()).slice(-2); // Pakai -2 lebih aman untuk mengambil 2 angka terakhir
+
+  return `${dd}-${mon}-${yy}`;
 }
 
 function fmtNum(n: number): string {
