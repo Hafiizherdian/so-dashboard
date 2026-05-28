@@ -242,8 +242,8 @@ export default function PlanProduksiTab({ theme }: Props) {
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 12 }}>
         {[
           { label: 'Total JOP',         value: String(data.jobs.length),               sub: data.nama_mesin || '—',               color: t.card1text, bg: t.card1bg, border: t.card1border },
-          { label: 'Qty Plan',          value: totalQtyJop.toLocaleString('id-ID'),     sub: 'target cetak',                       color: t.card2text, bg: t.card2bg, border: t.card2border },
-          { label: 'Qty Cetak',         value: totalQtyCetak.toLocaleString('id-ID'),   sub: `${progressPct.toFixed(1)}% dari plan`, color: '#10b981',   bg: t.card2bg, border: t.card2border },
+          { label: 'Qty JOP',          value: totalQtyJop.toLocaleString('id-ID'),     sub: 'target cetak',                       color: t.card2text, bg: t.card2bg, border: t.card2border },
+          { label: 'Qty Plan Cetak',         value: totalQtyCetak.toLocaleString('id-ID'),   sub: `${progressPct.toFixed(1)}% dari plan`, color: '#10b981',   bg: t.card2bg, border: t.card2border },
           // { label: 'Realisasi Shift',   value: totalShiftQty.toLocaleString('id-ID'),   sub: `${data.dates.length * 2} slot shift`, color: t.card4text, bg: t.card4bg, border: t.card4border },
         ].map(card => (
           <div key={card.label} style={{ borderRadius: 13, padding: '14px 16px', background: card.bg, border: `1px solid ${card.border}` }}>
@@ -301,7 +301,7 @@ export default function PlanProduksiTab({ theme }: Props) {
                   <th rowSpan={2} style={{ ...thS, minWidth: 160, borderRight: `1px solid ${t.border}` }}>Ukuran Kertas</th>
                   <th rowSpan={2} style={{ ...thS, textAlign: 'right', borderRight: `1px solid ${t.border}` }}>UP</th>
                   <th rowSpan={2} style={{ ...thS, textAlign: 'right', borderRight: `1px solid ${t.border}` }}>Qty JOP</th>
-                  <th rowSpan={2} style={{ ...thS, textAlign: 'right', borderRight: `1px solid ${t.border}`, minWidth: 90 }}>Qty Cetak</th>
+                  <th rowSpan={2} style={{ ...thS, textAlign: 'right', borderRight: `1px solid ${t.border}`, minWidth: 90 }}>Qty Plan Cetak</th>
                   {data.dates.map((d, di) => (
                     <th key={d} colSpan={2} style={{ ...thS, textAlign: 'center', borderRight: `1px solid ${t.border}`, background: di % 2 === 0 ? 'rgba(99,102,241,0.08)' : 'rgba(16,185,129,0.07)', color: di % 2 === 0 ? t.card1text : t.card2text, minWidth: 80 }}>
                       {fmtDate(d)}
