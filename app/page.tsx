@@ -21,6 +21,8 @@ import KertasTab from '@/components/KertasTab';
 import UploadKertasTab from '@/components/UploadKertasTab';
 import WipTab from '@/components/PlanproduksiTab';
 import UploadWIPTab from '@/components/UploadPlanTab';
+import LhkpTab from '@/components/LhkpTab';
+import UploadLhkpTab from '@/components/UploadLhkpTab';
 
 const MONTHS = [{ value: 'all', label: 'Semua Bulan' }, ...['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'].map((l,i) => ({ value: String(i+1), label: l }))];
 
@@ -31,9 +33,11 @@ const ALL_TABS = [
   { id: 'outstanding',   label: 'Outstanding',         shortLabel: 'Out.',       Icon: AlertCircle,  roles: ['root','admin','user'] },
   { id: 'kertas',        label: 'Stok Level',          shortLabel: 'Kertas',     Icon: Layers,       roles: ['root','admin','user'] },
   { id: 'Plan',           label: 'Plan Produksi',        shortLabel: 'Plan',        Icon: ClipboardList,roles: ['root','admin','user'] },
+  { id: 'lhkp',           label: 'LHKP',                shortLabel: 'LHKP',        Icon: ClipboardList,roles: ['root','admin','user'] },
   { id: 'upload',        label: 'Upload Data',         shortLabel: 'Upload',     Icon: Upload,       roles: ['root','admin'] },
   { id: 'kertas_upload', label: 'Upload Stok Kertas',  shortLabel: 'Up. Kertas', Icon: Package,      roles: ['root','admin'] },
   { id: 'Plan_upload',    label: 'Upload Plan Produksi', shortLabel: 'Up. Plan',    Icon: Package,      roles: ['root','admin'] },
+  { id: 'lhkp_upload',    label: 'Upload LHKP',          shortLabel: 'Up. LHKP',    Icon: Package,      roles: ['root','admin'] },
   { id: 'users',         label: 'Manajemen User',      shortLabel: 'User',       Icon: Users,        roles: ['root','admin'] },
   { id: 'settings',      label: 'Pengaturan',          shortLabel: 'Setting',    Icon: Settings,     roles: ['root','admin'] },
 ] as const;
@@ -312,6 +316,8 @@ function DashboardInner() {
       case 'penjualan':     return <PenjualanTab data={data} theme={theme}/>;
       case 'so':            return <SalesOrderTab data={data} theme={theme}/>;
       case 'outstanding':   return <OutstandingTab data={data} theme={theme}/>;
+      case 'lhkp':           return <LhkpTab theme={theme}/>;
+      case 'lhkp_upload':    return userRole!=='user'?<UploadLhkpTab theme={theme}/>:null;
       case 'upload':        return userRole!=='user'?<UploadTabComp theme={theme}/>:null;
       case 'kertas_upload': return userRole!=='user'?<UploadKertasTab theme={theme}/>:null;
       case 'Plan_upload':    return userRole!=='user'?<UploadWIPTab theme={theme}/>:null;

@@ -117,6 +117,44 @@ CREATE TABLE IF NOT EXISTS wip_shifts (
   qty       NUMERIC(15,2) DEFAULT 0,
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
+
+-- Tabel LHKP
+CREATE TABLE IF NOT EXISTS lhkp_uploads (
+  id          UUID PRIMARY KEY DEFaULT gen_random_uuid(),
+  file_name   VARCHAR(500) NOT NULL,
+  file_size   BIGINT DEFAULT 0,
+  record_count INTEGER DEFAULT 0,
+  tgl_awal    DATE,
+  tgl_akhir   DATE,
+  uploaded_by INTEGER REFERENCES users(id),
+  created_at  TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS lhkp_records (
+  id           BIGSERIAL PRIMARY KEY,
+  upload_id    UUID REFERENCES lhkp_uploads(id) ON DELETE CASCADE,
+  week         VARCHAR(10),
+  tanggal      DATE,
+  mesin        VARCHAR(300),
+  proses       VARCHAR(200),
+  no_job_order VARCHAR(200),
+  no_proses    VARCHAR(200),
+  no_lhkp      VARCHAR(200),
+  output_produk TEXT,
+  qty_plan      NUMERIC(15,2) DEFAULT 0,
+  qty_baik     NUMERIC(15,2) DEFAULT 0,
+  qty_rusak    NUMERIC(15,2) DEFAULT 0,
+  unit         VARCHAR(20),
+  created_at    TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_lhkp_upload    ON lhkp_records(upload_id);
+CREATE INDEX IF NOT EXISTS idx_lhkp_tanggal   ON lhkp_records(tanggal);
+CREATE INDEX IF NOT EXISTS idx_lhkp_week      ON lhkp_records(week);
+CREATE INDEX IF NOT EXISTS idx_lhkp_mesin     ON lhkp_records(mesin);
+CREATE INDEX IF NOT EXISTS idx_lhkp_proses    ON lhkp_records(proses);
+CREATE INDEX IF NOT EXISTS idx_lhkp_jop       ON lhkp_records(no_job_order);
+
  
 CREATE INDEX IF NOT EXISTS idx_wip_shifts_job    ON wip_shifts(job_id);
 CREATE INDEX IF NOT EXISTS idx_wip_shifts_upload ON wip_shifts(upload_id);
