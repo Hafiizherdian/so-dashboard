@@ -38,7 +38,6 @@ jobs:
             npm ci 
 
             echo "=== Build Next.js ==="
-            # Ditambahkan limit memory 2GB biar server 4GB RAM kamu aman saat build
             npm run build
 
             echo "=== Restart PM2 ==="
