@@ -211,9 +211,9 @@ export default function LhkpTab({ theme }: Props) {
       </div>
 
       {/* ── KPI Cards ── */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5,1fr)', gap: 12 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 12 }}>
         {[
-          { label: 'Total Records',  value: summary.total_records.toLocaleString('id-ID'), sub: 'entri LHKP',         color: t.card1text, bg: t.card1bg, border: t.card1border },
+          // { label: 'Total Records',  value: summary.total_records.toLocaleString('id-ID'), sub: 'entri LHKP',         color: t.card1text, bg: t.card1bg, border: t.card1border },
           { label: 'Total Plan',     value: fmtNum(summary.total_plan),                    sub: 'qty direncanakan',    color: t.card2text, bg: t.card2bg, border: t.card2border },
           { label: 'Qty Baik',       value: fmtNum(summary.total_baik),                    sub: 'output good',         color: '#10b981',   bg: t.card2bg, border: t.card2border },
           { label: 'Qty Rusak',      value: fmtNum(summary.total_rusak),                   sub: 'output reject',       color: t.card4text, bg: t.card4bg, border: t.card4border },
