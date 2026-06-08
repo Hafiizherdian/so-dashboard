@@ -26,7 +26,7 @@ export default function OutstandingTab({ data, theme }: Props) {
   // FIX: pakai total_delivered dari so_outstanding (bukan kalkulasi frontend)
   const totalDelivered   = Number(summary.total_delivered   ?? (totalSO - totalOutstanding));
   const outstandingPct   = Number(summary.pct_outstanding   ?? 0);
-  const outColor         = outstandingPct > 50 ? '#ef4444' : outstandingPct > 25 ? '#f59e0b' : '#10b981';
+  const outColor         = outstandingPct > 50 ? '#ef4444' : outstandingPct > 25 ? '#f59e0b' : '#1062b9';
 
   // ── Monthly outstanding bar ───────────────────────────────────────────────
   // FIX: pakai field "delivered" yang dikirim API (dari qty_delivered so_outstanding)
