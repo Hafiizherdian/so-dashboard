@@ -10,14 +10,15 @@ import { Theme, tk, fmtRp, fmtRpFull, FONT_MONO } from '@/lib/theme';
 import { DashboardData } from '@/types/index';
 import { Card, ChartTooltip, mkTick, ProgressBar } from '@/components/ui';
 
-interface Props { data: DashboardData; theme: Theme; }
+interface Props { data: DashboardData; theme: Theme; tahun?: string; }
 
-export default function SalesOrderTab({ data, theme }: Props) {
+export default function SalesOrderTab({ data, theme, tahun }: Props) {
   const t  = tk[theme];
   const ts = mkTick(theme);
   const gs = t.gridStroke;
 
-  const monthly      = Array.isArray(data.monthly)                  ? data.monthly                  : [];
+  const monthly = (Array.isArray(data.monthly) ? data.monthly : [])
+    .filter((m: any) => !tahun || tahun === 'all' || Number(m.tahun) === Number(tahun));
   const weeklySO     = Array.isArray((data as any).weeklySO)        ? (data as any).weeklySO        : [];
   const topCustomers = Array.isArray(data.topCustomers)             ? data.topCustomers             : [];
   const categories   = Array.isArray(data.categories)              ? data.categories               : [];
@@ -26,7 +27,7 @@ export default function SalesOrderTab({ data, theme }: Props) {
   const ratioData = monthly.map((m: any) => ({
     label:     m.label,
     so:        Number(m.so        ?? 0),
-    delivered: Number(m.delivered ?? 0),   // qty_delivered dari so_outstanding
+    delivered: Number(m.delivered ?? 0),
     ratio:     (m.so ?? 0) > 0 ? (Number(m.delivered ?? 0) / Number(m.so)) * 100 : 0,
   }));
 
@@ -69,7 +70,6 @@ export default function SalesOrderTab({ data, theme }: Props) {
             </defs>
             <CartesianGrid strokeDasharray="3 3" stroke={gs} vertical={false} />
             <XAxis dataKey="label" tick={ts} axisLine={false} tickLine={false} />
-            {/* FIX: format qty tanpa Rp */}
             <YAxis
               yAxisId="l"
               tickFormatter={(v: number) => v.toLocaleString('id-ID')}
@@ -81,11 +81,10 @@ export default function SalesOrderTab({ data, theme }: Props) {
               tickFormatter={(v: number) => `${Number(v).toFixed(0)}%`}
               tick={ts} axisLine={false} tickLine={false} width={36}
             />
-            {/* FIX: currency={false} */}
             <Tooltip content={<ChartTooltip theme={theme} currency={false} />} />
-            <Area yAxisId="l" type="monotone" dataKey="so"        name="SO (Qty)"       fill="url(#gSO)" stroke="#10b981" strokeWidth={2}   dot={false} />
-            <Area yAxisId="l" type="monotone" dataKey="delivered" name="Delivered (Qty)" fill="url(#gDL)" stroke="#6366f1" strokeWidth={2}   dot={false} />
-            <Line yAxisId="r" type="monotone" dataKey="ratio"     name="Realisasi %"    stroke="#f59e0b" strokeWidth={1.4} dot={false} strokeDasharray="4 2" />
+            <Area yAxisId="l" type="monotone" dataKey="so"        name="SO (Qty)"        fill="url(#gSO)" stroke="#10b981" strokeWidth={2}   dot={false} />
+            <Area yAxisId="l" type="monotone" dataKey="delivered" name="Delivered (Qty)"  fill="url(#gDL)" stroke="#6366f1" strokeWidth={2}   dot={false} />
+            <Line yAxisId="r" type="monotone" dataKey="ratio"     name="Realisasi %"     stroke="#f59e0b" strokeWidth={1.4} dot={false} strokeDasharray="4 2" />
           </ComposedChart>
         </ResponsiveContainer>
       </Card>
@@ -109,16 +108,14 @@ export default function SalesOrderTab({ data, theme }: Props) {
                 tick={ts} axisLine={false} tickLine={false}
                 interval={Math.max(0, Math.floor(weeklyData.length / 10))}
               />
-              {/* FIX: format qty tanpa Rp */}
               <YAxis
                 tickFormatter={(v: number) => v.toLocaleString('id-ID')}
                 tick={ts} axisLine={false} tickLine={false} width={50}
               />
-              {/* FIX: currency={false} */}
               <Tooltip content={<ChartTooltip theme={theme} currency={false} />} />
-              <Bar dataKey="qty_order"     name="SO (Qty)"       fill="#6366f1" opacity={0.7} radius={[2, 2, 0, 0]} maxBarSize={10} />
-              <Bar dataKey="qty_delivered" name="Delivered (Qty)" fill="#10b981" opacity={0.8} radius={[2, 2, 0, 0]} maxBarSize={10} />
-              <Bar dataKey="qty_sisa"      name="Sisa (Qty)"     fill="#ef4444" opacity={0.7} radius={[2, 2, 0, 0]} maxBarSize={10} />
+              <Bar dataKey="qty_order"     name="SO (Qty)"        fill="#6366f1" opacity={0.7} radius={[2, 2, 0, 0]} maxBarSize={10} />
+              <Bar dataKey="qty_delivered" name="Delivered (Qty)"  fill="#10b981" opacity={0.8} radius={[2, 2, 0, 0]} maxBarSize={10} />
+              <Bar dataKey="qty_sisa"      name="Sisa (Qty)"      fill="#ef4444" opacity={0.7} radius={[2, 2, 0, 0]} maxBarSize={10} />
             </BarChart>
           </ResponsiveContainer>
           {/* Legend manual */}

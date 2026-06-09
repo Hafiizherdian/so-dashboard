@@ -9,9 +9,9 @@ import { Theme, tk, FONT_MONO } from '@/lib/theme';
 import { DashboardData } from '@/types/index';
 import { Card, ChartTooltip, mkTick, ProgressBar } from '@/components/ui';
 
-interface Props { data: DashboardData; theme: Theme; }
+interface Props { data: DashboardData; theme: Theme; tahun?: string; }
 
-export default function OutstandingTab({ data, theme }: Props) {
+export default function OutstandingTab({ data, theme, tahun }: Props) {
   const t  = tk[theme];
   const ts = mkTick(theme);
   const gs = t.gridStroke;
@@ -23,23 +23,23 @@ export default function OutstandingTab({ data, theme }: Props) {
 
   const totalSO          = Number(summary.total_so          ?? 0);
   const totalOutstanding = Number(summary.total_outstanding ?? 0);
-  // FIX: pakai total_delivered dari so_outstanding (bukan kalkulasi frontend)
   const totalDelivered   = Number(summary.total_delivered   ?? (totalSO - totalOutstanding));
   const outstandingPct   = Number(summary.pct_outstanding   ?? 0);
   const outColor         = outstandingPct > 50 ? '#ef4444' : outstandingPct > 25 ? '#f59e0b' : '#1062b9';
 
-  // ── Monthly outstanding bar ───────────────────────────────────────────────
-  // FIX: pakai field "delivered" yang dikirim API (dari qty_delivered so_outstanding)
-  const monthlyOut = monthly.map((m: any) => ({
-    label:       m.label,
-    outstanding: Number(m.outstanding ?? 0),
-    delivered:   Number(m.delivered   ?? 0),
-  }));
+  // ── Monthly outstanding — filter by tahun sama seperti SalesOrderTab ──────
+  const monthlyOut = monthly
+    .filter((m: any) => !tahun || tahun === 'all' || Number(m.tahun) === Number(tahun))
+    .map((m: any) => ({
+      label:       m.label,
+      outstanding: Number(m.outstanding ?? 0),
+      delivered:   Number(m.delivered   ?? 0),
+    }));
 
   // ── Pie data ──────────────────────────────────────────────────────────────
   const pieData = [
-    { name: 'Terkirim', value: totalDelivered,   fill: '#10b981' },
-    { name: 'Sisa',     value: totalOutstanding,  fill: outColor  },
+    { name: 'Terkirim', value: totalDelivered,  fill: '#10b981' },
+    { name: 'Sisa',     value: totalOutstanding, fill: outColor  },
   ];
 
   const maxSisa = Math.max(...topOutstanding.map(r => Number(r.qty_sisa ?? 0)), 1);
@@ -92,7 +92,6 @@ export default function OutstandingTab({ data, theme }: Props) {
             <BarChart data={monthlyOut} margin={{ top: 2, right: 4, left: 0, bottom: 0 }}>
               <CartesianGrid strokeDasharray="3 3" stroke={gs} vertical={false} />
               <XAxis dataKey="label" tick={ts} axisLine={false} tickLine={false} />
-              {/* FIX: hilangkan Rp, format qty saja */}
               <YAxis
                 tick={ts}
                 axisLine={false}
@@ -100,7 +99,6 @@ export default function OutstandingTab({ data, theme }: Props) {
                 width={50}
                 tickFormatter={(v: number) => v.toLocaleString('id-ID')}
               />
-              {/* FIX: currency={false} agar tooltip tidak tampilkan Rp */}
               <Tooltip content={<ChartTooltip theme={theme} currency={false} />} />
               <Bar dataKey="delivered"   name="Terkirim"    stackId="a" fill="#10b981" opacity={0.8} maxBarSize={28} />
               <Bar dataKey="outstanding" name="Outstanding" stackId="a" fill={outColor} opacity={0.8} radius={[2, 2, 0, 0]} maxBarSize={28} />

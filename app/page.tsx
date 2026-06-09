@@ -32,12 +32,12 @@ const ALL_TABS = [
   { id: 'so',            label: 'Sales Order',         shortLabel: 'SO',         Icon: ShoppingCart, roles: ['root','admin','user'] },
   { id: 'outstanding',   label: 'Outstanding',         shortLabel: 'Out.',       Icon: AlertCircle,  roles: ['root','admin','user'] },
   { id: 'kertas',        label: 'Stok Level',          shortLabel: 'Kertas',     Icon: Layers,       roles: ['root','admin','user'] },
-  { id: 'Plan',           label: 'Plan Produksi',        shortLabel: 'Plan',        Icon: ClipboardList,roles: ['root','admin','user'] },
-  { id: 'lhkp',           label: 'LHKP',                shortLabel: 'LHKP',        Icon: ClipboardList,roles: ['root','admin','user'] },
+  { id: 'Plan',          label: 'Plan Produksi',       shortLabel: 'Plan',       Icon: ClipboardList,roles: ['root','admin','user'] },
+  { id: 'lhkp',          label: 'LHKP',                shortLabel: 'LHKP',       Icon: ClipboardList,roles: ['root','admin','user'] },
   { id: 'upload',        label: 'Upload Data',         shortLabel: 'Upload',     Icon: Upload,       roles: ['root','admin'] },
   { id: 'kertas_upload', label: 'Upload Stok Kertas',  shortLabel: 'Up. Kertas', Icon: Package,      roles: ['root','admin'] },
-  { id: 'Plan_upload',    label: 'Upload Plan Produksi', shortLabel: 'Up. Plan',    Icon: Package,      roles: ['root','admin'] },
-  { id: 'lhkp_upload',    label: 'Upload LHKP',          shortLabel: 'Up. LHKP',    Icon: Package,      roles: ['root','admin'] },
+  { id: 'Plan_upload',   label: 'Upload Plan Produksi',shortLabel: 'Up. Plan',   Icon: Package,      roles: ['root','admin'] },
+  { id: 'lhkp_upload',   label: 'Upload LHKP',         shortLabel: 'Up. LHKP',  Icon: Package,      roles: ['root','admin'] },
   { id: 'users',         label: 'Manajemen User',      shortLabel: 'User',       Icon: Users,        roles: ['root','admin'] },
   { id: 'settings',      label: 'Pengaturan',          shortLabel: 'Setting',    Icon: Settings,     roles: ['root','admin'] },
 ] as const;
@@ -47,8 +47,8 @@ const EMPTY: DashboardData = {
   summary: {
     total_penjualan:   0,
     total_so:          0,
-    total_outstanding: 0, 
-    total_terkirim:    0, 
+    total_outstanding: 0,
+    total_terkirim:    0,
     qty_penjualan:     0,
     qty_so:            0,
     transaksi:         0,
@@ -102,16 +102,16 @@ function Sidebar({ activeTab, setActiveTab, collapsed, setCollapsed, theme, setT
     <aside style={{position:'fixed',left:0,top:0,height:'100vh',zIndex:40,display:'flex',flexDirection:'column',width:collapsed?52:210,background:t.sidebarbg,borderRight:`1px solid ${t.border}`,transition:'width 0.2s cubic-bezier(.4,0,.2,1)',overflowX:'hidden'}}>
       <div style={{display:'flex',alignItems:'center',justifyContent:collapsed?'center':'space-between',padding:collapsed?'0':'0 8px 0 12px',borderBottom:`1px solid ${t.border}`,flexShrink:0,minHeight:48}}>
         {collapsed?(
-          <button onClick={()=>setCollapsed(false)} style={{background:'none',border:'none',cursor:'pointer',padding:6,display:'flex'}}>
-            <div style={{width:28,height:28,borderRadius:8,background:'linear-gradient(135deg,#6366f1,#818cf8)',display:'flex',alignItems:'center',justifyContent:'center',boxShadow:'0 3px 8px rgba(99,102,241,0.4)'}}><BarChart3 size={15} color="#fff"/></div>
+          <button onClick={() => setCollapsed(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 6, display: 'flex' }}>
+            <img src="/logo-s3.jpeg" alt="S3" style={{ width: 26, height: 26, borderRadius: 7, objectFit: 'contain' }}/>
           </button>
         ):(
           <>
             <div style={{display:'flex',alignItems:'center',gap:9}}>
-              <div style={{width:28,height:28,borderRadius:8,background:'linear-gradient(135deg,#6366f1,#818cf8)',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0,boxShadow:'0 3px 8px rgba(99,102,241,0.35)'}}><BarChart3 size={14} color="#fff"/></div>
+              <img src="/logo-s3.jpeg" alt="S3" style={{ width: 26, height: 26, borderRadius: 7, objectFit: 'contain' }}/>
               <div>
-                <div style={{color:t.text,fontSize:12,fontWeight:800,fontFamily:FONT_MONO,lineHeight:1.15,letterSpacing:'-0.02em'}}>SO & OS Dashboard</div>
-                <div style={{color:t.textMuted,fontSize:8,fontFamily:FONT_MONO,letterSpacing:'0.1em',textTransform:'uppercase'}}>S3 Management</div>
+                <div style={{color:t.text,fontSize:12,fontWeight:800,fontFamily:FONT_MONO,lineHeight:1.15,letterSpacing:'-0.02em'}}>SSS</div>
+                <div style={{color:t.textMuted,fontSize:8,fontFamily:FONT_MONO,letterSpacing:'0.1em',textTransform:'uppercase'}}>SO & OS Dashboard</div>
               </div>
             </div>
             <button onClick={()=>setCollapsed(true)} style={{background:t.inputBg,border:`1px solid ${t.borderInput}`,cursor:'pointer',color:t.textMuted,borderRadius:6,width:22,height:22,display:'flex',alignItems:'center',justifyContent:'center'}}>
@@ -210,13 +210,33 @@ function MobileBottomNav({ activeTab, setActiveTab, theme, userRole }: { activeT
 
 type FilterState = { tahun:string; bulan:string; minggu:string; area:string; type_customer:string; kategori:string; };
 
-function FilterBar({ filters, setFilters, opts, onApply, onReset, loading, theme }: { filters:FilterState; setFilters:React.Dispatch<React.SetStateAction<FilterState>>; opts:FilterOptions; onApply:()=>void; onReset:()=>void; loading:boolean; theme:Theme }) {
+const FILTER_INIT: FilterState = {
+  tahun: 'all', bulan: 'all', minggu: 'all',
+  area: 'all', type_customer: 'all', kategori: 'all',
+};
+
+function FilterBar({ filters, setFilters, appliedFilters, opts, onApply, onReset, loading, theme }: {
+  filters: FilterState;
+  setFilters: React.Dispatch<React.SetStateAction<FilterState>>;
+  appliedFilters: FilterState;
+  opts: FilterOptions;
+  onApply: () => void;
+  onReset: () => void;
+  loading: boolean;
+  theme: Theme;
+}) {
   const t=tk[theme];
-  const dirty=filters.bulan!=='all'||filters.minggu!=='all'||filters.area!=='all'||filters.type_customer!=='all'||filters.kategori!=='all';
+
+  // dirty: filter draft berbeda dari yang sudah applied
+  const dirty = (Object.keys(filters) as (keyof FilterState)[]).some(
+    k => filters[k] !== appliedFilters[k]
+  );
+
   const WEEKS=[{value:'all',label:'Semua Minggu'},...Array.from({length:52},(_,i)=>({value:String(i+1),label:`W${i+1}`}))];
   const YEARS=[{value:'all',label:'Semua Tahun'},...opts.years.map(y=>({value:String(y),label:String(y)}))];
   const TYPES=[{value:'all',label:'Semua Tipe'},...opts.typeCustomers.map(a=>({value:a,label:a}))];
   const KATS=[{value:'all',label:'Semua Kategori'},...opts.kategoris.map(a=>({value:a,label:a}))];
+
   return (
     <div style={{flexShrink:0,background:t.filterbg,borderBottom:`1px solid ${t.border}`}}>
       <div style={{display:'flex',alignItems:'center',padding:'0 14px',height:36,gap:5,overflowX:'auto',scrollbarWidth:'none'}}>
@@ -228,8 +248,29 @@ function FilterBar({ filters, setFilters, opts, onApply, onReset, loading, theme
         <Sel value={filters.kategori} onChange={v=>setFilters(f=>({...f,kategori:v}))} options={KATS} theme={theme} style={{minWidth:110}}/>
         <div style={{flex:1}}/>
         {loading&&<Spinner size={11} color="#818cf8"/>}
-        {dirty&&<button onClick={onReset} style={{height:22,padding:'0 8px',borderRadius:5,fontSize:10,fontFamily:FONT_MONO,background:'transparent',border:`1px solid ${t.borderInput}`,color:t.textMuted,cursor:'pointer',flexShrink:0}}>Reset</button>}
-        <button onClick={onApply} disabled={loading} style={{height:22,padding:'0 12px',borderRadius:5,fontSize:10,fontWeight:700,fontFamily:FONT_MONO,background:'#6366f1',border:'none',color:'#fff',cursor:loading?'not-allowed':'pointer',opacity:loading?0.5:1,flexShrink:0,boxShadow:'0 1px 6px rgba(99,102,241,0.35)'}}>Terapkan</button>
+        {/* indikator ada filter belum diterapkan */}
+        {dirty&&(
+          <span style={{fontSize:9,fontFamily:FONT_MONO,color:'#f59e0b',background:'rgba(245,158,11,0.1)',border:'1px solid rgba(245,158,11,0.25)',borderRadius:4,padding:'1px 6px',flexShrink:0}}>
+            belum diterapkan
+          </span>
+        )}
+        {(dirty || (Object.keys(appliedFilters) as (keyof FilterState)[]).some(k => appliedFilters[k] !== 'all')) && (
+          <button onClick={onReset} style={{height:22,padding:'0 8px',borderRadius:5,fontSize:10,fontFamily:FONT_MONO,background:'transparent',border:`1px solid ${t.borderInput}`,color:t.textMuted,cursor:'pointer',flexShrink:0}}>Reset</button>
+        )}
+        <button
+          onClick={onApply}
+          disabled={loading}
+          style={{
+            height:22,padding:'0 12px',borderRadius:5,fontSize:10,fontWeight:700,fontFamily:FONT_MONO,
+            background: dirty ? '#f59e0b' : '#6366f1',
+            border:'none',color:'#fff',cursor:loading?'not-allowed':'pointer',
+            opacity:loading?0.5:1,flexShrink:0,
+            boxShadow: dirty ? '0 1px 6px rgba(245,158,11,0.4)' : '0 1px 6px rgba(99,102,241,0.35)',
+            transition:'background 0.15s, box-shadow 0.15s',
+          }}
+        >
+          Terapkan
+        </button>
       </div>
     </div>
   );
@@ -258,7 +299,11 @@ function DashboardInner() {
   const {isMobile,isTablet}=useBreakpoint();
   const {user}=useAuth();
 
-  const [filters,setFilters]=useState<FilterState>({tahun:'all',bulan:'all',minggu:'all',area:'all',type_customer:'all',kategori:'all'});
+  // filters: draft (diubah real-time oleh user)
+  const [filters,setFilters]=useState<FilterState>(FILTER_INIT);
+  // appliedFilters: hanya berubah setelah tombol Terapkan diklik
+  const [appliedFilters,setAppliedFilters]=useState<FilterState>(FILTER_INIT);
+
   const [opts,setOpts]=useState<FilterOptions>({years:[],months:[],areas:[],typeCustomers:[],kategoris:[],keterangans:[]});
   const [data,setData]=useState<DashboardData>(EMPTY);
   const [loading,setLoading]=useState(false);
@@ -293,13 +338,17 @@ function DashboardInner() {
       if(filters.type_customer!=='all') p.set('type_customer',filters.type_customer);
       if(filters.kategori!=='all') p.set('kategori',filters.kategori);
       const r=await apiJson(`/api/sales?${p}`);
-      if(r.success) setData(r.data);
+      if(r.success) {
+        setData(r.data);
+        setAppliedFilters({ ...filters }); // ← simpan sebagai applied hanya setelah berhasil
+      }
     } catch(e){ console.error(e); }
     finally { setLoading(false); }
   },[filters]);
 
   const doReset=()=>{
-    setFilters({tahun:'all',bulan:'all',minggu:'all',area:'all',type_customer:'all',kategori:'all'});
+    setFilters(FILTER_INIT);
+    setAppliedFilters(FILTER_INIT);
     setData(EMPTY);
   };
 
@@ -309,21 +358,23 @@ function DashboardInner() {
   const t=tk[theme];
   const showFilter=DATA_TABS.includes(tab);
 
-  const filtersForExport = Object.fromEntries(Object.entries(filters));
+  // gunakan appliedFilters untuk export/settings
+  const filtersForExport = Object.fromEntries(Object.entries(appliedFilters));
 
   const renderTab=()=>{
     switch(tab){
       case 'penjualan':     return <PenjualanTab data={data} theme={theme}/>;
-      case 'so':            return <SalesOrderTab data={data} theme={theme}/>;
-      case 'outstanding':   return <OutstandingTab data={data} theme={theme}/>;
-      case 'lhkp':           return <LhkpTab theme={theme}/>;
-      case 'lhkp_upload':    return userRole!=='user'?<UploadLhkpTab theme={theme}/>:null;
+      // ↓ pakai appliedFilters.tahun bukan filters.tahun
+      case 'so':            return <SalesOrderTab data={data} theme={theme} tahun={appliedFilters.tahun}/>;
+      case 'outstanding':   return <OutstandingTab data={data} theme={theme} tahun={appliedFilters.tahun} />;
+      case 'lhkp':          return <LhkpTab theme={theme}/>;
+      case 'lhkp_upload':   return userRole!=='user'?<UploadLhkpTab theme={theme}/>:null;
       case 'upload':        return userRole!=='user'?<UploadTabComp theme={theme}/>:null;
       case 'kertas_upload': return userRole!=='user'?<UploadKertasTab theme={theme}/>:null;
-      case 'Plan_upload':    return userRole!=='user'?<UploadWIPTab theme={theme}/>:null;
+      case 'Plan_upload':   return userRole!=='user'?<UploadWIPTab theme={theme}/>:null;
       case 'users':         return userRole!=='user'?<UserManagement theme={theme}/>:null;
       case 'kertas':        return <KertasTab theme={theme}/>;
-      case 'Plan':           return <WipTab theme={theme}/>;
+      case 'Plan':          return <WipTab theme={theme}/>;
       case 'settings':      return <SettingsTab theme={theme} currentFilters={filtersForExport}/>;
       default:              return <OverviewTab data={data} theme={theme} availH={availH}/>;
     }
@@ -360,9 +411,14 @@ function DashboardInner() {
 
         {showFilter && (
           <FilterBar
-            filters={filters} setFilters={setFilters}
-            opts={opts} onApply={doApply} onReset={doReset}
-            loading={loading} theme={theme}
+            filters={filters}
+            setFilters={setFilters}
+            appliedFilters={appliedFilters}
+            opts={opts}
+            onApply={doApply}
+            onReset={doReset}
+            loading={loading}
+            theme={theme}
           />
         )}
 
