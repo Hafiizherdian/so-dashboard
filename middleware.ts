@@ -9,6 +9,7 @@ const PUBLIC_PREFIXES = [
   '/api/debug',
   '/_next',
   '/favicon',
+  '/logo-s3.jpeg',
 ];
 
 export function middleware(req: NextRequest) {
