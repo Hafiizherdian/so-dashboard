@@ -77,7 +77,7 @@ export async function GET(req: NextRequest) {
         total_records: string; total_plan: string;
         total_baik: string; total_rusak: string;
       }>(`SELECT COUNT(*) AS total_records,
-                COALESCE(SUM(qty_plan),0)  AS total_plan,
+                COALESCE(SUM(DISTINCT qty_plan),0) AS total_plan,
                 COALESCE(SUM(qty_baik),0)  AS total_baik,
                 COALESCE(SUM(qty_rusak),0) AS total_rusak
           FROM lhkp_records ${where}`, vals),
@@ -125,6 +125,7 @@ export async function GET(req: NextRequest) {
     const yieldPct   = (totalBaik + totalRusak) > 0
       ? (totalBaik / (totalBaik + totalRusak)) * 100
       : 0;
+    const wastePct = 100 - yieldPct;
 
     return NextResponse.json({
       success: true,
@@ -135,6 +136,7 @@ export async function GET(req: NextRequest) {
           total_baik:    totalBaik,
           total_rusak:   totalRusak,
           yield_pct:     yieldPct,
+          waste_pct:     wastePct, 
         },
         byProses: byProses.map(r => ({
           proses:     r.proses || '(Tanpa Proses)',
