@@ -38,8 +38,8 @@ const ALL_TABS = [
   { id: 'kertas_upload', label: 'Upload Stok Kertas',  shortLabel: 'Up. Kertas', Icon: Package,      roles: ['root','admin'] },
   { id: 'Plan_upload',   label: 'Upload Plan Produksi',shortLabel: 'Up. Plan',   Icon: Package,      roles: ['root','admin'] },
   { id: 'lhkp_upload',   label: 'Upload LHKP',         shortLabel: 'Up. LHKP',  Icon: Package,      roles: ['root','admin'] },
-  { id: 'users',         label: 'Manajemen User',      shortLabel: 'User',       Icon: Users,        roles: ['root','admin'] },
-  { id: 'settings',      label: 'Pengaturan',          shortLabel: 'Setting',    Icon: Settings,     roles: ['root','admin'] },
+  { id: 'users',         label: 'Manajemen User',      shortLabel: 'User',       Icon: Users,        roles: ['root'] },
+  { id: 'settings',      label: 'Pengaturan',          shortLabel: 'Setting',    Icon: Settings,     roles: ['root'] },
 ] as const;
 type TabId = typeof ALL_TABS[number]['id'];
 
