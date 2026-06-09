@@ -177,7 +177,7 @@ function MobileHeader({ theme, setTheme }: { theme:Theme; setTheme:(t:Theme)=>vo
   return (
     <header style={{background:t.headerbg,backdropFilter:'blur(12px)',borderBottom:`1px solid ${t.border}`,display:'flex',alignItems:'center',justifyContent:'space-between',padding:'0 12px',height:46,flexShrink:0}}>
       <div style={{display:'flex',alignItems:'center',gap:8}}>
-        <div style={{width:28,height:28,borderRadius:8,background:'linear-gradient(135deg,#6366f1,#818cf8)',display:'flex',alignItems:'center',justifyContent:'center'}}><BarChart3 size={14} color="#fff"/></div>
+        <img src="/logo-s3.jpeg" alt="S3" style={{ width: 26, height: 26, borderRadius: 7, objectFit: 'contain' }}/>
         <span style={{fontSize:13,fontWeight:800,color:t.text,fontFamily:FONT_MONO,letterSpacing:'-0.02em'}}>SO Dashboard</span>
       </div>
       <div style={{display:'flex',alignItems:'center',gap:5}}>
