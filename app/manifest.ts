@@ -11,14 +11,28 @@ export default function manifest(): MetadataRoute.Manifest {
     theme_color: "#1c9706",
     icons: [
       {
-        src: "/public/icon-192x192.png",
+        src: "/icon-192x192.png", // Teks '/public' dihapus
         sizes: "192x192",
         type: "image/png",
+        purpose: "any", // Digunakan untuk shortcut biasa
       },
       {
-        src: "/public/icon-512x512.png",
+        src: "/icon-192x192.png", 
+        sizes: "192x192",
+        type: "image/png",
+        purpose: "maskable", // Memberitahu Android bahwa icon ini aman untuk dipotong/diubah bentuknya
+      },
+      {
+        src: "/icon-512x512.png", // Teks '/public' dihapus
         sizes: "512x512",
         type: "image/png",
+        purpose: "any",
+      },
+      {
+        src: "/icon-512x512.png",
+        sizes: "512x512",
+        type: "image/png",
+        purpose: "maskable",
       },
     ],
   };
