@@ -35,7 +35,6 @@ const OUT_BAR_COLORS: { bar: string; border: string }[] = [
 
 type ChartMode = 'penj' | 'so';
 
-// ── Breakpoint hook ──
 function useBreakpoint() {
   const [bp, setBp] = useState<'mobile' | 'tablet' | 'desktop'>('desktop');
   useEffect(() => {
@@ -95,13 +94,17 @@ export default function OverviewTab({ data, theme, availH }: Props) {
     </div>
   );
 
-  // ── Responsive height logic ──
-  // Desktop: fixed layout with availH
-  // Tablet/Mobile: scroll, ignore availH
-  const CHART_H_DESKTOP = 120;
-  const CHART_H_TABLET  = 140;
-  const CHART_H_MOBILE  = 160;
-  const chartH = isMobile ? CHART_H_MOBILE : isTablet ? CHART_H_TABLET : Math.max(80, availH - 380);
+  // ── PERBAIKAN 1: Kalkulasi Tinggi Bar Chart yang Dipendekkan ──
+  const KPI_H = 106;
+  const bodyH = availH - KPI_H - GAP * 4;
+  const rowH  = Math.max(100, Math.floor((bodyH - GAP) / 2));
+
+  // Di desktop, kita ambil tinggi bersih kartu (rowH) dikurangi tinggi header & footer pill (~95px)
+  const chartH = isMobile 
+    ? 160 
+    : isTablet 
+      ? 140 
+      : Math.max(90, rowH - 130); 
 
   const outstandingPct = summary.pct_outstanding;
   const outColor = outstandingPct > 50 ? '#ef4444' : outstandingPct > 25 ? '#f59e0b' : '#10b981';
@@ -127,13 +130,10 @@ export default function OverviewTab({ data, theme, availH }: Props) {
   }));
 
   const BULAN_NAMES = ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agt','Sep','Okt','Nov','Des'];
-  // Mobile: tampilkan setiap 2 bulan agar tidak crowded
-  const BULAN_NAMES_SHORT = isMobile
-    ? ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agt','Sep','Okt','Nov','Des']
-    : BULAN_NAMES;
+  const BULAN_NAMES_SHORT = BULAN_NAMES;
 
   const pivotPenj: Record<string, any>[] = BULAN_NAMES_SHORT.map(b => ({ bulan: b }));
-  const pivotSO:   Record<string, any>[] = BULAN_NAMES_SHORT.map(b => ({ bulan: b }));
+  const pivotSO:    Record<string, any>[] = BULAN_NAMES_SHORT.map(b => ({ bulan: b }));
 
   monthly.forEach((m: any) => {
     const yr  = m.tahun;
@@ -182,7 +182,7 @@ export default function OverviewTab({ data, theme, availH }: Props) {
 
   const qtyTerkirimSO = summary.qty_so - summary.total_outstanding;
 
-  // ── Chart node ──
+  // ── PERBAIKAN 2: Optimalisasi Area ChartNode ──
   const ChartNode = (
     <Card
       theme={theme}
@@ -195,7 +195,7 @@ export default function OverviewTab({ data, theme, availH }: Props) {
           : `${monthly.length} bulan`
       }
     >
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0, marginBottom: 4, flexWrap: 'wrap', gap: 4 }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0, marginBottom: 8, flexWrap: 'wrap', gap: 4 }}>
         <YearLegend />
         <div style={{ display: 'flex', gap: 2, background: t.inputBg, borderRadius: 6, padding: 2, flexShrink: 0 }}>
           {tabBtn('penj', 'Penjualan (Rp)')}
@@ -203,59 +203,63 @@ export default function OverviewTab({ data, theme, availH }: Props) {
         </div>
       </div>
 
-      <ResponsiveContainer width="100%" height={chartH}>
-        <BarChart
-          data={chartMode === 'penj' ? pivotPenj : pivotSO}
-          margin={{ top: 4, right: 4, left: 0, bottom: 4 }}
-          barCategoryGap="20%"
-          barGap={1}
-        >
-          <CartesianGrid strokeDasharray="3 3" stroke={gs} vertical={false} />
-          <XAxis
-            dataKey="bulan"
-            axisLine={false}
-            tickLine={false}
-            tick={{ fontSize: isMobile ? 8 : 9, fill: t.textMuted, fontFamily: FONT_MONO }}
-          />
-          <YAxis
-            axisLine={false}
-            tickLine={false}
-            tick={{ fontSize: isMobile ? 8 : 9, fill: t.textMuted, fontFamily: FONT_MONO }}
-            width={chartMode === 'penj' ? (isMobile ? 44 : 56) : 44}
-            tickFormatter={chartMode === 'penj'
-              ? fmtRp
-              : (v: number) => v.toLocaleString('id-ID')}
-          />
-          <Tooltip content={<ChartTooltip theme={theme} currency={chartMode === 'penj'} />} />
+      {/* Kontainer ini sekarang mengunci tinggi grafik hasil perpendekan di atas */}
+      <div style={{ width: '100%', height: chartH, flexShrink: 0, minHeight: 0, overflow: 'hidden' }}>
+        <ResponsiveContainer width="100%" height="100%">
+          <BarChart
+            data={chartMode === 'penj' ? pivotPenj : pivotSO}
+           
+            margin={{ top: 8, right: 4, left: 4, bottom: 4 }}
+            barCategoryGap="20%"
+            barGap={1}
+          >
+            <CartesianGrid strokeDasharray="3 3" stroke={gs} vertical={false} />
+            <XAxis
+              dataKey="bulan"
+              axisLine={false}
+              tickLine={false}
+              tick={{ fontSize: isMobile ? 8 : 9, fill: t.textMuted, fontFamily: FONT_MONO }}
+            />
+            <YAxis
+              axisLine={false}
+              tickLine={false}
+              tick={{ fontSize: isMobile ? 8 : 9, fill: t.textMuted, fontFamily: FONT_MONO }}
+              width={chartMode === 'penj' ? (isMobile ? 55 : 75) : 48}
+              tickFormatter={chartMode === 'penj'
+                ? fmtRp
+                : (v: number) => v.toLocaleString('id-ID')}
+            />
+            <Tooltip content={<ChartTooltip theme={theme} currency={chartMode === 'penj'} />} />
 
-          {chartMode === 'penj'
-            ? allYears.map((yr, i) => (
-                <Bar
-                  key={yr}
-                  dataKey={String(yr)}
-                  name={String(yr)}
-                  fill={YEAR_BAR_COLORS[i % YEAR_BAR_COLORS.length].bar}
-                  stroke={YEAR_BAR_COLORS[i % YEAR_BAR_COLORS.length].border}
-                  strokeWidth={0.5}
-                  radius={[3, 3, 0, 0]}
-                  maxBarSize={14}
-                />
-              ))
-            : allYears.flatMap((yr, i) => [
-                <Bar key={`so_${yr}`} dataKey={String(yr)} name={`SO ${yr}`}
-                  fill={SO_BAR_COLORS[i % SO_BAR_COLORS.length].bar}
-                  stroke={SO_BAR_COLORS[i % SO_BAR_COLORS.length].border}
-                  strokeWidth={0.5} radius={[3, 3, 0, 0]} maxBarSize={10} />,
-                <Bar key={`out_${yr}`} dataKey={`out_${yr}`} name={`Out ${yr}`}
-                  fill={OUT_BAR_COLORS[i % OUT_BAR_COLORS.length].bar}
-                  stroke={OUT_BAR_COLORS[i % OUT_BAR_COLORS.length].border}
-                  strokeWidth={0.5} radius={[3, 3, 0, 0]} maxBarSize={10} />,
-              ])
-          }
-        </BarChart>
-      </ResponsiveContainer>
+            {chartMode === 'penj'
+              ? allYears.map((yr, i) => (
+                  <Bar
+                    key={yr}
+                    dataKey={String(yr)}
+                    name={String(yr)}
+                    fill={YEAR_BAR_COLORS[i % YEAR_BAR_COLORS.length].bar}
+                    stroke={YEAR_BAR_COLORS[i % YEAR_BAR_COLORS.length].border}
+                    strokeWidth={0.5}
+                    radius={[3, 3, 0, 0]}
+                    maxBarSize={14}
+                  />
+                ))
+              : allYears.flatMap((yr, i) => [
+                  <Bar key={`so_${yr}`} dataKey={String(yr)} name={`SO ${yr}`}
+                    fill={SO_BAR_COLORS[i % SO_BAR_COLORS.length].bar}
+                    stroke={SO_BAR_COLORS[i % SO_BAR_COLORS.length].border}
+                    strokeWidth={0.5} radius={[3, 3, 0, 0]} maxBarSize={10} />,
+                  <Bar key={`out_${yr}`} dataKey={`out_${yr}`} name={`Out ${yr}`}
+                    fill={OUT_BAR_COLORS[i % OUT_BAR_COLORS.length].bar}
+                    stroke={OUT_BAR_COLORS[i % OUT_BAR_COLORS.length].border}
+                    strokeWidth={0.5} radius={[3, 3, 0, 0]} maxBarSize={10} />,
+                ])
+            }
+          </BarChart>
+        </ResponsiveContainer>
+      </div>
 
-      <div style={{ display: 'flex', gap: 6, flexShrink: 0, marginTop: 4 }}>
+      <div style={{ display: 'flex', gap: 6, flexShrink: 0 }}>
         {[
           { label: 'Tertinggi',      value: pillTertinggi,                  color: '#6366f1' },
           { label: 'Rata-rata/bulan', value: pillRataRata,                   color: '#10b981' },
@@ -270,7 +274,6 @@ export default function OverviewTab({ data, theme, availH }: Props) {
     </Card>
   );
 
-  // ── Tipe Pelanggan node ──
   const TipePelangganNode = (
     <Card theme={theme} title="Tipe Pelanggan" icon={<Users size={10} color="#8b5cf6" />} color="#8b5cf6" accent="#8b5cf6">
       {tcData.length > 0 ? (
@@ -287,9 +290,8 @@ export default function OverviewTab({ data, theme, availH }: Props) {
               </div>
             ))}
           </div>
-          {/* Sembunyikan mini bar chart di mobile untuk hemat ruang */}
           {!isMobile && (
-            <div style={{ flex: 1, minHeight: 80 }}>
+            <div style={{ flex: 1, minHeight: 60 }}>
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={tcData} layout="vertical" margin={{ top: 0, right: 4, left: 0, bottom: 0 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke={gs} horizontal={false} />
@@ -308,7 +310,6 @@ export default function OverviewTab({ data, theme, availH }: Props) {
     </Card>
   );
 
-  // ── Status Outstanding node ──
   const StatusOutstandingNode = (
     <Card theme={theme} title="Status Outstanding" icon={<AlertCircle size={10} color={outColor} />} color={outColor} accent={outColor}>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 10, flex: 1, justifyContent: 'center' }}>
@@ -319,8 +320,8 @@ export default function OverviewTab({ data, theme, availH }: Props) {
         <ProgressBar pct={outstandingPct} color={outColor} bg={t.borderCard} height={6} />
         <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
           {[
-            { label: 'Qty Order',  value: summary.qty_so.toLocaleString('id-ID'),            color: '#6366f1' },
-            { label: 'Qty Kirim',  value: qtyTerkirimSO.toLocaleString('id-ID'),             color: '#10b981' },
+            { label: 'Qty Order',  value: summary.qty_so.toLocaleString('id-ID'),             color: '#6366f1' },
+            { label: 'Qty Kirim',  value: qtyTerkirimSO.toLocaleString('id-ID'),              color: '#10b981' },
             { label: 'Sisa (Qty)', value: summary.total_outstanding.toLocaleString('id-ID'), color: outColor  },
           ].map(row => (
             <div key={row.label} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -336,7 +337,6 @@ export default function OverviewTab({ data, theme, availH }: Props) {
     </Card>
   );
 
-  // ── Top Pelanggan node ──
   const TopPelangganNode = (
     <Card theme={theme} title="Top Pelanggan" icon={<Users size={10} color="#f59e0b" />} color="#f59e0b" accent="#f59e0b">
       <div style={{ flex: 1, overflowY: 'auto' }}>
@@ -360,7 +360,6 @@ export default function OverviewTab({ data, theme, availH }: Props) {
     </Card>
   );
 
-  // ── Kategori Produk node ──
   const KategoriProdukNode = (
     <Card theme={theme} title="Kategori Produk" icon={<Package size={10} color="#10b981" />} color="#10b981" accent="#10b981">
       <div style={{ flex: 1, overflowY: 'auto' }}>
@@ -375,7 +374,6 @@ export default function OverviewTab({ data, theme, availH }: Props) {
     </Card>
   );
 
-  // ── Produk Outstanding node ──
   const ProdukOutstandingNode = (
     <Card theme={theme} title="Produk Outstanding" icon={<Tag size={10} color="#ec4899" />} color="#ec4899" accent="#ec4899">
       <div style={{ flex: 1, overflowY: 'auto' }}>
@@ -401,13 +399,9 @@ export default function OverviewTab({ data, theme, availH }: Props) {
     </Card>
   );
 
-  // ══════════════════════════════════════════
-  // MOBILE layout  (< 640px) — full scroll, 1 column
-  // ══════════════════════════════════════════
   if (isMobile) {
     return (
       <div style={{ display: 'flex', flexDirection: 'column', gap: GAP, overflowY: 'auto', paddingBottom: 16 }}>
-        {/* KPI: 2×2 grid */}
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: GAP }}>
           <KpiCard
             bg={t.card1bg} border={t.card1border} labelColor={t.card1text} accent={t.card1accent}
@@ -430,35 +424,21 @@ export default function OverviewTab({ data, theme, availH }: Props) {
             icon={<Package size={18} />} theme={theme}
           />
         </div>
-
-        {/* Chart full width */}
         {ChartNode}
-
-        {/* Status Outstanding full width */}
         {StatusOutstandingNode}
-
-        {/* 2-col: Tipe Pelanggan + Kategori */}
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: GAP }}>
           {TipePelangganNode}
           {KategoriProdukNode}
         </div>
-
-        {/* Top Pelanggan full width */}
         {TopPelangganNode}
-
-        {/* Produk Outstanding full width */}
         {ProdukOutstandingNode}
       </div>
     );
   }
 
-  // ══════════════════════════════════════════
-  // TABLET layout  (640–1023px) — scroll, 2-col focus
-  // ══════════════════════════════════════════
   if (isTablet) {
     return (
       <div style={{ display: 'flex', flexDirection: 'column', gap: GAP, overflowY: 'auto', paddingBottom: 16 }}>
-        {/* KPI: 4 kolom */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: GAP }}>
           <KpiCard
             bg={t.card1bg} border={t.card1border} labelColor={t.card1text} accent={t.card1accent}
@@ -481,20 +461,14 @@ export default function OverviewTab({ data, theme, availH }: Props) {
             icon={<Package size={14} />} theme={theme}
           />
         </div>
-
-        {/* Row 1: Chart (2/3) + Status Outstanding (1/3) */}
         <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: GAP }}>
           {ChartNode}
           {StatusOutstandingNode}
         </div>
-
-        {/* Row 2: Tipe Pelanggan (1/2) + Top Pelanggan (1/2) */}
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: GAP }}>
           {TipePelangganNode}
           {TopPelangganNode}
         </div>
-
-        {/* Row 3: Kategori Produk (1/2) + Produk Outstanding (1/2) */}
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: GAP }}>
           {KategoriProdukNode}
           {ProdukOutstandingNode}
@@ -503,16 +477,8 @@ export default function OverviewTab({ data, theme, availH }: Props) {
     );
   }
 
-  // ══════════════════════════════════════════
-  // DESKTOP layout  (≥ 1024px) — original fixed-height
-  // ══════════════════════════════════════════
-  const KPI_H = 106;
-  const bodyH = availH - KPI_H - GAP * 4;
-  const rowH  = Math.max(100, Math.floor((bodyH - GAP) / 2));
-
   return (
     <div style={{ height: availH, display: 'flex', flexDirection: 'column', gap: GAP, overflow: 'hidden' }}>
-      {/* KPI Row */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: GAP, height: KPI_H, flexShrink: 0 }}>
         <KpiCard
           bg={t.card1bg} border={t.card1border} labelColor={t.card1text} accent={t.card1accent}
@@ -536,14 +502,12 @@ export default function OverviewTab({ data, theme, availH }: Props) {
         />
       </div>
 
-      {/* Row 1 */}
       <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr', gap: GAP, height: rowH, flexShrink: 0 }}>
         {ChartNode}
         {TipePelangganNode}
         {StatusOutstandingNode}
       </div>
 
-      {/* Row 2 */}
       <div style={{ display: 'grid', gridTemplateColumns: '1.6fr 1fr 1fr', gap: GAP, flex: 1, minHeight: 0 }}>
         {TopPelangganNode}
         {KategoriProdukNode}

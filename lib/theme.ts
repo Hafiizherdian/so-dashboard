@@ -40,7 +40,7 @@ export const tk = {
     tooltipBg: '#13161f',
     tooltipBorder: 'rgba(255,255,255,0.09)',
     tableHead: '#111318',
-    tableAlt: '#0f1117',
+    tableAlt: '#20b53112',
     rowHover: 'rgba(28,151,6,0.08)',
     shadowCard: '0 4px 20px rgba(0,0,0,0.4)',
     contentBg: '#07090e',
