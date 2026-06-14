@@ -2,7 +2,7 @@ import * as XLSX from 'xlsx';
 
 export interface PlanShiftEntry {
   tanggal: string;   // 'YYYY-MM-DD'
-  shift: 1 | 2;
+  shift: 1 | 2 | 3;
   qty: number;
 }
 
@@ -104,7 +104,7 @@ export function parsePlanExcel(buffer: Buffer): PlanParseResult {
   }
 
   // 3. Build shiftMap dari merged cells
-  const shiftMap: { colIdx: number; tanggal: string; shift: 1 | 2 }[] = [];
+  const shiftMap: { colIdx: number; tanggal: string; shift: 1 | 2 | 3}[] = [];
   if (dateHeaderRow >= 0) {
     const range  = XLSX.utils.decode_range(ws['!ref'] ?? 'A1');
     const merges: XLSX.Range[] = ws['!merges'] ?? [];
@@ -135,7 +135,8 @@ export function parsePlanExcel(buffer: Buffer): PlanParseResult {
     Object.entries(dateCols).forEach(([tanggal, cols]) => {
       cols.sort((a, b) => a - b);
       cols.forEach((c, i) => {
-        shiftMap.push({ colIdx: c, tanggal, shift: ((i % 2) + 1) as 1 | 2 });
+        // shiftMap.push({ colIdx: c, tanggal, shift: ((i % 2) + 1) as 1 | 2 });
+        shiftMap.push({ colIdx: c, tanggal, shift: (i + 1) as 1 | 2 | 3 });
       });
     });
   }

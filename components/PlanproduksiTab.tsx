@@ -54,39 +54,32 @@ const EMPTY_DATA: PlanData = {
 
 function fmtDate(iso: string | Date | null | undefined): string {
   if (!iso) return '—';
-
   let d: Date;
-
-  // Jika inputnya adalah objek Date asli
   if (iso instanceof Date) {
     d = iso;
   } else {
-    // Jika inputnya string, pastikan kita handle string tanggal murni (YYYY-MM-DD)
-    // PostgreSQL DATE seringkali dikirim hanya 10 karakter pertama
     const cleanIso = typeof iso === 'string' ? iso.substring(0, 10) : iso;
     d = new Date(cleanIso + 'T00:00:00');
   }
-
-  // Validasi apakah hasil konversi Date-nya valid
   if (isNaN(d.getTime())) return '—';
 
   const dd  = String(d.getDate()).padStart(2, '0');
   const mon = ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'][d.getMonth()];
-  const yy  = String(d.getFullYear()).slice(-2); // Pakai -2 lebih aman untuk mengambil 2 angka terakhir
+  const yy  = String(d.getFullYear()).slice(-2);
 
   return `${dd}-${mon}-${yy}`;
 }
 
 function fmtNum(n: number): string {
   if (!n) return '';
-  if (n >= 1000) return `${(n / 1000).toFixed(0)}rb`;
+  if (n >= 1000000) return `${(n / 1000000).toFixed(1)}jt`;
   return n.toLocaleString('id-ID');
 }
 
 export default function PlanProduksiTab({ theme }: Props) {
   const t = tk[theme];
 
-  const [data,           setData]           = useState<PlanData>(EMPTY_DATA);
+  const [data,          setData]          = useState<PlanData>(EMPTY_DATA);
   const [uploads,        setUploads]        = useState<UploadRow[]>([]);
   const [mesinList,      setMesinList]      = useState<string[]>([]);
   const [loading,        setLoading]        = useState(true);
@@ -122,12 +115,10 @@ export default function PlanProduksiTab({ theme }: Props) {
 
   useEffect(() => {
     loadUploads().then(() => loadData());
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
     loadData(selectedUpload || undefined, filterMesin);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedUpload, filterMesin]);
 
   const handleDelete = async () => {
@@ -145,6 +136,20 @@ export default function PlanProduksiTab({ theme }: Props) {
     } finally { setDeleting(false); }
   };
 
+  // ── DETEKSI SHIFT SECARA DINAMIS ──────────────────────────────────────────
+  // Menghitung daftar shift unik yang ada di dalam data.shifts (misal [1, 2] atau [1, 2, 3])
+  // Jika data kosong, default ke [1, 2] agar struktur tabel tidak rusak.
+  const activeShifts = useMemo(() => {
+    if (!data.shifts || data.shifts.length === 0) return [1, 2];
+    const shiftsSet = new Set<number>();
+    data.shifts.forEach(s => {
+      if (s.shift) shiftsSet.add(Number(s.shift));
+    });
+    // Diurutkan dari shift terkecil ke terbesar
+    const sortedShifts = Array.from(shiftsSet).sort((a, b) => a - b);
+    return sortedShifts.length > 0 ? sortedShifts : [1, 2];
+  }, [data.shifts]);
+
   // ── shiftIndex: key = "jobId_tanggal_shift" ──────────────────────────────
   const shiftIndex = useMemo(() => {
     const idx: Record<string, number> = {};
@@ -157,7 +162,6 @@ export default function PlanProduksiTab({ theme }: Props) {
   // KPI
   const totalQtyJop   = data.jobs.reduce((s, j) => s + Number(j.qty_jop),   0);
   const totalQtyCetak = data.jobs.reduce((s, j) => s + Number(j.qty_cetak), 0);
-  const totalShiftQty = data.shifts.reduce((s, sh) => s + Number(sh.qty),   0);
   const progressPct   = totalQtyJop > 0 ? (totalQtyCetak / totalQtyJop) * 100 : 0;
 
   // Total per kolom (tanggal, shift)
@@ -241,10 +245,9 @@ export default function PlanProduksiTab({ theme }: Props) {
       {/* ── KPI Cards ── */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 12 }}>
         {[
-          { label: 'Total JOP',         value: String(data.jobs.length),               sub: data.nama_mesin || '—',               color: t.card1text, bg: t.card1bg, border: t.card1border },
-          { label: 'Qty JOP',          value: totalQtyJop.toLocaleString('id-ID'),     sub: 'target cetak',                       color: t.card2text, bg: t.card2bg, border: t.card2border },
-          { label: 'Qty Plan Cetak',         value: totalQtyCetak.toLocaleString('id-ID'),   sub: `${progressPct.toFixed(1)}% dari plan`, color: '#10b981',   bg: t.card2bg, border: t.card2border },
-          // { label: 'Realisasi Shift',   value: totalShiftQty.toLocaleString('id-ID'),   sub: `${data.dates.length * 2} slot shift`, color: t.card4text, bg: t.card4bg, border: t.card4border },
+          { label: 'Total JOP',        value: String(data.jobs.length),              sub: data.nama_mesin || '—',               color: t.card1text, bg: t.card1bg, border: t.card1border },
+          { label: 'Qty JOP',          value: totalQtyJop.toLocaleString('id-ID'),      sub: 'target cetak',                       color: t.card2text, bg: t.card2bg, border: t.card2border },
+          { label: 'Qty Plan Cetak',   value: totalQtyCetak.toLocaleString('id-ID'),   sub: `${progressPct.toFixed(1)}% dari plan`, color: '#10b981',   bg: t.card2bg, border: t.card2border },
         ].map(card => (
           <div key={card.label} style={{ borderRadius: 13, padding: '14px 16px', background: card.bg, border: `1px solid ${card.border}` }}>
             <div style={{ fontSize: 9, fontFamily: FONT_MONO, textTransform: 'uppercase', letterSpacing: '0.1em', color: card.color, fontWeight: 700, marginBottom: 7 }}>{card.label}</div>
@@ -303,7 +306,8 @@ export default function PlanProduksiTab({ theme }: Props) {
                   <th rowSpan={2} style={{ ...thS, textAlign: 'right', borderRight: `1px solid ${t.border}` }}>Qty JOP</th>
                   <th rowSpan={2} style={{ ...thS, textAlign: 'right', borderRight: `1px solid ${t.border}`, minWidth: 90 }}>Qty Plan Cetak</th>
                   {data.dates.map((d, di) => (
-                    <th key={d} colSpan={2} style={{ ...thS, textAlign: 'center', borderRight: `1px solid ${t.border}`, background: di % 2 === 0 ? 'rgba(99,102,241,0.08)' : 'rgba(16,185,129,0.07)', color: di % 2 === 0 ? t.card1text : t.card2text, minWidth: 80 }}>
+                    // colSpan diganti secara dinamis menyesuaikan jumlah shift yang aktif
+                    <th key={d} colSpan={activeShifts.length} style={{ ...thS, textAlign: 'center', borderRight: `1px solid ${t.border}`, background: di % 2 === 0 ? 'rgba(99,102,241,0.08)' : 'rgba(16,185,129,0.07)', color: di % 2 === 0 ? t.card1text : t.card2text, minWidth: 80 }}>
                       {fmtDate(d)}
                     </th>
                   ))}
@@ -311,9 +315,9 @@ export default function PlanProduksiTab({ theme }: Props) {
                 <tr>
                   {data.dates.map((d, di) => (
                     <React.Fragment key={d}>
-                      {[1, 2].map(sh => (
-                        <th key={sh} style={{ ...thS, textAlign: 'center', borderRight: sh === 2 ? `1px solid ${t.border}` : undefined, background: di % 2 === 0 ? 'rgba(99,102,241,0.04)' : 'rgba(16,185,129,0.03)', fontSize: 8, minWidth: 40 }}>
-                          {sh === 1 ? 'I' : 'II'}
+                      {activeShifts.map((sh, si) => (
+                        <th key={sh} style={{ ...thS, textAlign: 'center', borderRight: si === activeShifts.length - 1  ? `1px solid ${t.border}` : undefined, background: di % 2 === 0 ? 'rgba(99,102,241,0.04)' : 'rgba(16,185,129,0.03)', fontSize: 8, minWidth: 40 }}>
+                          {sh === 1 ? 'I' : sh === 2 ? 'II' : 'III'}
                         </th>
                       ))}
                     </React.Fragment>
@@ -354,10 +358,10 @@ export default function PlanProduksiTab({ theme }: Props) {
 
                       {data.dates.map((d, di) => (
                         <React.Fragment key={d}>
-                          {[1, 2].map(sh => {
+                          {activeShifts.map((sh, si) => {
                             const qty = shiftIndex[`${jobIdStr}_${d}_${sh}`] ?? 0;
                             return (
-                              <td key={sh} style={{ ...tdS, textAlign: 'center', borderRight: sh === 2 ? `1px solid ${t.border}` : undefined, background: qty > 0 ? (di % 2 === 0 ? 'rgba(99,102,241,0.07)' : 'rgba(16,185,129,0.06)') : undefined, color: qty > 0 ? (di % 2 === 0 ? t.card1text : t.card2text) : t.textFaint, fontSize: 10, fontWeight: qty > 0 ? 700 : 400 }}>
+                              <td key={sh} style={{ ...tdS, textAlign: 'center', borderRight: si === activeShifts.length - 1 ? `1px solid ${t.border}` : undefined, background: qty > 0 ? (di % 2 === 0 ? 'rgba(99,102,241,0.07)' : 'rgba(16,185,129,0.06)') : undefined, color: qty > 0 ? (di % 2 === 0 ? t.card1text : t.card2text) : t.textFaint, fontSize: 10, fontWeight: qty > 0 ? 700 : 400 }}>
                                 {qty > 0 ? fmtNum(qty) : '—'}
                               </td>
                             );
@@ -378,10 +382,10 @@ export default function PlanProduksiTab({ theme }: Props) {
                   <td style={{ ...tdS, textAlign: 'right', fontWeight: 800, color: t.text, borderRight: `1px solid ${t.border}` }}>{totalQtyCetak.toLocaleString('id-ID')}</td>
                   {data.dates.map((d, di) => (
                     <React.Fragment key={d}>
-                      {[1, 2].map(sh => {
+                      {activeShifts.map((sh, si) => {
                         const tot = colTotals[`${d}_${sh}`] ?? 0;
                         return (
-                          <td key={sh} style={{ ...tdS, textAlign: 'center', fontWeight: 700, borderRight: sh === 2 ? `1px solid ${t.border}` : undefined, color: tot > 0 ? (di % 2 === 0 ? t.card1text : t.card2text) : t.textFaint, fontSize: 10, background: tot > 0 ? (di % 2 === 0 ? 'rgba(99,102,241,0.09)' : 'rgba(16,185,129,0.08)') : undefined }}>
+                          <td key={sh} style={{ ...tdS, textAlign: 'center', fontWeight: 700, borderRight: si === activeShifts.length - 1 ? `1px solid ${t.border}` : undefined, color: tot > 0 ? (di % 2 === 0 ? t.card1text : t.card2text) : t.textFaint, fontSize: 10, background: tot > 0 ? (di % 2 === 0 ? 'rgba(99,102,241,0.09)' : 'rgba(16,185,129,0.08)') : undefined }}>
                             {tot > 0 ? fmtNum(tot) : '—'}
                           </td>
                         );
