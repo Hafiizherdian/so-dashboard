@@ -333,9 +333,9 @@ export default function LhkpTab({ theme }: Props) {
     <div style={{ background: t.cardbg, border: `1px solid ${t.borderCard}`, borderRadius: 13, padding: '12px 14px' }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10, flexWrap: 'wrap', gap: 6 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
-          <div style={{ width: 22, height: 22, borderRadius: 6, background: 'rgba(99,102,241,0.1)', border: '1px solid rgba(99,102,241,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          {/* <div style={{ width: 22, height: 22, borderRadius: 6, background: 'rgba(99,102,241,0.1)', border: '1px solid rgba(99,102,241,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <ClipboardCheck size={11} color="#818cf8"/>
-          </div>
+          </div> */}
           <span style={{ fontSize: 11, fontWeight: 700, color: t.text }}>Qty Baik &amp; Rusak</span>
         </div>
         <div style={{ display: 'flex', gap: 4, background: t.inputBg, borderRadius: 7, padding: 3, flexShrink: 0 }}>
@@ -373,12 +373,12 @@ export default function LhkpTab({ theme }: Props) {
   const DetailTable = (
     <div style={{ background: t.cardbg, border: `1px solid ${t.borderCard}`, borderRadius: 13, overflow: 'hidden', boxShadow: t.shadowCard }}>
       <div style={{ padding: '10px 14px', borderBottom: `1px solid ${t.border}`, display: 'flex', alignItems: 'center', gap: 8 }}>
-        <div style={{ width: 24, height: 24, borderRadius: 7, background: 'rgba(99,102,241,0.1)', border: '1px solid rgba(99,102,241,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        {/* <div style={{ width: 24, height: 24, borderRadius: 7, background: 'rgba(99,102,241,0.1)', border: '1px solid rgba(99,102,241,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           <ClipboardCheck size={12} color="#818cf8"/>
-        </div>
+        </div> */}
         <div>
           <div style={{ fontSize: 11, fontWeight: 700, color: t.text }}>Detail LHKP</div>
-          <div style={{ fontSize: 9, color: t.textMuted, fontFamily: FONT_MONO }}>{sortedDetail.length} records {sortedDetail.length >= 500 ? '(maks 500 tampil)' : ''}</div>
+          <div style={{ fontSize: 9, color: t.textMuted, fontFamily: FONT_MONO }}>{sortedDetail.length} row {sortedDetail.length >= 500 ? '' : ''}</div>
         </div>
       </div>
       <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>

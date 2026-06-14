@@ -273,9 +273,9 @@ export default function PlanProduksiTab({ theme }: Props) {
       {/* ── Tabel pivot ── */}
       <div style={{ background: t.cardbg, border: `1px solid ${t.borderCard}`, borderRadius: 13, overflow: 'hidden', boxShadow: t.shadowCard }}>
         <div style={{ padding: '10px 14px', borderBottom: `1px solid ${t.border}`, display: 'flex', alignItems: 'center', gap: 8 }}>
-          <div style={{ width: 24, height: 24, borderRadius: 7, background: 'rgba(99,102,241,0.1)', border: '1px solid rgba(99,102,241,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          {/* <div style={{ width: 24, height: 24, borderRadius: 7, background: 'rgba(99,102,241,0.1)', border: '1px solid rgba(99,102,241,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <ClipboardList size={12} color="#818cf8" />
-          </div>
+          </div> */}
           <div>
             <div style={{ fontSize: 11, fontWeight: 700, color: t.text }}>{data.nama_mesin || 'Plan Produksi'}</div>
             <div style={{ fontSize: 9, color: t.textMuted, fontFamily: FONT_MONO }}>
