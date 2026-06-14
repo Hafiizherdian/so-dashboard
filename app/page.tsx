@@ -39,7 +39,7 @@ const ALL_TABS = [
   { id: 'Plan_upload',   label: 'Upload Plan Produksi',shortLabel: 'Up. Plan',   Icon: Package,      roles: ['root','admin'] },
   { id: 'lhkp_upload',   label: 'Upload LHKP',         shortLabel: 'Up. LHKP',  Icon: Package,      roles: ['root','admin'] },
   { id: 'users',         label: 'Manajemen User',      shortLabel: 'User',       Icon: Users,        roles: ['root'] },
-  { id: 'settings',      label: 'Pengaturan',          shortLabel: 'Setting',    Icon: Settings,     roles: ['root'] },
+  // { id: 'settings',      label: 'Pengaturan',          shortLabel: 'Setting',    Icon: Settings,     roles: ['root'] },
 ] as const;
 type TabId = typeof ALL_TABS[number]['id'];
 
@@ -127,8 +127,8 @@ function Sidebar({ activeTab, setActiveTab, collapsed, setCollapsed, theme, setT
           const active = activeTab === id;
           const prevTab = tabs[idx - 1];
           const showDivider = !collapsed && prevTab && (
-            (id === 'upload' && !['upload'].includes(prevTab.id)) ||
-            (id === 'settings' && !['settings'].includes(prevTab.id) && prevTab.id !== 'users')
+            (id === 'upload' && !['upload'].includes(prevTab.id)) 
+            // (id === 'settings' && !['settings'].includes(prevTab.id) && prevTab.id !== 'users')
           );
           return (
             <React.Fragment key={id}>
@@ -405,7 +405,7 @@ function DashboardInner() {
       case 'users':         return userRole!=='user'?<UserManagement theme={theme}/>:null;
       case 'kertas':        return <KertasTab theme={theme}/>;
       case 'Plan':          return <WipTab theme={theme}/>;
-      case 'settings':      return <SettingsTab theme={theme} currentFilters={filtersForExport}/>;
+      // case 'settings':      return <SettingsTab theme={theme} currentFilters={filtersForExport}/>;
       default:              return <OverviewTab data={data} theme={theme} availH={availH}/>;
     }
   };
