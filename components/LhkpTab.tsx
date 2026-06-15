@@ -157,10 +157,15 @@ export default function LhkpTab({ theme }: Props) {
     borderBottom: `1px solid ${t.border}`, whiteSpace: 'nowrap',
   };
   const selS: React.CSSProperties = {
-    height: 28, padding: '0 8px', fontSize: 11, borderRadius: 6,
-    background: t.inputBg, border: `1px solid ${t.borderInput}`,
-    color: t.text, outline: 'none', fontFamily: FONT_MONO, cursor: 'pointer',
-  };
+  height: 28, padding: '0 22px 0 8px', fontSize: 11, borderRadius: 6,
+  background: t.inputBg, border: `1px solid ${t.borderInput}`,
+  color: t.text, outline: 'none', fontFamily: FONT_MONO, cursor: 'pointer',
+  colorScheme: theme === 'dark' ? 'dark' : 'light',
+  appearance: 'none',
+  backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='8' viewBox='0 0 24 24' fill='none' stroke='${theme === 'dark' ? '%23aaa' : '%23555'}' stroke-width='2.5'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E")`,
+  backgroundRepeat: 'no-repeat',
+  backgroundPosition: 'right 6px center',
+};
   const SortIcon = ({ k }: { k: SortKey }) => sortKey === k
     ? (sortDir === 'asc' ? <ChevronUp size={9} color="#6366f1"/> : <ChevronDown size={9} color="#6366f1"/>)
     : <ChevronUp size={9} color={t.textFaint}/>;
@@ -191,7 +196,7 @@ export default function LhkpTab({ theme }: Props) {
         <option value="">{uploads.length ? 'Terbaru' : '— Belum ada upload —'}</option>
         {uploads.map(u => (
           <option key={u.id} value={u.id}>
-            {fmtDate(u.tgl_awal)}–{fmtDate(u.tgl_akhir)} ({u.record_count.toLocaleString('id-ID')} rec)
+            {fmtDate(u.tgl_awal)}–{fmtDate(u.tgl_akhir)} 
           </option>
         ))}
       </select>
