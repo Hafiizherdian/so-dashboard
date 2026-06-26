@@ -110,12 +110,12 @@ export default function UserManagement({ theme }: Props) {
 
   const thS: React.CSSProperties = {
     padding: '9px 12px', textAlign: 'left', fontSize: 9, fontWeight: 700,
-    textTransform: 'uppercase', letterSpacing: '0.09em', color: t.textMuted,
+    textTransform: 'uppercase', letterSpacing: '0.09em', color: t.text,
     borderBottom: `1px solid ${t.border}`, fontFamily: FONT_MONO, background: t.tableHead,
   };
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 14, maxWidth: 820 }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
       {/* Toast */}
       {toast && (
         <div style={{ position: 'fixed', top: 16, right: 16, zIndex: 9999, display: 'flex', alignItems: 'center', gap: 8, padding: '10px 14px', borderRadius: 10, background: t.cardbg, border: `1px solid ${toast.type === 'ok' ? t.posBorder : t.negBorder}`, color: toast.type === 'ok' ? t.posText : t.negText, fontSize: 12, fontFamily: FONT_MONO, boxShadow: '0 8px 24px rgba(0,0,0,0.3)', animation: 'fadeIn 0.2s ease' }}>

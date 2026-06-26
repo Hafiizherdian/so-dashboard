@@ -63,7 +63,7 @@ export default function UploadTab({ theme }: Props) {
   const inp: React.CSSProperties = { width:'100%', padding:'9px 12px', fontSize:12, borderRadius:8, background:t.inputBg, border:`1px solid ${t.borderInput}`, color:t.text, outline:'none', fontFamily:FONT_MONO };
 
   return (
-    <div style={{ display:'flex', flexDirection:'column', gap:16, maxWidth:760 }}>
+    <div style={{ display:'flex', flexDirection:'column', gap:16, width:'100%', padding:16 }}>
       <div style={{ background:t.cardbg, border:`1px solid ${t.borderCard}`, borderRadius:14, overflow:'hidden', boxShadow:t.shadowCard }}>
         <div style={{ padding:'12px 16px', borderBottom:`1px solid ${t.border}`, display:'flex', alignItems:'center', gap:8 }}>
           <div style={{ width:24, height:24, borderRadius:7, background:'#6366f115', border:'1px solid #6366f128', display:'flex', alignItems:'center', justifyContent:'center' }}><Upload size={12} color="#6366f1"/></div>

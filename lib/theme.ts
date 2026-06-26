@@ -88,7 +88,7 @@ export const tk = {
   },
 } as const;
 
-export type Tokens = typeof tk['dark'];
+export type Tokens = typeof tk['dark'] | typeof tk['light'];
 
 export const CC = ['#6366f1','#10b981','#f59e0b','#ef4444','#8b5cf6','#0d9488','#f97316','#ec4899','#3b82f6','#84cc16'];
 
@@ -110,3 +110,218 @@ export const fmtNum = (v: number): string => {
 
 export const FONT_MONO = '"IBM Plex Mono", monospace';
 export const FONT_SANS = '"IBM Plex Sans", sans-serif';
+
+type ThemeKey = keyof typeof tk; // Hasilnya: 'dark' | 'light'
+type T = typeof tk[ThemeKey];    // Mengambil struktur object dari tk // alias pendek
+
+// ── Table ──────────────────────────────────────────────────────
+/** Style untuk <th> di semua tabel dashboard */
+export function thStyle(t: T): React.CSSProperties {
+  return {
+    padding: '8px 10px',
+    textAlign: 'left',
+    fontSize: 9,
+    fontWeight: 700,
+    textTransform: 'uppercase',
+    letterSpacing: '0.08em',
+    color: t.textMuted,
+    borderBottom: `1px solid ${t.border}`,
+    fontFamily: FONT_MONO,
+    background: t.tableHead,
+    whiteSpace: 'nowrap',
+  };
+}
+
+/** Style untuk <td> di semua tabel dashboard */
+export function tdStyle(t: T): React.CSSProperties {
+  return {
+    padding: '8px 10px',
+    fontFamily: FONT_MONO,
+    fontSize: 11,
+    borderBottom: `1px solid ${t.border}`,
+    whiteSpace: 'nowrap',
+  };
+}
+
+// ── Form inputs ────────────────────────────────────────────────
+/** Style untuk <input> dan <textarea> */
+export function inputStyle(t: T, extra?: React.CSSProperties): React.CSSProperties {
+  return {
+    padding: '9px 12px',
+    fontSize: 12,
+    borderRadius: 8,
+    background: t.inputBg,
+    border: `1px solid ${t.borderInput}`,
+    color: t.text,
+    outline: 'none',
+    fontFamily: FONT_MONO,
+    width: '100%',
+    boxSizing: 'border-box',
+    ...extra,
+  };
+}
+
+/** Style untuk <select> — includes custom chevron SVG */
+export function selectStyle(t: T, theme: 'dark' | 'light', extra?: React.CSSProperties): React.CSSProperties {
+  const chevronColor = theme === 'dark' ? '%23aaa' : '%23555';
+  return {
+    height: 28,
+    padding: '0 22px 0 8px',
+    fontSize: 11,
+    borderRadius: 6,
+    background: t.inputBg,
+    border: `1px solid ${t.borderInput}`,
+    color: t.text,
+    outline: 'none',
+    fontFamily: FONT_MONO,
+    cursor: 'pointer',
+    colorScheme: theme === 'dark' ? 'dark' : 'light',
+    appearance: 'none',
+    backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='8' viewBox='0 0 24 24' fill='none' stroke='${chevronColor}' stroke-width='2.5'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E")`,
+    backgroundRepeat: 'no-repeat',
+    backgroundPosition: 'right 6px center',
+    ...extra,
+  };
+}
+
+// ── Labels ─────────────────────────────────────────────────────
+/** Style untuk label di atas input */
+export function labelStyle(t: T): React.CSSProperties {
+  return {
+    display: 'block',
+    fontSize: 9,
+    fontWeight: 700,
+    color: t.textMuted,
+    marginBottom: 5,
+    fontFamily: FONT_MONO,
+    textTransform: 'uppercase',
+    letterSpacing: '0.08em',
+  };
+}
+
+// ── Badges / pills ─────────────────────────────────────────────
+/** Badge status: positif, negatif, info, warning */
+export type BadgeVariant = 'pos' | 'neg' | 'info' | 'warn';
+
+export function badgeStyle(t: T, variant: BadgeVariant): React.CSSProperties {
+  const map: Record<BadgeVariant, React.CSSProperties> = {
+    pos:  { background: t.posBg,  color: t.posText,  border: `1px solid ${t.posBorder}`  },
+    neg:  { background: t.negBg,  color: t.negText,  border: `1px solid ${t.negBorder}`  },
+    info: { background: t.infoBg, color: t.infoText, border: `1px solid ${t.infoBorder}` },
+    warn: { background: 'rgba(245,158,11,0.1)', color: '#f59e0b', border: '1px solid rgba(245,158,11,0.25)' },
+  };
+  return {
+    padding: '2px 8px',
+    borderRadius: 8,
+    fontSize: 9,
+    fontWeight: 600,
+    fontFamily: FONT_MONO,
+    ...map[variant],
+  };
+}
+
+// ── Alert / message bar ────────────────────────────────────────
+/** Alert bar untuk success / error message di form/upload */
+export function alertStyle(t: T, variant: 'ok' | 'err'): React.CSSProperties {
+  return {
+    display: 'flex',
+    alignItems: 'center',
+    gap: 8,
+    padding: '9px 12px',
+    borderRadius: 8,
+    background: variant === 'ok' ? t.posBg  : t.negBg,
+    border: `1px solid ${variant === 'ok' ? t.posBorder : t.negBorder}`,
+    color: variant === 'ok' ? t.posText : t.negText,
+    fontSize: 12,
+    fontFamily: FONT_MONO,
+  };
+}
+
+// ── Buttons ────────────────────────────────────────────────────
+/** Tombol primary (indigo) */
+export function btnPrimaryStyle(disabled: boolean): React.CSSProperties {
+  return {
+    height: 38,
+    padding: '0 24px',
+    borderRadius: 9,
+    fontSize: 12,
+    fontWeight: 700,
+    border: 'none',
+    background: disabled ? 'rgba(99,102,241,0.3)' : '#6366f1',
+    color: disabled ? 'rgba(255,255,255,0.4)' : '#fff',
+    cursor: disabled ? 'not-allowed' : 'pointer',
+    fontFamily: FONT_MONO,
+    display: 'flex',
+    alignItems: 'center',
+    gap: 7,
+    boxShadow: disabled ? 'none' : '0 2px 10px rgba(99,102,241,0.3)',
+    transition: 'all 0.15s',
+  };
+}
+
+/** Tombol danger (merah) */
+export function btnDangerStyle(disabled = false): React.CSSProperties {
+  return {
+    padding: '7px 14px',
+    borderRadius: 8,
+    fontSize: 12,
+    fontWeight: 700,
+    background: '#dc2626',
+    color: '#fff',
+    border: 'none',
+    cursor: disabled ? 'not-allowed' : 'pointer',
+    opacity: disabled ? 0.6 : 1,
+  };
+}
+
+/** Tombol ghost (neutral) */
+export function btnGhostStyle(t: T): React.CSSProperties {
+  return {
+    padding: '7px 14px',
+    borderRadius: 8,
+    fontSize: 12,
+    fontWeight: 600,
+    background: t.inputBg,
+    color: t.textSub,
+    border: `1px solid ${t.borderInput}`,
+    cursor: 'pointer',
+  };
+}
+
+// ── Card header ────────────────────────────────────────────────
+/** Card container utama */
+export function cardStyle(t: T): React.CSSProperties {
+  return {
+    background: t.cardbg,
+    // border: `1px solid ${t.borderCard}`,
+    // borderRadius: 13,
+    overflow: 'hidden',
+    // boxShadow: t.shadowCard,
+  };
+}
+
+/** Card header row */
+export function cardHeaderStyle(t: T): React.CSSProperties {
+  return {
+    padding: '12px 16px',
+    borderBottom: `1px solid ${t.border}`,
+    display: 'flex',
+    alignItems: 'center',
+    gap: 8,
+  };
+}
+
+// ── Icon box (kotak kecil untuk icon di header) ────────────────
+export function iconBoxStyle(color: string): React.CSSProperties {
+  return {
+    width: 24,
+    height: 24,
+    borderRadius: 7,
+    background: `${color}18`,
+    border: `1px solid ${color}30`,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexShrink: 0,
+  };
+}
