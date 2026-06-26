@@ -80,7 +80,7 @@ export default function OverviewTab({ data, theme, availH }: Props) {
   const typeCustomerBreakdown = Array.isArray(raw.typeCustomerBreakdown) ? raw.typeCustomerBreakdown : [];
   const keteranganBreakdown   = Array.isArray(raw.keteranganBreakdown)   ? raw.keteranganBreakdown   : [];
 
-  const hasData = summary.transaksi > 0;
+  const hasData = summary.transaksi > 0 || summary.total_so > 0 || summary.total_outstanding > 0;
 
   if (!hasData) return (
     <div style={{ height: availH, display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: 14 }}>

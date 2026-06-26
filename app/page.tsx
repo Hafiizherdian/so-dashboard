@@ -208,11 +208,11 @@ function MobileBottomNav({ activeTab, setActiveTab, theme, userRole }: { activeT
   );
 }
 
-type FilterState = { tahun:string; bulan:string; minggu:string; area:string; type_customer:string; kategori:string; };
+type FilterState = { tahun:string; bulan:string; minggu:string; area:string; type_customer:string; kategori:string; jenis:string };
 
 const FILTER_INIT: FilterState = {
   tahun: 'all', bulan: 'all', minggu: 'all',
-  area: 'all', type_customer: 'all', kategori: 'all',
+  area: 'all', type_customer: 'all', kategori: 'all', jenis: 'all',
 };
 
 function FilterBar({ filters, setFilters, appliedFilters, opts, onApply, onReset, loading, theme }: {
@@ -236,6 +236,7 @@ function FilterBar({ filters, setFilters, appliedFilters, opts, onApply, onReset
   const YEARS=[{value:'all',label:'Semua Tahun'},...opts.years.map(y=>({value:String(y),label:String(y)}))];
   const TYPES=[{value:'all',label:'Semua Tipe'},...opts.typeCustomers.map(a=>({value:a,label:a}))];
   const KATS=[{value:'all',label:'Semua Kategori'},...opts.kategoris.map(a=>({value:a,label:a}))];
+  const JENS=[{value:'all', label:'Semua Jenis'},...opts.jenis.map(a=>({value:a, label:a}))];
 
   return (
     <div style={{flexShrink:0,background:t.filterbg,borderBottom:`1px solid ${t.border}`}}>
@@ -246,6 +247,7 @@ function FilterBar({ filters, setFilters, appliedFilters, opts, onApply, onReset
         <div style={{width:1,height:12,background:t.border,flexShrink:0,margin:'0 1px'}}/>
         <Sel value={filters.type_customer} onChange={v=>setFilters(f=>({...f,type_customer:v}))} options={TYPES} theme={theme} style={{minWidth:90}}/>
         <Sel value={filters.kategori} onChange={v=>setFilters(f=>({...f,kategori:v}))} options={KATS} theme={theme} style={{minWidth:110}}/>
+        <Sel value={filters.jenis} onChange={v=>setFilters(f=>({...f,jenis:v}))} options={JENS} theme={theme} style={{minWidth:90}} />
         <div style={{flex:1}}/>
         {loading&&<Spinner size={11} color="#818cf8"/>}
         {/* indikator ada filter belum diterapkan */}
@@ -334,7 +336,7 @@ function DashboardInner() {
   // appliedFilters: hanya berubah setelah tombol Terapkan diklik
   const [appliedFilters,setAppliedFilters]=useState<FilterState>(FILTER_INIT);
 
-  const [opts,setOpts]=useState<FilterOptions>({years:[],months:[],areas:[],typeCustomers:[],kategoris:[],keterangans:[]});
+  const [opts,setOpts]=useState<FilterOptions>({years:[],months:[],areas:[],typeCustomers:[],kategoris:[],keterangans:[], jenis:[]});
   const [data,setData]=useState<DashboardData>(EMPTY);
   const [loading,setLoading]=useState(false);
   const [availH,setAvailH]=useState(600);
@@ -367,11 +369,14 @@ function DashboardInner() {
       if(filters.area!=='all') p.set('area',filters.area);
       if(filters.type_customer!=='all') p.set('type_customer',filters.type_customer);
       if(filters.kategori!=='all') p.set('kategori',filters.kategori);
+      if(filters.jenis!=='all') p.set('jenis', filters.jenis);
       const r=await apiJson(`/api/sales?${p}`);
       if(r.success) {
         setData(r.data);
         setAppliedFilters({ ...filters }); // ← simpan sebagai applied hanya setelah berhasil
       }
+      console.log('doApply filters:', filters);
+console.log('query string:', `/api/sales?${p}`);
     } catch(e){ console.error(e); }
     finally { setLoading(false); }
   },[filters]);

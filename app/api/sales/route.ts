@@ -7,7 +7,7 @@ function andWhere(existing: string, cond: string): string {
 }
 
 // WHERE untuk sales_transactions
-// Kolom: tanggal, week, type_customer, kategori, salesman, kota
+// Kolom: tanggal, week, type_customer, kategori, jenis, salesman, kota
 function buildWhereSales(p: URLSearchParams) {
   const conds: string[] = [];
   const vals: unknown[] = [];
@@ -28,6 +28,9 @@ function buildWhereSales(p: URLSearchParams) {
   const kategori = p.get('kategori');
   if (kategori && kategori !== 'all') { conds.push(`kategori=$${i++}`); vals.push(kategori); }
 
+  const jenis = p.get('jenis');
+  if (jenis && jenis !== 'all') { conds.push(`jenis=$${i++}`); vals.push(jenis); }
+
   const salesman = p.get('salesman');
   if (salesman && salesman !== 'all') { conds.push(`salesman=$${i++}`); vals.push(salesman); }
 
@@ -39,7 +42,7 @@ function buildWhereSales(p: URLSearchParams) {
 
 // WHERE untuk so_outstanding
 // Kolom tersedia: tanggal, week, pelanggan, produk
-// type_customer & kategori TIDAK ada di so_outstanding → filter via nomor_so JOIN ke sales_transactions
+// type_customer, kategori, & jenis TIDAK ada di so_outstanding → filter via nomor_so JOIN ke sales_transactions
 function buildWhereSO(p: URLSearchParams) {
   const conds: string[] = [];
   const vals: unknown[] = [];
@@ -54,7 +57,7 @@ function buildWhereSO(p: URLSearchParams) {
   const minggu = p.get('minggu');
   if (minggu && minggu !== 'all') { conds.push(`week=$${i++}`); vals.push(Number(minggu)); }
 
-  // Filter type_customer & kategori via subquery ke sales_transactions
+  // Filter type_customer, kategori, & jenis via subquery ke sales_transactions
   const typeCustomer = p.get('type_customer');
   if (typeCustomer && typeCustomer !== 'all') {
     conds.push(`nomor_so IN (SELECT DISTINCT nomor_so FROM sales_transactions WHERE type_customer=$${i++} AND nomor_so IS NOT NULL AND nomor_so != '')`);
@@ -65,6 +68,12 @@ function buildWhereSO(p: URLSearchParams) {
   if (kategori && kategori !== 'all') {
     conds.push(`nomor_so IN (SELECT DISTINCT nomor_so FROM sales_transactions WHERE kategori=$${i++} AND nomor_so IS NOT NULL AND nomor_so != '')`);
     vals.push(kategori);
+  }
+
+  const jenis = p.get('jenis');
+  if (jenis && jenis !== 'all') {
+    conds.push(`nomor_so IN (SELECT DISTINCT nomor_so FROM sales_transactions WHERE jenis=$${i++} AND nomor_so IS NOT NULL AND nomor_so != '')`);
+    vals.push(jenis);
   }
 
   return { where: conds.length ? 'WHERE ' + conds.join(' AND ') : '', vals };
@@ -82,6 +91,8 @@ function buildWhereMultiYear(p: URLSearchParams, table: 'sales' | 'so') {
     if (typeCustomer && typeCustomer !== 'all') { extraSalesConds.push(`type_customer=$EXTRA${extraSalesVals.length}`); extraSalesVals.push(typeCustomer); }
     const kategori = p.get('kategori');
     if (kategori && kategori !== 'all') { extraSalesConds.push(`kategori=$EXTRA${extraSalesVals.length}`); extraSalesVals.push(kategori); }
+    const jenis = p.get('jenis');
+    if (jenis && jenis !== 'all') { extraSalesConds.push(`jenis=$EXTRA${extraSalesVals.length}`); extraSalesVals.push(jenis); }
     const salesman = p.get('salesman');
     if (salesman && salesman !== 'all') { extraSalesConds.push(`salesman=$EXTRA${extraSalesVals.length}`); extraSalesVals.push(salesman); }
     const kota = p.get('kota');
@@ -97,6 +108,8 @@ function buildWhereMultiYear(p: URLSearchParams, table: 'sales' | 'so') {
     if (typeCustomer && typeCustomer !== 'all') { extraSOConds.push(`nomor_so IN (SELECT DISTINCT nomor_so FROM sales_transactions WHERE type_customer=$EXTRA${extraSOVals.length} AND nomor_so IS NOT NULL AND nomor_so != '')`); extraSOVals.push(typeCustomer); }
     const kategori = p.get('kategori');
     if (kategori && kategori !== 'all') { extraSOConds.push(`nomor_so IN (SELECT DISTINCT nomor_so FROM sales_transactions WHERE kategori=$EXTRA${extraSOVals.length} AND nomor_so IS NOT NULL AND nomor_so != '')`); extraSOVals.push(kategori); }
+    const jenis = p.get('jenis');
+    if (jenis && jenis !== 'all') { extraSOConds.push(`nomor_so IN (SELECT DISTINCT nomor_so FROM sales_transactions WHERE jenis=$EXTRA${extraSOVals.length} AND nomor_so IS NOT NULL AND nomor_so != '')`); extraSOVals.push(jenis); }
   }
 
   const extraConds = table === 'sales' ? extraSalesConds : extraSOConds;

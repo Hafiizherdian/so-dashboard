@@ -126,12 +126,12 @@ export default function OutstandingTab({ data, theme, tahun }: Props) {
           <CartesianGrid strokeDasharray="3 3" stroke={gs} vertical={false} />
           <XAxis
             dataKey="label"
-            tick={{ ...ts, fontSize: isMobile ? 8 : isTablet ? 9 : isDesktop ? 10 : undefined }}
+            tick={{ ...ts, fontSize: isMobile ? 5 : isTablet ? 6 : isDesktop ? 8 : undefined }}
             axisLine={false} tickLine={false}
             interval={isMobile ? Math.max(0, Math.floor(monthlyOut.length / 6)) : 0}
           />
           <YAxis
-            tick={{ ...ts, fontSize: isMobile ? 8 : isTablet ? 9 : isDesktop ? 10 : undefined }}
+            tick={{ ...ts, fontSize: isMobile ? 5 : isTablet ? 6 : isDesktop ? 8 : undefined }}
             axisLine={false} tickLine={false}
             width={isMobile ? 36 : 50}
             tickFormatter={(v: number) => v.toLocaleString('id-ID')}

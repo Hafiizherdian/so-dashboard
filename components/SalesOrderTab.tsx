@@ -56,6 +56,12 @@ export default function SalesOrderTab({ data, theme, tahun }: Props) {
     qty_sisa:      Number(w.qty_sisa      ?? 0),
   }));
 
+console.log('DEBUG tahun prop:', tahun);
+console.log('DEBUG ratioData:', ratioData);
+console.log('DEBUG weeklyData:', weeklyData);
+console.log('DEBUG topCustomers:', topCustomers);
+console.log('DEBUG categories:', categories);
+
   const maxCustVal  = Math.max(...topCustomers.map(c => Number(c.total_penjualan ?? 0)), 1);
   const totalCatVal = categories.reduce((s, c) => s + Number(c.total_penjualan ?? 0), 0) || 1;
 

@@ -1,3 +1,5 @@
+// types/index.ts
+
 export interface UploadedFile {
   id: string;
   original_name: string;
@@ -72,6 +74,7 @@ export interface FilterOptions {
   typeCustomers: string[];
   kategoris: string[];
   keterangans: string[];
+  jenis: string[];
 }
 
 export interface DashboardData {

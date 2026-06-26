@@ -1,15 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getTokenFromRequest } from '@/lib/auth';
 import { query, initDb } from '@/lib/db';
-
 export async function GET(req: NextRequest) {
   try {
     const payload = getTokenFromRequest(req);
     if (!payload) return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
-
     await initDb();
-
-    const [years, months, areas, types, kategoris] = await Promise.all([
+    const [years, months, areas, types, kategoris, jenisRows] = await Promise.all([
       // Ekstrak tahun dari kolom tanggal (DATE)
       query<{ tahun: number }>(
         `SELECT DISTINCT EXTRACT(YEAR FROM tanggal)::INTEGER AS tahun
@@ -24,7 +21,7 @@ export async function GET(req: NextRequest) {
          WHERE tanggal IS NOT NULL
          ORDER BY bulan ASC`
       ),
-      
+
       query<{ area: string }>(
         `SELECT DISTINCT uf.area
          FROM uploaded_files uf
@@ -43,8 +40,13 @@ export async function GET(req: NextRequest) {
          WHERE kategori IS NOT NULL AND kategori != ''
          ORDER BY kategori`
       ),
+      query<{ jenis: string }>(
+        `SELECT DISTINCT jenis
+         FROM sales_transactions
+         WHERE jenis IS NOT NULL AND jenis != ''
+         ORDER BY jenis`
+      )
     ]);
-
     return NextResponse.json({
       success: true,
       data: {
@@ -53,7 +55,8 @@ export async function GET(req: NextRequest) {
         areas: areas.map(r => r.area),
         typeCustomers: types.map(r => r.type_customer),
         kategoris: kategoris.map(r => r.kategori),
-        keterangans: [], 
+        keterangans: [],
+        jenis: jenisRows.map(r => r.jenis),
       } satisfies import('@/types').FilterOptions,
     });
   } catch (e: any) {
