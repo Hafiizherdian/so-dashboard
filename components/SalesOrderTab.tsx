@@ -35,6 +35,7 @@ export default function SalesOrderTab({ data, theme, tahun }: Props) {
 
   const isMobile = bp === 'mobile';
   const isTablet = bp === 'tablet';
+  const isDesktop = bp === 'desktop';
 
   const monthly = (Array.isArray(data.monthly) ? data.monthly : [])
     .filter((m: any) => !tahun || tahun === 'all' || Number(m.tahun) === Number(tahun));
@@ -56,18 +57,18 @@ export default function SalesOrderTab({ data, theme, tahun }: Props) {
     qty_sisa:      Number(w.qty_sisa      ?? 0),
   }));
 
-console.log('DEBUG tahun prop:', tahun);
-console.log('DEBUG ratioData:', ratioData);
-console.log('DEBUG weeklyData:', weeklyData);
-console.log('DEBUG topCustomers:', topCustomers);
-console.log('DEBUG categories:', categories);
+// console.log('DEBUG tahun prop:', tahun);
+// console.log('DEBUG ratioData:', ratioData);
+// console.log('DEBUG weeklyData:', weeklyData);
+// console.log('DEBUG topCustomers:', topCustomers);
+// console.log('DEBUG categories:', categories);
 
   const maxCustVal  = Math.max(...topCustomers.map(c => Number(c.total_penjualan ?? 0)), 1);
   const totalCatVal = categories.reduce((s, c) => s + Number(c.total_penjualan ?? 0), 0) || 1;
 
   // ── Responsive sizes ──
   const ratioChartH  = isMobile ? 160 : 200;
-  const weeklyChartH = isMobile ? 130 : 160;
+  const weeklyChartH = isMobile ? 130 : 260;
   const weeklyInterval = isMobile
     ? Math.max(0, Math.floor(weeklyData.length / 6))
     : Math.max(0, Math.floor(weeklyData.length / 10));
@@ -96,14 +97,14 @@ console.log('DEBUG categories:', categories);
           <CartesianGrid strokeDasharray="3 3" stroke={gs} vertical={false} />
           <XAxis
             dataKey="label"
-            tick={{ ...ts, fontSize: isMobile ? 8 : undefined }}
+            tick={{ ...ts, fontSize: isMobile ? 5 : isTablet ? 6 : isDesktop ? 8 : undefined }}
             axisLine={false} tickLine={false}
             interval={isMobile ? Math.max(0, Math.floor(ratioData.length / 6)) : 0}
           />
           <YAxis
             yAxisId="l"
             tickFormatter={(v: number) => v.toLocaleString('id-ID')}
-            tick={{ ...ts, fontSize: isMobile ? 8 : undefined }}
+            tick={{ ...ts, fontSize: isMobile ? 5 : isTablet ? 6 : isDesktop ? 8 : undefined }}
             axisLine={false} tickLine={false}
             width={isMobile ? 40 : 60}
           />
@@ -111,7 +112,7 @@ console.log('DEBUG categories:', categories);
             yAxisId="r"
             orientation="right"
             tickFormatter={(v: number) => `${Number(v).toFixed(0)}%`}
-            tick={{ ...ts, fontSize: isMobile ? 8 : undefined }}
+            tick={{ ...ts, fontSize: isMobile ? 5 : isTablet ? 6 : isDesktop ? 8 : undefined }}
             axisLine={false} tickLine={false}
             width={isMobile ? 28 : 36}
           />
@@ -139,20 +140,20 @@ console.log('DEBUG categories:', categories);
           <XAxis
             dataKey="minggu"
             tickFormatter={(v: any) => `W${v}`}
-            tick={{ ...ts, fontSize: isMobile ? 8 : undefined }}
+            tick={{ ...ts, fontSize: isMobile ? 5 : isTablet ? 6 : isDesktop ? 8 : undefined }}
             axisLine={false} tickLine={false}
             interval={weeklyInterval}
           />
           <YAxis
             tickFormatter={(v: number) => v.toLocaleString('id-ID')}
-            tick={{ ...ts, fontSize: isMobile ? 8 : undefined }}
+            tick={{ ...ts, fontSize: isMobile ? 5 : isTablet ? 6 : isDesktop ? 8 : undefined }}
             axisLine={false} tickLine={false}
             width={isMobile ? 36 : 50}
           />
           <Tooltip content={<ChartTooltip theme={theme} currency={false} />} />
           <Bar dataKey="qty_order"     name="SO (Qty)"       fill="#6366f1" opacity={0.7} radius={[2, 2, 0, 0]} maxBarSize={10} />
           <Bar dataKey="qty_delivered" name="Delivered (Qty)" fill="#10b981" opacity={0.8} radius={[2, 2, 0, 0]} maxBarSize={10} />
-          <Bar dataKey="qty_sisa"      name="Sisa (Qty)"     fill="#ef4444" opacity={0.7} radius={[2, 2, 0, 0]} maxBarSize={10} />
+          <Bar dataKey="qty_sisa"      name="Sisa (Qty)"     fill="#ef4444" opacity={0.7} radius={[2, 2, 0, 0]} maxBarSize={10}  />
         </BarChart>
       </ResponsiveContainer>
       <div style={{ display: 'flex', gap: 10, marginTop: 4, flexWrap: 'wrap' }}>
