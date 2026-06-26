@@ -94,6 +94,7 @@ export interface DashboardData {
   topCustomers: TopCustomer[];
   topProducts: TopProduct[];
   typeCustomerBreakdown: { type_customer: string; penjualan: number; pct: number; transaksi: number }[];
+  jenisBreakdown: { jenis: string; penjualan: number; pct: number; transaksi: number }[];
   keteranganBreakdown: { keterangan: string; penjualan: number; count: number }[];
   topOutstanding?: {
     nomor_so: string;

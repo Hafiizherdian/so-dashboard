@@ -344,6 +344,22 @@ export async function GET(req: NextRequest) {
       ORDER BY qty DESC 
     `, vSO);
 
+    // ── 10. JENIS BREAKDOWN ────────────────────────────────────────────────────────────
+    const jenisRows = await query<{
+      jenis:     string;
+      penjualan: string;
+      transaksi: string;
+    }>(`
+      SELECT jenis,
+            COALESCE(SUM(sub_total),0) AS penjualan,
+            COUNT(*) AS transaksi
+      FROM sales_transactions ${wSales}
+      GROUP BY jenis ORDER BY penjualan DESC
+    `, vSales);
+
+    const totalJenisPenjualan =
+      jenisRows.reduce((acc, r) => acc + Number(r.penjualan), 0) || 1;
+
     // ── RESPONSE ──────────────────────────────────────────────────────────────
     return NextResponse.json({
       success: true,
@@ -388,6 +404,12 @@ export async function GET(req: NextRequest) {
           penjualan:     Number(r.penjualan),
           transaksi:     Number(r.transaksi),
           pct:           (Number(r.penjualan) / totalTypePenjualan) * 100,
+        })),
+        jenisBreakdown: jenisRows.map(r => ({
+          jenis:     r.jenis || '(Tanpa Jenis)',
+          penjualan: Number(r.penjualan),
+          transaksi: Number(r.transaksi),
+          pct:       (Number(r.penjualan) / totalJenisPenjualan) * 100,
         })),
         keteranganBreakdown: ketRows.map(r => ({
           keterangan: r.label || '(kosong)',

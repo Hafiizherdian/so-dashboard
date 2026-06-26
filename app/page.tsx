@@ -60,6 +60,7 @@ const EMPTY: DashboardData = {
   topCustomers:          [],
   topProducts:           [],
   typeCustomerBreakdown: [],
+  jenisBreakdown:        [],  
   keteranganBreakdown:   [],
   topOutstanding:        [],
   allYears:              [],

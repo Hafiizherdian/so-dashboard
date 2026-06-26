@@ -46,6 +46,7 @@ export default function PenjualanTab({ data, theme }: Props) {
   const topCustomers          = Array.isArray(data.topCustomers)          ? data.topCustomers          : [];
   const categories            = Array.isArray(data.categories)            ? data.categories            : [];
   const typeCustomerBreakdown = Array.isArray(data.typeCustomerBreakdown) ? data.typeCustomerBreakdown : [];
+  const jenisBreakdown        = Array.isArray((data as any).jenisBreakdown) ? (data as any).jenisBreakdown : [];
 
   const toggleSort = (k: SortKey) => {
     if (k === sortKey) setSortDir(d => d === 'asc' ? 'desc' : 'asc');
@@ -86,47 +87,87 @@ export default function PenjualanTab({ data, theme }: Props) {
   const categoryChartH  = isMobile ? 140 : 160;
 
   // ── Tipe Pelanggan node ──
-  const TipePelangganNode = (
-    <Card
-      theme={theme} title="Tipe Pelanggan"
-      icon={<Users size={10} color="#f59e0b" />}
-      color="#f59e0b" accent="#f59e0b"
-    >
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 6, flex: 1, justifyContent: 'center' }}>
-        {typeCustomerBreakdown.length === 0 && (
-          <span style={{ fontSize: 11, color: t.textMuted, fontFamily: FONT_MONO, textAlign: 'center' }}>
-            Tidak ada data
-          </span>
-        )}
-        {typeCustomerBreakdown.slice(0, 6).map((k, i) => {
-          const maxVal = Number(typeCustomerBreakdown[0]?.penjualan ?? 1) || 1;
-          const pct    = (Number(k.penjualan ?? 0) / maxVal) * 100;
-          const color  = CC[i % CC.length];
-          return (
-            <div key={k.type_customer} style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-                  <span style={{ width: 6, height: 6, borderRadius: 2, background: color, flexShrink: 0 }} />
-                  <span style={{ fontSize: 10, color: t.textSub, fontFamily: FONT_MONO }}>
-                    {k.type_customer}
-                  </span>
-                  <span style={{ fontSize: 9, color: t.textMuted, fontFamily: FONT_MONO }}>
-                    ({Number(k.pct ?? 0).toFixed(1)}%)
-                  </span>
-                </div>
-                <span style={{ fontSize: 10, fontWeight: 700, color: t.text, fontFamily: FONT_MONO }}>
-                  {fmtRpFull(Number(k.penjualan ?? 0))}
+  // const TipePelangganNode = (
+  //   <Card
+  //     theme={theme} title="Tipe Pelanggan"
+  //     icon={<Users size={10} color="#f59e0b" />}
+  //     color="#f59e0b" accent="#f59e0b"
+  //   >
+  //     <div style={{ display: 'flex', flexDirection: 'column', gap: 6, flex: 1, justifyContent: 'center' }}>
+  //       {typeCustomerBreakdown.length === 0 && (
+  //         <span style={{ fontSize: 11, color: t.textMuted, fontFamily: FONT_MONO, textAlign: 'center' }}>
+  //           Tidak ada data
+  //         </span>
+  //       )}
+  //       {typeCustomerBreakdown.slice(0, 6).map((k, i) => {
+  //         const maxVal = Number(typeCustomerBreakdown[0]?.penjualan ?? 1) || 1;
+  //         const pct    = (Number(k.penjualan ?? 0) / maxVal) * 100;
+  //         const color  = CC[i % CC.length];
+  //         return (
+  //           <div key={k.type_customer} style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+  //             <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+  //               <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+  //                 <span style={{ width: 6, height: 6, borderRadius: 2, background: color, flexShrink: 0 }} />
+  //                 <span style={{ fontSize: 10, color: t.textSub, fontFamily: FONT_MONO }}>
+  //                   {k.type_customer}
+  //                 </span>
+  //                 <span style={{ fontSize: 9, color: t.textMuted, fontFamily: FONT_MONO }}>
+  //                   ({Number(k.pct ?? 0).toFixed(1)}%)
+  //                 </span>
+  //               </div>
+  //               <span style={{ fontSize: 10, fontWeight: 700, color: t.text, fontFamily: FONT_MONO }}>
+  //                 {fmtRpFull(Number(k.penjualan ?? 0))}
+  //               </span>
+  //             </div>
+  //             <div style={{ height: 3, borderRadius: 2, background: t.borderCard, overflow: 'hidden' }}>
+  //               <div style={{ height: '100%', width: `${pct}%`, background: color, borderRadius: 2 }} />
+  //             </div>
+  //           </div>
+  //         );
+  //       })}
+  //     </div>
+  //   </Card>
+  // );
+
+  const JenisNode = (
+  <Card
+    theme={theme} title="Penjualan per Jenis"
+    icon={<Users size={10} color="#f59e0b" />}
+    color="#f59e0b" accent="#f59e0b"
+  >
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 6, flex: 1, justifyContent: 'center' }}>
+      {jenisBreakdown.length === 0 && (
+        <span style={{ fontSize: 11, color: t.textMuted, fontFamily: FONT_MONO, textAlign: 'center' }}>
+          Tidak ada data
+        </span>
+      )}
+      {jenisBreakdown.slice(0, 6).map((k: any, i: number) => {
+        const maxVal = Number(jenisBreakdown[0]?.penjualan ?? 1) || 1;
+        const pct    = (Number(k.penjualan ?? 0) / maxVal) * 100;
+        const color  = CC[i % CC.length];
+        return (
+          <div key={k.jenis} style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+                <span style={{ width: 6, height: 6, borderRadius: 2, background: color, flexShrink: 0 }} />
+                <span style={{ fontSize: 10, color: t.textSub, fontFamily: FONT_MONO }}>{k.jenis}</span>
+                <span style={{ fontSize: 9, color: t.textMuted, fontFamily: FONT_MONO }}>
+                  ({Number(k.pct ?? 0).toFixed(1)}%)
                 </span>
               </div>
-              <div style={{ height: 3, borderRadius: 2, background: t.borderCard, overflow: 'hidden' }}>
-                <div style={{ height: '100%', width: `${pct}%`, background: color, borderRadius: 2 }} />
-              </div>
+              <span style={{ fontSize: 10, fontWeight: 700, color: t.text, fontFamily: FONT_MONO }}>
+                {fmtRpFull(Number(k.penjualan ?? 0))}
+              </span>
             </div>
-          );
-        })}
-      </div>
-    </Card>
-  );
+            <div style={{ height: 3, borderRadius: 2, background: t.borderCard, overflow: 'hidden' }}>
+              <div style={{ height: '100%', width: `${pct}%`, background: color, borderRadius: 2 }} />
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  </Card>
+);
 
   // ── Kategori node ──
   const KategoriNode = (
@@ -331,7 +372,7 @@ export default function PenjualanTab({ data, theme }: Props) {
         {/* Kategori + Tipe: 2 kolom */}
         <div style={{ display: 'grid', gridTemplateColumns: '1fr ', gap: 10 }}>
           {KategoriNode}
-          {TipePelangganNode}
+          {JenisNode}
         </div>
 
         {/* Customer table full width */}
@@ -373,7 +414,7 @@ export default function PenjualanTab({ data, theme }: Props) {
         {/* Kategori (3/5) + Tipe Pelanggan (2/5) */}
         <div style={{ display: 'grid', gridTemplateColumns: '3fr 2fr', gap: 12 }}>
           {KategoriNode}
-          {TipePelangganNode}
+          {JenisNode}
         </div>
 
         {/* Customer table full width */}
@@ -412,7 +453,7 @@ export default function PenjualanTab({ data, theme }: Props) {
 
       <div style={{ display: 'grid', gridTemplateColumns: '1.4fr 1fr', gap: 12 }}>
         {KategoriNode}
-        {TipePelangganNode}
+        {JenisNode}
       </div>
 
       {CustomerTable}
