@@ -86,6 +86,7 @@ export function parseExcel(buffer: Buffer): ExcelResult {
         salesman: toStr(r['salesman']),
         kota: toStr(r['kota']),
         kecamatan: toStr(r['kecamatan']),
+        jenis: toStr(r['jenis']),
       };
     }
   });

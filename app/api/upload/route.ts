@@ -45,11 +45,11 @@ export async function POST(req: NextRequest) {
         } else {
           const vals: any[] = [];
           const placeholders = batch.map((r, j) => {
-            const b = j * 22;
-            vals.push(fileId, r.week, r.tanggal, r.produk_id, r.qty_po, r.nomor_penjualan, r.type_customer, r.pelanggan, r.nomor_so, r.kategori, r.deskripsi_produk, r.brand, r.qty_terkirim, r.satuan, r.harga, r.bruto, r.diskon, r.pajak, r.sub_total, r.salesman, r.kota, r.kecamatan);
-            return `($${b+1},$${b+2},$${b+3},$${b+4},$${b+5},$${b+6},$${b+7},$${b+8},$${b+9},$${b+10},$${b+11},$${b+12},$${b+13},$${b+14},$${b+15},$${b+16},$${b+17},$${b+18},$${b+19},$${b+20},$${b+21},$${b+22})`;
+            const b = j * 23;
+            vals.push(fileId, r.week, r.tanggal, r.produk_id, r.qty_po, r.nomor_penjualan, r.type_customer, r.pelanggan, r.nomor_so, r.kategori, r.deskripsi_produk, r.brand, r.qty_terkirim, r.satuan, r.harga, r.bruto, r.diskon, r.pajak, r.sub_total, r.salesman, r.kota, r.kecamatan, r.jenis);
+            return `($${b+1},$${b+2},$${b+3},$${b+4},$${b+5},$${b+6},$${b+7},$${b+8},$${b+9},$${b+10},$${b+11},$${b+12},$${b+13},$${b+14},$${b+15},$${b+16},$${b+17},$${b+18},$${b+19},$${b+20},$${b+21},$${b+22},$${b+23})`;
           });
-          await query(`INSERT INTO sales_transactions (file_id, week, tanggal, produk_id, qty_po, nomor_penjualan, type_customer, pelanggan, nomor_so, kategori, deskripsi_produk, brand, qty_terkirim, satuan, harga, bruto, diskon, pajak, sub_total, salesman, kota, kecamatan) VALUES ${placeholders.join(',')}`, vals);
+          await query(`INSERT INTO sales_transactions (file_id, week, tanggal, produk_id, qty_po, nomor_penjualan, type_customer, pelanggan, nomor_so, kategori, deskripsi_produk, brand, qty_terkirim, satuan, harga, bruto, diskon, pajak, sub_total, salesman, kota, kecamatan, jenis) VALUES ${placeholders.join(',')}`, vals);
         }
       }
 
