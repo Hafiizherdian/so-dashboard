@@ -409,7 +409,7 @@ export default function UploadPlanTab({ theme }: Props) {
 
   // ── Render ──
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 16, padding: 16 }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 16,  }}>
       <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
 
       <FormatGuide t={t} />

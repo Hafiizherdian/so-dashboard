@@ -1,11 +1,113 @@
 'use client';
 import React, { useState, useRef, useEffect } from 'react';
 import { Upload, FileSpreadsheet, X, CheckCircle, AlertCircle, Trash2 } from 'lucide-react';
-import { Theme, tk, FONT_MONO } from '@/lib/theme';
+import { Theme, tk, FONT_MONO, Tokens } from '@/lib/theme';
 import { apiFetch, apiJson } from '@/lib/apiFetch';
 
 interface FileRow { id: string; original_name: string; file_size: number; record_count: number; status: 'completed'|'processing'|'error'; area: string; created_at: string; error_message?: string; }
 interface Props { theme: Theme; }
+
+const FORMAT_COLS_PENJ   = [
+  'Week', 'Tanggal', 'Produk id', 'QTY_PO',
+  'Tipe Customer', 'Pelanggan', 'nomor so',
+  'Jenis', 'Kategori', 'Deskripsi Produk', 'Brand',
+  'qty terkirim', 'satuan', 'harga', 'bruto', 'diskon',
+  'pajak', 'sub total', 'salesman', 'kota', 'kecamatan'
+];
+
+const FORMAT_COLS_SO    = [
+  'Week', 'Tanggal', 'Column14', 'ref po',
+  'no so', 'Customer', 'Produk', 'Panjang',
+  'lebar', 'tinggi', 'berat', 'harga',
+  'uom', 'qty order', 'qty delivered', 'qty sisa'
+]
+
+function FormatGuide({ t }: { t: Tokens }) {
+  return (
+    <div
+      style={{
+        padding: '11px 14px',
+        borderRadius: 10,
+        background: t.cardbg,
+        border: `1px solid ${t.border}`,
+        fontSize: 11,
+        color: t.text,
+        fontFamily: FONT_MONO,
+        lineHeight: 1.8,
+      }}
+    >
+      <div
+        style={{
+          display: 'flex',
+          gap: 16,
+          alignItems: 'flex-start',
+        }}
+      >
+        {/* Kiri */}
+        <div style={{ flex: 1 ,padding: '5px 5px' ,borderRadius: 10, border: t.borderInput , background: t.infoBg}}>
+          <div
+            style={{
+              fontWeight: 700,
+              marginBottom: 4,
+              color: '#818cf8',
+            }}
+          >
+            Format kolom Excel Penjualan:
+          </div>
+
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px 10px' }}>
+            {FORMAT_COLS_PENJ.map((col) => (
+              <span
+                key={col}
+                style={{
+                  padding: '1px 7px',
+                  borderRadius: 5,
+                  background: t.inputBg,
+                  border: `1px solid ${t.borderInput}`,
+                  fontSize: 10,
+                  color: t.textSub,
+                }}
+              >
+                {col}
+              </span>
+            ))}
+          </div>
+        </div>
+
+        {/* Kanan */}
+        <div style={{ flex: 1, padding: '18px 5px' ,borderRadius: 10, border: t.borderInput , background: t.infoBg }}>
+          <div
+            style={{
+              fontWeight: 700,
+              marginBottom: 4,
+              color: '#818cf8',
+            }}
+          >
+            Format kolom Excel SO:
+          </div>
+
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px 10px' }}>
+            {FORMAT_COLS_SO.map((col) => (
+              <span
+                key={col}
+                style={{
+                  padding: '1px 7px',
+                  borderRadius: 5,
+                  background: t.inputBg,
+                  border: `1px solid ${t.borderInput}`,
+                  fontSize: 10,
+                  color: t.textSub,
+                }}
+              >
+                {col}
+              </span>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 export default function UploadTab({ theme }: Props) {
   const t = tk[theme];
@@ -63,8 +165,9 @@ export default function UploadTab({ theme }: Props) {
   const inp: React.CSSProperties = { width:'100%', padding:'9px 12px', fontSize:12, borderRadius:8, background:t.inputBg, border:`1px solid ${t.borderInput}`, color:t.text, outline:'none', fontFamily:FONT_MONO };
 
   return (
-    <div style={{ display:'flex', flexDirection:'column', gap:16, width:'100%', padding:16 }}>
-      <div style={{ background:t.cardbg, border:`1px solid ${t.borderCard}`, borderRadius:14, overflow:'hidden', boxShadow:t.shadowCard }}>
+    <div style={{ display:'flex', flexDirection:'column', gap:16, width:'100%' }}>
+      <FormatGuide t={t}/>
+      <div style={{ background:t.cardbg, border:`1px solid ${t.borderCard}`,  overflow:'hidden', boxShadow:t.shadowCard }}>
         <div style={{ padding:'12px 16px', borderBottom:`1px solid ${t.border}`, display:'flex', alignItems:'center', gap:8 }}>
           <div style={{ width:24, height:24, borderRadius:7, background:'#6366f115', border:'1px solid #6366f128', display:'flex', alignItems:'center', justifyContent:'center' }}><Upload size={12} color="#6366f1"/></div>
           <div style={{ fontSize:12, fontWeight:700, color:t.text }}>Upload File Baru</div>
@@ -114,7 +217,7 @@ export default function UploadTab({ theme }: Props) {
         </div>
       </div>
 
-      <div style={{ background:t.cardbg, border:`1px solid ${t.borderCard}`, borderRadius:14, overflow:'hidden', boxShadow:t.shadowCard }}>
+      <div style={{ background:t.cardbg, border:`1px solid ${t.borderCard}`,  overflow:'hidden', boxShadow:t.shadowCard }}>
         <div style={{ padding:'12px 16px', borderBottom:`1px solid ${t.border}`, display:'flex', alignItems:'center', gap:8 }}>
           <div style={{ width:24, height:24, borderRadius:7, background:'#10b98115', border:'1px solid #10b98128', display:'flex', alignItems:'center', justifyContent:'center' }}><FileSpreadsheet size={12} color="#10b981"/></div>
           <div style={{ fontSize:12, fontWeight:700, color:t.text }}>File Terupload</div>
