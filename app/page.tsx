@@ -1,11 +1,12 @@
 'use client';
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import {
   TrendingUp, ShoppingCart, Receipt, AlertCircle, Upload, Layers,
   Sun, Moon, LogOut, ChevronLeft, BarChart3, Users, Settings, Package,
   ClipboardList,
 } from 'lucide-react';
 import { AuthProvider, useAuth } from '@/lib/AuthContext';
+import { ALL_MENUS, MenuDef } from '@/lib/menu';
 import { Theme, tk, FONT_MONO, FONT_SANS } from '@/lib/theme';
 import { DashboardData, FilterOptions } from '@/types/index';
 import { Sel, Spinner } from '@/components/ui';
@@ -26,22 +27,25 @@ import UploadLhkpTab from '@/components/UploadLhkpTab';
 
 const MONTHS = [{ value: 'all', label: 'Semua Bulan' }, ...['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'].map((l,i) => ({ value: String(i+1), label: l }))];
 
-const ALL_TABS = [
-  { id: 'overview',      label: 'Ringkasan',          shortLabel: 'Ringkasan',  Icon: TrendingUp,   roles: ['root','admin','user'] },
-  { id: 'penjualan',     label: 'Penjualan',           shortLabel: 'Jual',       Icon: Receipt,      roles: ['root','admin','user'] },
-  { id: 'so',            label: 'Sales Order',         shortLabel: 'SO',         Icon: ShoppingCart, roles: ['root','admin','user'] },
-  { id: 'outstanding',   label: 'Outstanding',         shortLabel: 'Out.',       Icon: AlertCircle,  roles: ['root','admin','user'] },
-  { id: 'kertas',        label: 'Stok Level',          shortLabel: 'Kertas',     Icon: Layers,       roles: ['root','admin','user'] },
-  { id: 'Plan',          label: 'Plan Produksi',       shortLabel: 'Plan',       Icon: ClipboardList,roles: ['root','admin','user'] },
-  { id: 'lhkp',          label: 'LHKP',                shortLabel: 'LHKP',       Icon: ClipboardList,roles: ['root','admin','user'] },
-  { id: 'upload',        label: 'Upload Data',         shortLabel: 'Upload',     Icon: Upload,       roles: ['root','admin'] },
-  { id: 'kertas_upload', label: 'Upload Stok Kertas',  shortLabel: 'Up. Kertas', Icon: Package,      roles: ['root','admin'] },
-  { id: 'Plan_upload',   label: 'Upload Plan Produksi',shortLabel: 'Up. Plan',   Icon: Package,      roles: ['root','admin'] },
-  { id: 'lhkp_upload',   label: 'Upload LHKP',         shortLabel: 'Up. LHKP',  Icon: Package,      roles: ['root','admin'] },
-  { id: 'users',         label: 'Manajemen User',      shortLabel: 'User',       Icon: Users,        roles: ['root'] },
-  // { id: 'settings',      label: 'Pengaturan',          shortLabel: 'Setting',    Icon: Settings,     roles: ['root'] },
-] as const;
-type TabId = typeof ALL_TABS[number]['id'];
+// Icon di-map terpisah dari data menu (ALL_MENUS ada di lib/menu.ts, dipakai juga oleh UserManagement)
+const MENU_ICONS: Record<string, any> = {
+  overview:      TrendingUp,
+  penjualan:     Receipt,
+  so:            ShoppingCart,
+  outstanding:   AlertCircle,
+  kertas:        Layers,
+  Plan:          ClipboardList,
+  lhkp:          ClipboardList,
+  upload:        Upload,
+  kertas_upload: Package,
+  Plan_upload:   Package,
+  lhkp_upload:   Package,
+  users:         Users,
+};
+
+const ALL_TABS = ALL_MENUS.map(m => ({ ...m, Icon: MENU_ICONS[m.id] || TrendingUp }));
+type TabId = string;
+type TabDef = typeof ALL_TABS[number];
 
 const EMPTY: DashboardData = {
   summary: {
@@ -60,7 +64,7 @@ const EMPTY: DashboardData = {
   topCustomers:          [],
   topProducts:           [],
   typeCustomerBreakdown: [],
-  jenisBreakdown:        [],  
+  jenisBreakdown:        [],
   keteranganBreakdown:   [],
   topOutstanding:        [],
   allYears:              [],
@@ -92,13 +96,16 @@ function ThemeToggle({ theme, setTheme, compact }: { theme:Theme; setTheme:(t:Th
   );
 }
 
-function Sidebar({ activeTab, setActiveTab, collapsed, setCollapsed, theme, setTheme, userRole }: {
+/**
+ * Sidebar & MobileBottomNav sekarang menerima daftar tab yang SUDAH difilter
+ * (role + allowedMenus) dari DashboardInner, bukan memfilter sendiri pakai userRole.
+ */
+function Sidebar({ activeTab, setActiveTab, collapsed, setCollapsed, theme, setTheme, tabs }: {
   activeTab:TabId; setActiveTab:(id:TabId)=>void;
   collapsed:boolean; setCollapsed:(v:boolean)=>void;
-  theme:Theme; setTheme:(t:Theme)=>void; userRole: string;
+  theme:Theme; setTheme:(t:Theme)=>void; tabs: TabDef[];
 }) {
   const t=tk[theme]; const {user,logout}=useAuth();
-  const tabs = ALL_TABS.filter(tab => tab.roles.includes(userRole as any));
   return (
     <aside style={{position:'fixed',left:0,top:0,height:'100vh',zIndex:40,display:'flex',flexDirection:'column',width:collapsed?52:210,background:t.sidebarbg,borderRight:`1px solid ${t.border}`,transition:'width 0.2s cubic-bezier(.4,0,.2,1)',overflowX:'hidden'}}>
       <div style={{display:'flex',alignItems:'center',justifyContent:collapsed?'center':'space-between',padding:collapsed?'0':'0 8px 0 12px',borderBottom:`1px solid ${t.border}`,flexShrink:0,minHeight:48}}>
@@ -128,8 +135,7 @@ function Sidebar({ activeTab, setActiveTab, collapsed, setCollapsed, theme, setT
           const active = activeTab === id;
           const prevTab = tabs[idx - 1];
           const showDivider = !collapsed && prevTab && (
-            (id === 'upload' && !['upload'].includes(prevTab.id)) 
-            // (id === 'settings' && !['settings'].includes(prevTab.id) && prevTab.id !== 'users')
+            (id === 'upload' && !['upload'].includes(prevTab.id))
           );
           return (
             <React.Fragment key={id}>
@@ -190,9 +196,8 @@ function MobileHeader({ theme, setTheme }: { theme:Theme; setTheme:(t:Theme)=>vo
   );
 }
 
-function MobileBottomNav({ activeTab, setActiveTab, theme, userRole }: { activeTab:TabId; setActiveTab:(id:TabId)=>void; theme:Theme; userRole:string }) {
+function MobileBottomNav({ activeTab, setActiveTab, theme, tabs }: { activeTab:TabId; setActiveTab:(id:TabId)=>void; theme:Theme; tabs: TabDef[] }) {
   const t=tk[theme];
-  const tabs = ALL_TABS.filter(tab => tab.roles.includes(userRole as any));
   return (
     <nav style={{position:'fixed',bottom:0,left:0,right:0,zIndex:9999,background:t.bottombarbg,backdropFilter:'blur(16px)',borderTop:`1px solid ${t.border}`,display:'flex',paddingBottom:'env(safe-area-inset-bottom,0px)'}}>
       {tabs.map(({id,shortLabel,Icon}) => {
@@ -228,7 +233,6 @@ function FilterBar({ filters, setFilters, appliedFilters, opts, onApply, onReset
 }) {
   const t=tk[theme];
 
-  // dirty: filter draft berbeda dari yang sudah applied
   const dirty = (Object.keys(filters) as (keyof FilterState)[]).some(
     k => filters[k] !== appliedFilters[k]
   );
@@ -251,7 +255,6 @@ function FilterBar({ filters, setFilters, appliedFilters, opts, onApply, onReset
         <Sel value={filters.jenis} onChange={v=>setFilters(f=>({...f,jenis:v}))} options={JENS} theme={theme} style={{minWidth:90}} />
         <div style={{flex:1}}/>
         {loading&&<Spinner size={11} color="#818cf8"/>}
-        {/* indikator ada filter belum diterapkan */}
         {dirty&&(
           <span style={{fontSize:9,fontFamily:FONT_MONO,color:'#f59e0b',background:'rgba(245,158,11,0.1)',border:'1px solid rgba(245,158,11,0.25)',borderRadius:4,padding:'1px 6px',flexShrink:0}}>
             belum diterapkan
@@ -332,9 +335,7 @@ function DashboardInner() {
   const {isMobile,isTablet}=useBreakpoint();
   const {user}=useAuth();
 
-  // filters: draft (diubah real-time oleh user)
   const [filters,setFilters]=useState<FilterState>(FILTER_INIT);
-  // appliedFilters: hanya berubah setelah tombol Terapkan diklik
   const [appliedFilters,setAppliedFilters]=useState<FilterState>(FILTER_INIT);
 
   const [opts,setOpts]=useState<FilterOptions>({years:[],months:[],areas:[],typeCustomers:[],kategoris:[],keterangans:[], jenis:[]});
@@ -374,10 +375,8 @@ function DashboardInner() {
       const r=await apiJson(`/api/sales?${p}`);
       if(r.success) {
         setData(r.data);
-        setAppliedFilters({ ...filters }); // ← simpan sebagai applied hanya setelah berhasil
+        setAppliedFilters({ ...filters });
       }
-      console.log('doApply filters:', filters);
-console.log('query string:', `/api/sales?${p}`);
     } catch(e){ console.error(e); }
     finally { setLoading(false); }
   },[filters]);
@@ -390,17 +389,42 @@ console.log('query string:', `/api/sales?${p}`);
 
   const sideW=isMobile?0:collapsed?52:210;
   const pad=isMobile?10:12;
-  const userRole=user?.role||'user';
+  const userRole = user?.role || 'user';
+  const allowedMenus = user?.allowedMenus ?? null; // null = akses penuh sesuai role
   const t=tk[theme];
   const showFilter=DATA_TABS.includes(tab);
 
-  // gunakan appliedFilters untuk export/settings
   const filtersForExport = Object.fromEntries(Object.entries(appliedFilters));
 
+  // Daftar tab yang benar-benar boleh diakses user ini:
+  // 1) role harus termasuk di tab.roles
+  // 2) root selalu full access
+  // 3) kalau allowedMenus null -> full access sesuai role
+  // 4) kalau allowedMenus array -> hanya menu yang ada di dalamnya
+  const visibleTabs = useMemo(() => {
+    return ALL_TABS.filter(tabDef => {
+      if (!tabDef.roles.includes(userRole as any)) return false;
+      if (userRole === 'root') return true;
+      if (allowedMenus === null) return true;
+      return allowedMenus.includes(tabDef.id);
+    });
+  }, [userRole, allowedMenus]);
+
+  // Kalau tab aktif ternyata tidak lagi ada di visibleTabs (misal admin baru login
+  // dan menu default 'overview' dicabut), pindah ke tab pertama yang boleh diakses.
+  useEffect(() => {
+    if (visibleTabs.length > 0 && !visibleTabs.some(vt => vt.id === tab)) {
+      setTab(visibleTabs[0].id);
+    }
+  }, [visibleTabs, tab]);
+
   const renderTab=()=>{
+    // Guard tambahan: kalau user coba akses tab yang tidak ada di visibleTabs
+    // (misal lewat state lama), jangan render apa-apa.
+    if (!visibleTabs.some(vt => vt.id === tab)) return null;
+
     switch(tab){
       case 'penjualan':     return <PenjualanTab data={data} theme={theme}/>;
-      // ↓ pakai appliedFilters.tahun bukan filters.tahun
       case 'so':            return <SalesOrderTab data={data} theme={theme} tahun={appliedFilters.tahun}/>;
       case 'outstanding':   return <OutstandingTab data={data} theme={theme} tahun={appliedFilters.tahun} />;
       case 'lhkp':          return <LhkpTab theme={theme}/>;
@@ -408,10 +432,9 @@ console.log('query string:', `/api/sales?${p}`);
       case 'upload':        return userRole!=='user'?<UploadTabComp theme={theme}/>:null;
       case 'kertas_upload': return userRole!=='user'?<UploadKertasTab theme={theme}/>:null;
       case 'Plan_upload':   return userRole!=='user'?<UploadWIPTab theme={theme}/>:null;
-      case 'users':         return userRole!=='user'?<UserManagement theme={theme}/>:null;
+      case 'users':         return userRole==='root'?<UserManagement theme={theme}/>:null;
       case 'kertas':        return <KertasTab theme={theme}/>;
       case 'Plan':          return <WipTab theme={theme}/>;
-      // case 'settings':      return <SettingsTab theme={theme} currentFilters={filtersForExport}/>;
       default:              return <OverviewTab data={data} theme={theme} availH={availH}/>;
     }
   };
@@ -438,7 +461,7 @@ console.log('query string:', `/api/sales?${p}`);
           activeTab={tab} setActiveTab={setTab}
           collapsed={collapsed} setCollapsed={setCollapsed}
           theme={theme} setTheme={applyTheme}
-          userRole={userRole}
+          tabs={visibleTabs}
         />
       )}
 
@@ -469,7 +492,7 @@ console.log('query string:', `/api/sales?${p}`);
       </div>
 
       {isMobile && (
-        <MobileBottomNav activeTab={tab} setActiveTab={setTab} theme={theme} userRole={userRole}/>
+        <MobileBottomNav activeTab={tab} setActiveTab={setTab} theme={theme} tabs={visibleTabs}/>
       )}
     </div>
   );

@@ -13,7 +13,7 @@ export async function GET(req: NextRequest) {
     }
     await initDb();
     const rows = await query(
-      `SELECT id, username, role, areas, created_at FROM users ORDER BY created_at DESC`
+      `SELECT id, username, role, areas, allowed_menus, created_at FROM users ORDER BY created_at DESC`
     );
     return NextResponse.json({ success: true, data: rows });
   } catch (e: any) {
@@ -30,7 +30,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ success: false, error: 'Forbidden' }, { status: 403 });
     }
     await initDb();
-    const { username, password, role, areas } = await req.json();
+    const { username, password, role, areas, allowedMenus } = await req.json();
     if (!username || !password) return NextResponse.json({ success: false, error: 'Username dan password wajib' }, { status: 400 });
     
     if (payload.role === 'admin' && role === 'root') {
@@ -38,8 +38,8 @@ export async function POST(req: NextRequest) {
     }
     const hash = await bcrypt.hash(password, 10);
     const rows = await query<{ id: number }>(
-      `INSERT INTO users (username, password_hash, role, areas) VALUES ($1,$2,$3,$4) RETURNING id`,
-      [username, hash, role || 'user', areas || []]
+      `INSERT INTO users (username, password_hash, role, areas, allowed_menus) VALUES ($1,$2,$3,$4, $5) RETURNING id`,
+      [username, hash, role || 'user', areas || [], allowedMenus || null]
     );
     return NextResponse.json({ success: true, data: { id: rows[0].id } });
   } catch (e: any) {
@@ -57,7 +57,7 @@ export async function PUT(req: NextRequest) {
       return NextResponse.json({ success: false, error: 'Forbidden' }, { status: 403 });
     }
     await initDb();
-    const { id, username, password, role, areas } = await req.json();
+    const { id, username, password, role, areas, allowedMenus } = await req.json();
     if (!id) return NextResponse.json({ success: false, error: 'ID wajib' }, { status: 400 });
     if (payload.role === 'admin' && role === 'root') {
       return NextResponse.json({ success: false, error: 'Admin tidak bisa mengubah role menjadi root' }, { status: 403 });
@@ -65,13 +65,13 @@ export async function PUT(req: NextRequest) {
     if (password) {
       const hash = await bcrypt.hash(password, 10);
       await query(
-        `UPDATE users SET username=$1, password_hash=$2, role=$3, areas=$4 WHERE id=$5`,
-        [username, hash, role, areas || [], id]
+        `UPDATE users SET username=$1, password_hash=$2, role=$3, areas=$4 ,allowed_menus=$5 WHERE id=$6`,
+        [username, hash, role, areas || [], allowedMenus || null, id]
       );
     } else {
       await query(
-        `UPDATE users SET username=$1, role=$2, areas=$3 WHERE id=$4`,
-        [username, role, areas || [], id]
+        `UPDATE users SET username=$1, role=$2, areas=$3, allowed_menus=$4 WHERE id=$5`,
+        [username, role, areas || [], allowedMenus || null, id]
       );
     }
     return NextResponse.json({ success: true });

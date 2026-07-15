@@ -4,9 +4,10 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Users, Plus, Pencil, Trash2, X, Check, Eye, EyeOff, ShieldAlert, ShieldCheck, Shield, AlertTriangle } from 'lucide-react';
 import { Theme, tk, FONT_MONO, FONT_SANS } from '@/lib/theme';
 import { useAuth } from '@/lib/AuthContext';
+import { ALL_MENUS } from '@/lib/menu';
 
 type Role = 'root' | 'admin' | 'user';
-interface User { id: number; username: string; role: Role; areas: string[]; created_at: string; }
+interface User { id: number; username: string; role: Role; areas: string[]; allowed_menus: string[] | null; created_at: string; }
 
 const ROLE_CFG: Record<Role, { label: string; Icon: any; color: string; bg: string; border: string }> = {
   root:  { label: 'Root',  Icon: ShieldAlert, color: '#a78bfa', bg: 'rgba(167,139,250,0.1)',  border: 'rgba(167,139,250,0.25)' },
@@ -25,7 +26,7 @@ export default function UserManagement({ theme }: Props) {
   const [loading, setLoading] = useState(true);
   const [modal, setModal] = useState<'create' | 'edit' | 'delete' | null>(null);
   const [selected, setSelected] = useState<User | null>(null);
-  const [form, setForm] = useState({ username: '', password: '', role: 'user' as Role, areas: '' });
+  const [form, setForm] = useState({ username: '', password: '', role: 'user' as Role, areas: '', allowedMenus: null as string[] | null });
   const [showPw, setShowPw] = useState(false);
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
@@ -47,14 +48,14 @@ export default function UserManagement({ theme }: Props) {
   useEffect(() => { loadUsers(); }, [loadUsers]);
 
   const openCreate = () => {
-    setForm({ username: '', password: '', role: 'user', areas: '' });
+    setForm({ username: '', password: '', role: 'user', areas: '', allowedMenus: null });
     setShowPw(false);
     setModal('create');
   };
 
   const openEdit = (u: User) => {
     setSelected(u);
-    setForm({ username: u.username, password: '', role: u.role, areas: (u.areas || []).join(', ') });
+    setForm({ username: u.username, password: '', role: u.role, areas: (u.areas || []).join(', '), allowedMenus: u.allowed_menus });
     setShowPw(false);
     setModal('edit');
   };
@@ -68,8 +69,8 @@ export default function UserManagement({ theme }: Props) {
     try {
       const areas = form.areas ? form.areas.split(',').map(s => s.trim()).filter(Boolean) : [];
       const body = modal === 'edit'
-        ? { id: selected!.id, username: form.username, password: form.password || undefined, role: form.role, areas }
-        : { username: form.username, password: form.password, role: form.role, areas };
+        ? { id: selected!.id, username: form.username, password: form.password || undefined, role: form.role, areas, allowedMenus: form.allowedMenus }
+        : { username: form.username, password: form.password, role: form.role, areas, allowedMenus: form.allowedMenus };
 
       const r = await apiFetch('/api/users', {
         method: modal === 'edit' ? 'PUT' : 'POST',
@@ -257,6 +258,50 @@ export default function UserManagement({ theme }: Props) {
                 <input style={inp} type="text" value={form.areas} onChange={e => setForm(f => ({ ...f, areas: e.target.value }))} placeholder="Contoh: Jawa Timur, Jawa Tengah" />
               </div>
             </div>
+
+             {form.role !== 'root' && (
+              <div>
+                <label style={{ display: 'block', fontSize: 10, fontWeight: 700, color: t.textMuted, marginBottom: 5, fontFamily: FONT_MONO, textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+                  Akses Menu <span style={{ fontWeight: 400, textTransform: 'none', letterSpacing: 0 }}>(kosong = semua menu sesuai role)</span>
+                </label>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                  {ALL_MENUS.filter(m => m.roles.includes(form.role)).map(m => {
+                    const checked = form.allowedMenus === null || form.allowedMenus.includes(m.id);
+                    const restricted = form.allowedMenus !== null;
+                    return (
+                      <button
+                        key={m.id}
+                        type="button"
+                        onClick={() => {
+                          setForm(f => {
+                            const current = f.allowedMenus === null
+                              ? ALL_MENUS.filter(mm => mm.roles.includes(f.role)).map(mm => mm.id)
+                              : [...f.allowedMenus];
+                            const next = current.includes(m.id) ? current.filter(id => id !== m.id) : [...current, m.id];
+                            return { ...f, allowedMenus: next };
+                          });
+                        }}
+                        style={{
+                          padding: '5px 10px', borderRadius: 7, fontSize: 10, fontFamily: FONT_MONO,
+                          border: `1px solid ${checked ? t.infoBorder : t.borderInput}`,
+                          background: checked ? t.infoBg : t.inputBg,
+                          color: checked ? t.infoText : t.textMuted,
+                          cursor: 'pointer',
+                        }}
+                      >
+                        {m.label}
+                      </button>
+                    );
+                  })}
+                </div>
+                {form.allowedMenus !== null && (
+                  <button type="button" onClick={() => setForm(f => ({ ...f, allowedMenus: null }))}
+                    style={{ marginTop: 6, fontSize: 9, color: t.textMuted, background: 'none', border: 'none', cursor: 'pointer', textDecoration: 'underline' }}>
+                    Reset ke akses penuh
+                  </button>
+                )}
+              </div>
+            )}
 
             <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, marginTop: 20 }}>
               <button onClick={() => setModal(null)} style={{ padding: '8px 16px', borderRadius: 8, fontSize: 12, fontWeight: 600, background: t.inputBg, color: t.textSub, border: `1px solid ${t.borderInput}`, cursor: 'pointer' }}>Batal</button>

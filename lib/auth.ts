@@ -12,6 +12,7 @@ export interface JwtPayload extends JoseJWTPayload {
   username: string;
   role: 'root' | 'admin' | 'user';
   areas: string[];
+  allowedMenus: string[] | null;
 }
 
 export async function signToken(payload: Omit<JwtPayload, 'iat' | 'exp'>): Promise<string> {

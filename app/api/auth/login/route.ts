@@ -20,7 +20,8 @@ export async function POST(req: NextRequest) {
       password_hash: string;
       role: string;
       areas: string[];
-    }>('SELECT id, username, password_hash, role, areas FROM users WHERE username=$1', [username]);
+      allowed_menus: string[] | null;
+    }>('SELECT id, username, password_hash, role, areas, allowed_menus FROM users WHERE username=$1', [username]);
 
     const user = rows[0];
     if (!user) {
@@ -38,6 +39,7 @@ export async function POST(req: NextRequest) {
       username: user.username,
       role: user.role as 'root' | 'admin' | 'user',
       areas: user.areas || [],
+      allowedMenus: user.allowed_menus || null,
     });
 
     const response = NextResponse.json({
@@ -46,7 +48,8 @@ export async function POST(req: NextRequest) {
         id: user.id,
         username: user.username,
         role: user.role,
-        areas: user.areas || []
+        areas: user.areas || [],
+        allowedMenus: user.allowed_menus || null,
       }
     });
 
