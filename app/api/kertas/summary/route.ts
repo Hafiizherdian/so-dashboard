@@ -1,16 +1,16 @@
-// ============================================================
-// FILE: app/api/kertas/summary/route.ts
-// ============================================================
 import { NextRequest, NextResponse } from 'next/server';
-import { getTokenFromRequest } from '@/lib/auth';
+import { getTokenFromRequest, hasMenuAccess } from '@/lib/auth';
 import { query, initDb } from '@/lib/db';
- 
+
 export async function GET(req: NextRequest) {
   try {
     const payload = await getTokenFromRequest(req);
     if (!payload) return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
+    if (!hasMenuAccess(payload, 'kertas')) {
+      return NextResponse.json({ success: false, error: 'Forbidden' }, { status: 403 });
+    }
     await initDb();
- 
+
     const [summary, jenis, merk] = await Promise.all([
       query<{
         total_produk: string;
@@ -36,7 +36,7 @@ export async function GET(req: NextRequest) {
         ORDER BY merk
       `),
     ]);
- 
+
     const s = summary[0];
     return NextResponse.json({
       success: true,

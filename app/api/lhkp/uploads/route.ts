@@ -1,7 +1,7 @@
 // app/api/lhkp/upload/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import * as XLSX from 'xlsx';
-import { getTokenFromRequest } from '@/lib/auth';
+import { getTokenFromRequest, hasMenuAccess } from '@/lib/auth';
 import { query, initDb } from '@/lib/db';
 
 export const runtime    = 'nodejs';
@@ -34,6 +34,9 @@ export async function POST(req: NextRequest) {
     if (!payload || payload.role === 'user') {
       return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
     }
+    if (!hasMenuAccess(payload, 'lhkp_upload')) {
+      return NextResponse.json({ success: false, error: 'Forbidden' }, { status: 403 });
+    }
     await initDb();
 
     const form = await req.formData();
@@ -47,12 +50,10 @@ export async function POST(req: NextRequest) {
 
     if (!raw.length) return NextResponse.json({ success: false, error: 'File kosong atau format tidak dikenali' });
 
-    // Hitung rentang tanggal
     const dates = raw.map(r => toDate(r['Tanggal'])).filter(Boolean) as string[];
     const tglAwal  = dates.sort()[0] ?? null;
     const tglAkhir = dates.sort().reverse()[0] ?? null;
 
-    // Insert upload header
     const upRes = await query<{ id: string }>(
       `INSERT INTO lhkp_uploads (file_name, file_size, record_count, tgl_awal, tgl_akhir, uploaded_by)
        VALUES ($1,$2,$3,$4,$5,$6) RETURNING id`,
@@ -60,7 +61,6 @@ export async function POST(req: NextRequest) {
     );
     const uploadId = upRes[0].id;
 
-    // Batch insert records
     const BATCH = 300;
     for (let i = 0; i < raw.length; i += BATCH) {
       const batch = raw.slice(i, i + BATCH);
@@ -92,7 +92,6 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Update record_count
     await query(`UPDATE lhkp_uploads SET record_count=$1 WHERE id=$2`, [raw.length, uploadId]);
 
     return NextResponse.json({ success: true, data: { upload_id: uploadId, record_count: raw.length, tgl_awal: tglAwal, tgl_akhir: tglAkhir } });

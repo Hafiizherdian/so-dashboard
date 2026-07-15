@@ -1,6 +1,6 @@
 // app/api/plan/upload/route.ts
 import { NextRequest, NextResponse } from 'next/server';
-import { getTokenFromRequest } from '@/lib/auth';
+import { getTokenFromRequest, hasMenuAccess } from '@/lib/auth';
 import { query, initDb } from '@/lib/db';
 import { parsePlanExcel } from '@/lib/parsePlan';
 
@@ -12,6 +12,9 @@ export async function POST(req: NextRequest) {
     const payload = await getTokenFromRequest(req);
     if (!payload || payload.role === 'user') {
       return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
+    }
+    if (!hasMenuAccess(payload, 'Plan_upload')) {
+      return NextResponse.json({ success: false, error: 'Forbidden' }, { status: 403 });
     }
     await initDb();
 
@@ -26,7 +29,6 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ success: false, error: 'Tidak ada data JOP yang berhasil dibaca. Periksa format file.' });
     }
 
-    // 1. Insert plan_uploads header
     const uploadRes = await query<{ id: string }>(
       `INSERT INTO plan_uploads (nama_mesin, minggu_awal, minggu_akhir, file_name, uploaded_by)
        VALUES ($1,$2,$3,$4,$5) RETURNING id`,
@@ -36,7 +38,6 @@ export async function POST(req: NextRequest) {
 
     let totalShifts = 0;
 
-    // 2. Insert jobs + shifts
     for (const job of parsed.jobs) {
       const jobRes = await query<{ id: string }>(
         `INSERT INTO plan_jobs

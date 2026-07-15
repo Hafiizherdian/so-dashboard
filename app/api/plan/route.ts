@@ -1,19 +1,21 @@
 // app/api/plan/route.ts
 import { NextRequest, NextResponse } from 'next/server';
-import { getTokenFromRequest } from '@/lib/auth';
+import { getTokenFromRequest, hasMenuAccess } from '@/lib/auth';
 import { query, initDb } from '@/lib/db';
 
 export async function GET(req: NextRequest) {
   try {
     const payload = await getTokenFromRequest(req);
     if (!payload) return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
+    if (!hasMenuAccess(payload, 'Plan')) {
+      return NextResponse.json({ success: false, error: 'Forbidden' }, { status: 403 });
+    }
     await initDb();
 
     const p      = req.nextUrl.searchParams;
     const uploadId = p.get('upload_id');
     const mesin    = p.get('mesin');
 
-    // ── List upload (untuk dropdown filter) ─────────────────────────────────
     if (p.get('list') === '1') {
       const rows = await query<{
         id: string; nama_mesin: string; minggu_awal: string;
@@ -43,7 +45,6 @@ export async function GET(req: NextRequest) {
       });
     }
 
-    // ── Data pivot untuk tabel ───────────────────────────────────────────────
     const conditions: string[] = [];
     const vals: any[] = [];
     let i = 1;
@@ -55,7 +56,6 @@ export async function GET(req: NextRequest) {
       conditions.push(`u.nama_mesin ILIKE $${i++}`);
       vals.push(`%${mesin}%`);
     } else {
-      // Default: upload terbaru
       conditions.push(`j.upload_id = (
         SELECT id FROM plan_uploads ORDER BY created_at DESC LIMIT 1
       )`);
@@ -140,6 +140,9 @@ export async function DELETE(req: NextRequest) {
     const payload = await getTokenFromRequest(req);
     if (!payload || payload.role === 'user') {
       return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
+    }
+    if (!hasMenuAccess(payload, 'Plan_upload')) {
+      return NextResponse.json({ success: false, error: 'Forbidden' }, { status: 403 });
     }
     await initDb();
 

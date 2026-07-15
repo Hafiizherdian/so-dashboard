@@ -1,11 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getTokenFromRequest } from '@/lib/auth';
+import { getTokenFromRequest, hasMenuAccess } from '@/lib/auth';
 import { query, initDb } from '@/lib/db';
 
 export async function GET(req: NextRequest) {
   try {
     const payload = await getTokenFromRequest(req);
     if (!payload) return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
+    if (!hasMenuAccess(payload, 'kertas')) {
+      return NextResponse.json({ success: false, error: 'Forbidden' }, { status: 403 });
+    }
     await initDb();
 
     const p = req.nextUrl.searchParams;
@@ -46,6 +49,9 @@ export async function POST(req: NextRequest) {
     if (!payload || payload.role === 'user') {
       return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
     }
+    if (!hasMenuAccess(payload, 'kertas')) {
+      return NextResponse.json({ success: false, error: 'Forbidden' }, { status: 403 });
+    }
     await initDb();
 
     const body = await req.json();
@@ -83,6 +89,9 @@ export async function PUT(req: NextRequest) {
     const payload = await getTokenFromRequest(req);
     if (!payload || payload.role === 'user') {
       return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
+    }
+    if (!hasMenuAccess(payload, 'kertas')) {
+      return NextResponse.json({ success: false, error: 'Forbidden' }, { status: 403 });
     }
     await initDb();
 
@@ -122,6 +131,9 @@ export async function DELETE(req: NextRequest) {
     const payload = await getTokenFromRequest(req);
     if (!payload || payload.role === 'user') {
       return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
+    }
+    if (!hasMenuAccess(payload, 'kertas')) {
+      return NextResponse.json({ success: false, error: 'Forbidden' }, { status: 403 });
     }
     await initDb();
 

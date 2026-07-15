@@ -1,27 +1,31 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getTokenFromRequest } from '@/lib/auth';
+import { getTokenFromRequest, hasAnyMenuAccess } from '@/lib/auth';
 import { query, initDb } from '@/lib/db';
+
 export async function GET(req: NextRequest) {
   try {
-    const payload = getTokenFromRequest(req);
+    // FIX: sebelumnya tidak di-await -> guard unauthorized tidak pernah aktif.
+    const payload = await getTokenFromRequest(req);
     if (!payload) return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
+
+    if (!hasAnyMenuAccess(payload, ['overview', 'penjualan', 'so', 'outstanding'])) {
+      return NextResponse.json({ success: false, error: 'Forbidden' }, { status: 403 });
+    }
+
     await initDb();
     const [years, months, areas, types, kategoris, jenisRows] = await Promise.all([
-      // Ekstrak tahun dari kolom tanggal (DATE)
       query<{ tahun: number }>(
         `SELECT DISTINCT EXTRACT(YEAR FROM tanggal)::INTEGER AS tahun
          FROM sales_transactions
          WHERE tanggal IS NOT NULL
          ORDER BY tahun DESC`
       ),
-      // Ekstrak bulan dari kolom tanggal
       query<{ bulan: number }>(
         `SELECT DISTINCT EXTRACT(MONTH FROM tanggal)::INTEGER AS bulan
          FROM sales_transactions
          WHERE tanggal IS NOT NULL
          ORDER BY bulan ASC`
       ),
-
       query<{ area: string }>(
         `SELECT DISTINCT uf.area
          FROM uploaded_files uf

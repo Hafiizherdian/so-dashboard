@@ -1,17 +1,19 @@
 // app/api/lhkp/route.ts
 import { NextRequest, NextResponse } from 'next/server';
-import { getTokenFromRequest } from '@/lib/auth';
+import { getTokenFromRequest, hasMenuAccess } from '@/lib/auth';
 import { query, initDb } from '@/lib/db';
 
 export async function GET(req: NextRequest) {
   try {
     const payload = await getTokenFromRequest(req);
     if (!payload) return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
+    if (!hasMenuAccess(payload, 'lhkp')) {
+      return NextResponse.json({ success: false, error: 'Forbidden' }, { status: 403 });
+    }
     await initDb();
 
     const p = req.nextUrl.searchParams;
 
-    // ── List uploads ──────────────────────────────────────────────────────────
     if (p.get('list') === '1') {
       const rows = await query<{
         id: string; file_name: string; record_count: number;
@@ -21,7 +23,6 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ success: true, data: rows });
     }
 
-    // ── Filter options ────────────────────────────────────────────────────────
     if (p.get('filters') === '1') {
       const uploadId = p.get('upload_id');
       const cond     = uploadId ? `WHERE upload_id = $1` : '';
@@ -47,7 +48,6 @@ export async function GET(req: NextRequest) {
       });
     }
 
-    // ── Dashboard / summary data ──────────────────────────────────────────────
     const uploadId = p.get('upload_id');
     const week     = p.get('week');
     const bulan    = p.get('bulan');
@@ -71,7 +71,6 @@ export async function GET(req: NextRequest) {
 
     const where = 'WHERE ' + conds.join(' AND ');
 
-    // Summary cards
     const [summary, byProses, byMesin, byWeek, detail] = await Promise.all([
       query<{
         total_records: string; total_plan: string;
@@ -175,6 +174,9 @@ export async function DELETE(req: NextRequest) {
     const payload = await getTokenFromRequest(req);
     if (!payload || payload.role === 'user') {
       return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
+    }
+    if (!hasMenuAccess(payload, 'lhkp_upload')) {
+      return NextResponse.json({ success: false, error: 'Forbidden' }, { status: 403 });
     }
     await initDb();
     const id = req.nextUrl.searchParams.get('id');

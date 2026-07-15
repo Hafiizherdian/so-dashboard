@@ -29,7 +29,6 @@ export async function verifyToken(token: string): Promise<JwtPayload | null> {
   try {
     const { payload } = await jwtVerify(token, secret);
 
-    // Type assertion dengan pengecekan sederhana
     const customPayload = payload as JwtPayload;
 
     if (!customPayload.userId || !customPayload.username || !customPayload.role) {
@@ -49,12 +48,37 @@ export async function getTokenFromRequest(req: NextRequest): Promise<JwtPayload 
   const cookie = req.cookies.get(COOKIE_NAME)?.value;
 
   if (!cookie) {
-    console.log(' Tidak ada cookie so_auth_token');
+    console.log('Tidak ada cookie so_auth_token');
     return null;
   }
 
-  console.log(' Cookie ditemukan, verifikasi JWT...');
+  console.log('Cookie ditemukan, verifikasi JWT...');
   return await verifyToken(cookie);
+}
+
+/**
+ * Cek apakah user boleh mengakses menu tertentu.
+ * - root: selalu boleh (full access)
+ * - allowedMenus null/undefined: full access sesuai role (belum dibatasi admin)
+ * - allowedMenus array: hanya menu yang ada di dalamnya yang boleh diakses
+ *
+ * Dipakai di SETIAP API route yang menjadi sumber data suatu tab,
+ * bukan cuma di frontend — supaya pembatasan menu benar-benar
+ * menutup akses data, bukan cuma menyembunyikan tab di UI.
+ */
+export function hasMenuAccess(payload: JwtPayload, menuId: string): boolean {
+  if (payload.role === 'root') return true;
+  if (payload.allowedMenus === null || payload.allowedMenus === undefined) return true;
+  return payload.allowedMenus.includes(menuId);
+}
+
+/**
+ * Sama seperti hasMenuAccess, tapi untuk route yang datanya dipakai
+ * bareng oleh beberapa tab (mis. /api/sales dipakai overview + penjualan + so + outstanding).
+ * Boleh akses kalau minimal SALAH SATU menu di daftar itu diizinkan.
+ */
+export function hasAnyMenuAccess(payload: JwtPayload, menuIds: string[]): boolean {
+  return menuIds.some(id => hasMenuAccess(payload, id));
 }
 
 export { COOKIE_NAME };

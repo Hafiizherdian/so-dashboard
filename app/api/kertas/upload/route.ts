@@ -1,8 +1,6 @@
-// FILE: app/api/kertas/upload/route.ts
-
 import { NextRequest, NextResponse } from 'next/server';
 import * as XLSX from 'xlsx';
-import { getTokenFromRequest } from '@/lib/auth';
+import { getTokenFromRequest, hasMenuAccess } from '@/lib/auth';
 import { query, initDb } from '@/lib/db';
 
 export const runtime = 'nodejs';
@@ -25,6 +23,9 @@ export async function POST(req: NextRequest) {
     if (!payload || payload.role === 'user') {
       return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
     }
+    if (!hasMenuAccess(payload, 'kertas_upload')) {
+      return NextResponse.json({ success: false, error: 'Forbidden' }, { status: 403 });
+    }
     await initDb();
 
     const form    = await req.formData();
@@ -40,7 +41,6 @@ export async function POST(req: NextRequest) {
 
     if (!raw.length) return NextResponse.json({ success: false, error: 'File kosong' });
 
-    // ── Batch insert ke kertas_stok ──
     let count = 0;
     const BATCH = 200;
 
@@ -86,7 +86,6 @@ export async function POST(req: NextRequest) {
       count += batch.length;
     }
 
-    // ── Insert 1 baris ke kertas_uploads (history) ──
     const uploadedBy = (payload as any).username ?? (payload as any).sub ?? null;
 
     await query(
@@ -108,7 +107,10 @@ export async function GET(req: NextRequest) {
     if (!payload) {
       return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
     }
-    
+    if (!hasMenuAccess(payload, 'kertas_upload')) {
+      return NextResponse.json({ success: false, error: 'Forbidden' }, { status: 403 });
+    }
+
     await initDb();
 
     const limit = Number(req.nextUrl.searchParams.get('limit') ?? '20');

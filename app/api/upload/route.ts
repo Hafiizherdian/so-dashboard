@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getTokenFromRequest } from '@/lib/auth';
+import { getTokenFromRequest, hasMenuAccess } from '@/lib/auth';
 import { query, initDb } from '@/lib/db';
 import { parseExcel } from '@/lib/parseExcel';
 
@@ -10,6 +10,9 @@ export async function POST(req: NextRequest) {
   try {
     const payload = await getTokenFromRequest(req);
     if (!payload || payload.role === 'user') return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
+    if (!hasMenuAccess(payload, 'upload')) {
+      return NextResponse.json({ success: false, error: 'Forbidden' }, { status: 403 });
+    }
 
     await initDb();
     const form = await req.formData();
@@ -20,7 +23,6 @@ export async function POST(req: NextRequest) {
     const buf = Buffer.from(await file.arrayBuffer());
     const { type, rows } = parseExcel(buf);
 
-    // 1. Simpan metadata file
     const fileRes = await query<{id: string}>(
       `INSERT INTO uploaded_files (original_name, file_size, status, area) VALUES ($1,$2,'processing',$3) RETURNING id`,
       [file.name, file.size, area]
@@ -28,7 +30,6 @@ export async function POST(req: NextRequest) {
     const fileId = fileRes[0].id;
 
     try {
-      // 2. Batch Insert berdasarkan tipe
       const BATCH_SIZE = 500;
       for (let i = 0; i < rows.length; i += BATCH_SIZE) {
         const batch = rows.slice(i, i + BATCH_SIZE);

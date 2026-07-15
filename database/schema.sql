@@ -5,6 +5,7 @@ CREATE TABLE IF NOT EXISTS users (
   password_hash VARCHAR(255) NOT NULL,
   role VARCHAR(20) NOT NULL DEFAULT 'user' CHECK (role IN ('root','admin','user')),
   areas TEXT[] DEFAULT '{}',
+  allowed_menus TEXT[] DEFAULT NULL,
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 

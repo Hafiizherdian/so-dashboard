@@ -1,11 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getTokenFromRequest } from '@/lib/auth';
+import { getTokenFromRequest, hasMenuAccess } from '@/lib/auth';
 import { query, initDb } from '@/lib/db';
 
 export async function GET(req: NextRequest) {
   try {
     const payload = await getTokenFromRequest(req);
     if (!payload) return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
+    if (!hasMenuAccess(payload, 'upload')) {
+      return NextResponse.json({ success: false, error: 'Forbidden' }, { status: 403 });
+    }
     await initDb();
     const rows = await query(
       `SELECT id, original_name, file_size, record_count, status, area, error_message, created_at
@@ -23,8 +26,10 @@ export async function DELETE(req: NextRequest) {
     
     if (!payload) return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
     
-    // Sekarang payload.role sudah bisa diakses
     if (payload.role === 'user') return NextResponse.json({ success: false, error: 'Forbidden' }, { status: 403 });
+    if (!hasMenuAccess(payload, 'upload')) {
+      return NextResponse.json({ success: false, error: 'Forbidden' }, { status: 403 });
+    }
     await initDb();
     const id = req.nextUrl.searchParams.get('id');
     if (!id) return NextResponse.json({ success: false, error: 'ID wajib diisi' }, { status: 400 });

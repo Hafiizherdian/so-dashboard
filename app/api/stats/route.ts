@@ -1,11 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getTokenFromRequest } from '@/lib/auth';
+import { getTokenFromRequest, hasMenuAccess } from '@/lib/auth';
 import { query, initDb } from '@/lib/db';
 
 export async function GET(req: NextRequest) {
   try {
-    const payload = getTokenFromRequest(req);
+    // FIX: sebelumnya tidak di-await -> guard unauthorized tidak pernah aktif.
+    const payload = await getTokenFromRequest(req);
     if (!payload) return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
+
+    if (!hasMenuAccess(payload, 'overview')) {
+      return NextResponse.json({ success: false, error: 'Forbidden' }, { status: 403 });
+    }
 
     await initDb();
 

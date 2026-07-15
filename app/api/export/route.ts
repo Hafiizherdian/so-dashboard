@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import * as XLSX from 'xlsx';
-import { getTokenFromRequest } from '@/lib/auth';
+import { getTokenFromRequest, hasAnyMenuAccess } from '@/lib/auth';
 import { query, initDb } from '@/lib/db';
 
 export const runtime = 'nodejs';
@@ -20,8 +20,17 @@ function buildWhere(p: URLSearchParams): { where: string; vals: unknown[] } {
 
 export async function GET(req: NextRequest) {
   try {
-    const payload = getTokenFromRequest(req);
+    // FIX: sebelumnya tidak di-await -> guard unauthorized tidak pernah aktif,
+    // dan export ini bisa nge-dump seluruh data mentah tanpa login.
+    const payload = await getTokenFromRequest(req);
     if (!payload) return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
+
+    // Export dipakai oleh tab Pengaturan/Settings yang datanya sama dengan
+    // overview/penjualan/so/outstanding -> pakai guard yang sama.
+    if (!hasAnyMenuAccess(payload, ['overview', 'penjualan', 'so', 'outstanding'])) {
+      return NextResponse.json({ success: false, error: 'Forbidden' }, { status: 403 });
+    }
+
     await initDb();
 
     const p = req.nextUrl.searchParams;
@@ -66,7 +75,6 @@ export async function GET(req: NextRequest) {
         ORDER BY SUM(penjualan_rp) DESC
       `, vals);
     } else {
-      // detail
       rows = await query(`
         SELECT
           minggu "Minggu", bulan "Bulan", tahun "Tahun", tanggal "Tanggal",
@@ -86,10 +94,8 @@ export async function GET(req: NextRequest) {
       `, vals);
     }
 
-    // Build Excel
     const wb = XLSX.utils.book_new();
     const ws = XLSX.utils.json_to_sheet(rows);
-    // Lebar coloumn disesuaikan dengan panjang data (min 14)
     const colWidths = Object.keys(rows[0] || {}).map(k => ({ wch: Math.max(k.length + 2, 14) }));
     ws['!cols'] = colWidths;
     XLSX.utils.book_append_sheet(wb, ws, 'Data');
