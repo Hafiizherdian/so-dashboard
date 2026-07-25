@@ -278,26 +278,30 @@ export async function GET(req: NextRequest) {
       })
     );
 
-    const weeklyRows = canPenjualanData
-      ? await query<{ week: string; penjualan: string; qty_terkirim: string }>(`
-          SELECT week,
-                 COALESCE(SUM(sub_total),0)    AS penjualan,
-                 COALESCE(SUM(qty_terkirim),0) AS qty_terkirim
-          FROM sales_transactions ${wSales}
-          GROUP BY week ORDER BY week
-        `, vSales)
-      : [];
+  const weeklyRows = canPenjualanData
+    ? await query<{ tahun: string; week: string; penjualan: string; qty_terkirim: string }>(`
+        SELECT EXTRACT(YEAR FROM tanggal)::INTEGER AS tahun,
+              week,
+              COALESCE(SUM(sub_total),0)    AS penjualan,
+              COALESCE(SUM(qty_terkirim),0) AS qty_terkirim
+        FROM sales_transactions ${wSales}
+        GROUP BY tahun, week
+        ORDER BY tahun, week
+      `, vSales)
+    : [];
 
-    const weeklySORows = canSOData
-      ? await query<{ week: string; qty_order: string; qty_delivered: string; qty_sisa: string }>(`
-          SELECT week,
-                 COALESCE(SUM(qty_order),0)     AS qty_order,
-                 COALESCE(SUM(qty_delivered),0) AS qty_delivered,
-                 COALESCE(SUM(qty_sisa),0)      AS qty_sisa
-          FROM so_outstanding ${wSO}
-          GROUP BY week ORDER BY week
-        `, vSO)
-      : [];
+  const weeklySORows = canSOData
+    ? await query<{ tahun: string; week: string; qty_order: string; qty_delivered: string; qty_sisa: string }>(`
+        SELECT EXTRACT(YEAR FROM tanggal)::INTEGER AS tahun,
+              week,
+              COALESCE(SUM(qty_order),0)     AS qty_order,
+              COALESCE(SUM(qty_delivered),0) AS qty_delivered,
+              COALESCE(SUM(qty_sisa),0)      AS qty_sisa
+        FROM so_outstanding ${wSO}
+        GROUP BY tahun, week
+        ORDER BY tahun, week
+      `, vSO)
+    : [];
 
     const catRows = canPenjualanData
       ? await query<{ kategori: string; penjualan: string }>(`
@@ -409,6 +413,7 @@ export async function GET(req: NextRequest) {
         allYears,
         weekly: canPenjualanData
           ? weeklyRows.map(r => ({
+              tahun:        Number(r.tahun),
               minggu:       r.week,
               penjualan:    Number(r.penjualan),
               qty_terkirim: Number(r.qty_terkirim),
@@ -416,6 +421,7 @@ export async function GET(req: NextRequest) {
           : [],
         weeklySO: canSOData
           ? weeklySORows.map(r => ({
+              tahun:         Number(r.tahun),
               minggu:        r.week,
               qty_order:     Number(r.qty_order),
               qty_delivered: Number(r.qty_delivered),

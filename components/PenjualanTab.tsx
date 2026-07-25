@@ -43,6 +43,15 @@ export default function PenjualanTab({ data, theme }: Props) {
   const [search,  setSearch]  = useState('');
 
   const weekly                = Array.isArray(data.weekly)                ? data.weekly                : [];
+  const weeklyHasMultiYear = new Set(weekly.map((w: any) => w.tahun)).size > 1;
+  const weeklyChartData = weekly.map((w: any) => ({
+    ...w,
+    weekLabel: weeklyHasMultiYear
+      ? `W${w.minggu}'${String(w.tahun).slice(-2)}`
+      : `W${w.minggu}`,
+  }));
+  const weeklyYears = Array.from(new Set(weekly.map((w: any) => w.tahun))).sort();
+  const yearColor = (tahun: number) => CC[weeklyYears.indexOf(tahun) % CC.length];
   const topCustomers          = Array.isArray(data.topCustomers)          ? data.topCustomers          : [];
   const categories            = Array.isArray(data.categories)            ? data.categories            : [];
   const typeCustomerBreakdown = Array.isArray(data.typeCustomerBreakdown) ? data.typeCustomerBreakdown : [];
@@ -354,17 +363,21 @@ export default function PenjualanTab({ data, theme }: Props) {
           sub={`${weekly.length} minggu`}
         >
           <ResponsiveContainer width="100%" height={weeklyChartH}>
-            <ComposedChart data={weekly} margin={{ top: 2, right: 4, left: 0, bottom: 0 }}>
+            <ComposedChart data={weeklyChartData} margin={{ top: 2, right: 4, left: 0, bottom: 0 }}>
               <CartesianGrid strokeDasharray="3 3" stroke={gs} vertical={false} />
               <XAxis
-                dataKey="minggu"
+                dataKey="weekLabel"
                 tickFormatter={v => `W${v}`}
                 tick={{ ...ts, fontSize: 8 }} axisLine={false} tickLine={false}
                 interval={weeklyInterval}
               />
               <YAxis tickFormatter={fmtRp} tick={{ ...ts, fontSize: 8 }} axisLine={false} tickLine={false} width={44} />
               <Tooltip content={<ChartTooltip theme={theme} />} />
-              <Bar dataKey="penjualan" name="Penjualan" fill="#6366f1" opacity={0.75} radius={[2, 2, 0, 0]} maxBarSize={10} />
+              <Bar dataKey="penjualan" name="Penjualan" opacity={0.85} radius={[2, 2, 0, 0]} maxBarSize={14}>
+                {weeklyChartData.map((entry: any, i: number) => (
+                  <Cell key={i} fill={weeklyHasMultiYear ? yearColor(entry.tahun) : '#6366f1'} />
+                ))}
+              </Bar>
             </ComposedChart>
           </ResponsiveContainer>
         </Card>
@@ -396,17 +409,21 @@ export default function PenjualanTab({ data, theme }: Props) {
           sub={`${weekly.length} minggu`}
         >
           <ResponsiveContainer width="100%" height={weeklyChartH}>
-            <ComposedChart data={weekly} margin={{ top: 2, right: 4, left: 0, bottom: 0 }}>
+            <ComposedChart data={weeklyChartData} margin={{ top: 2, right: 4, left: 0, bottom: 0 }}>
               <CartesianGrid strokeDasharray="3 3" stroke={gs} vertical={false} />
               <XAxis
-                dataKey="minggu"
+                dataKey="weekLabel"
                 tickFormatter={v => `W${v}`}
                 tick={ts} axisLine={false} tickLine={false}
                 interval={weeklyInterval}
               />
               <YAxis tickFormatter={fmtRp} tick={ts} axisLine={false} tickLine={false} width={60} />
               <Tooltip content={<ChartTooltip theme={theme} />} />
-              <Bar dataKey="penjualan" name="Penjualan" fill="#6366f1" opacity={0.75} radius={[2, 2, 0, 0]} maxBarSize={14} />
+              <Bar dataKey="penjualan" name="Penjualan" opacity={0.85} radius={[2, 2, 0, 0]} maxBarSize={14}>
+                {weeklyChartData.map((entry: any, i: number) => (
+                  <Cell key={i} fill={weeklyHasMultiYear ? yearColor(entry.tahun) : '#6366f1'} />
+                ))}
+              </Bar>
             </ComposedChart>
           </ResponsiveContainer>
         </Card>
@@ -436,17 +453,21 @@ export default function PenjualanTab({ data, theme }: Props) {
         sub={`${weekly.length} minggu`}
       >
         <ResponsiveContainer width="100%" height={180}>
-          <ComposedChart data={weekly} margin={{ top: 2, right: 4, left: 0, bottom: 0 }}>
+          <ComposedChart data={weeklyChartData} margin={{ top: 2, right: 4, left: 0, bottom: 0 }}>
             <CartesianGrid strokeDasharray="3 3" stroke={gs} vertical={false} />
             <XAxis
-              dataKey="minggu"
-              tickFormatter={v => `W${v}`}
+              dataKey="weekLabel"
+              // tickFormatter={v => `W${v}`}
               tick={ts} axisLine={false} tickLine={false}
               interval={weeklyInterval}
             />
             <YAxis tickFormatter={fmtRp} tick={ts} axisLine={false} tickLine={false} width={60} />
             <Tooltip content={<ChartTooltip theme={theme} />} />
-            <Bar dataKey="penjualan" name="Penjualan" fill="#6366f1" opacity={0.75} radius={[2, 2, 0, 0]} maxBarSize={14} />
+            <Bar dataKey="penjualan" name="Penjualan" opacity={0.85} radius={[2, 2, 0, 0]} maxBarSize={14}>
+              {weeklyChartData.map((entry: any, i: number) => (
+                <Cell key={i} fill={weeklyHasMultiYear ? yearColor(entry.tahun) : '#6366f1'} />
+              ))}
+            </Bar>
           </ComposedChart>
         </ResponsiveContainer>
       </Card>
