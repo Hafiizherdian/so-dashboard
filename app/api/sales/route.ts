@@ -311,6 +311,17 @@ export async function GET(req: NextRequest) {
         `, vSales)
       : [];
 
+    // Khusus tab SO: total = qty_order * harga dari so_outstanding, groupby produk.
+    // Terpisah dari `categories` (sales_transactions) supaya tidak ganggu
+    // consumer lain yang sudah pakai field `categories`.
+    const catSORows = canSOData
+      ? await query<{ kategori: string; penjualan: string }>(`
+          SELECT produk AS kategori, COALESCE(SUM(qty_order * harga),0) AS penjualan
+          FROM so_outstanding ${wSO}
+          GROUP BY produk ORDER BY penjualan DESC LIMIT 10
+        `, vSO)
+      : [];
+
     const custRows = canPenjualanData
       ? await query<{
           pelanggan:     string;
@@ -430,6 +441,12 @@ export async function GET(req: NextRequest) {
           : [],
         categories: canPenjualanData
           ? catRows.map(r => ({
+              kategori:        r.kategori || '(Lainnya)',
+              total_penjualan: Number(r.penjualan),
+            }))
+          : [],
+        categoriesSO: canSOData
+          ? catSORows.map(r => ({
               kategori:        r.kategori || '(Lainnya)',
               total_penjualan: Number(r.penjualan),
             }))

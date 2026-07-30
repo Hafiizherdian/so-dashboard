@@ -41,7 +41,7 @@ export default function SalesOrderTab({ data, theme, tahun }: Props) {
     .filter((m: any) => !tahun || tahun === 'all' || Number(m.tahun) === Number(tahun));
   const weeklySO     = Array.isArray((data as any).weeklySO)  ? (data as any).weeklySO  : [];
   const topCustomers = Array.isArray(data.topCustomers)       ? data.topCustomers       : [];
-  const categories   = Array.isArray(data.categories)         ? data.categories         : [];
+  const categories   = Array.isArray(data.categoriesSO)       ? data.categoriesSO         : [];
 
   const ratioData = monthly.map((m: any) => ({
     label:     m.label,
@@ -213,7 +213,7 @@ export default function SalesOrderTab({ data, theme, tahun }: Props) {
           <Package size={11} color="#10b981" />
         </div>
         <div>
-          <div style={{ fontSize: 11, fontWeight: 700, color: t.text }}>Kategori Produk</div>
+          <div style={{ fontSize: 11, fontWeight: 700, color: t.text }}>Produk</div>
           <div style={{ fontSize: 9, color: t.textMuted, fontFamily: FONT_MONO }}>{categories.length} kategori</div>
         </div>
       </div>
@@ -223,7 +223,7 @@ export default function SalesOrderTab({ data, theme, tahun }: Props) {
             <tr>
               {(isMobile
                 ? ['#', 'Kategori', '%']
-                : ['#', 'Kategori', 'Total Penjualan (Rp)', '% Kontribusi']
+                : ['#', 'Kategori', 'Total SO (Rp)', '% Kontribusi']
               ).map(h => (
                 <th key={h} style={{
                   padding: isMobile ? '7px 8px' : '8px 10px',

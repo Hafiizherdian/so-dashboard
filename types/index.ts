@@ -91,6 +91,7 @@ export interface DashboardData {
   monthly: MonthlyTrend[];
   weekly: WeeklyTrend[];
   categories: CategoryBreakdown[];
+  categoriesSO?: CategoryBreakdown[];
   topCustomers: TopCustomer[];
   topProducts: TopProduct[];
   typeCustomerBreakdown: { type_customer: string; penjualan: number; pct: number; transaksi: number }[];
