@@ -213,8 +213,8 @@ export default function SalesOrderTab({ data, theme, tahun }: Props) {
           <Package size={11} color="#10b981" />
         </div>
         <div>
-          <div style={{ fontSize: 11, fontWeight: 700, color: t.text }}>Produk</div>
-          <div style={{ fontSize: 9, color: t.textMuted, fontFamily: FONT_MONO }}>{categories.length} </div>
+          <div style={{ fontSize: 11, fontWeight: 700, color: t.text }}>Kategori Produk</div>
+          <div style={{ fontSize: 9, color: t.textMuted, fontFamily: FONT_MONO }}>{categories.length} kategori</div>
         </div>
       </div>
       <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
@@ -223,7 +223,7 @@ export default function SalesOrderTab({ data, theme, tahun }: Props) {
             <tr>
               {(isMobile
                 ? ['#', 'Kategori', '%']
-                : ['#', 'Kategori', 'Total SO (Rp)', '% Kontribusi']
+                : ['#', 'Kategori', 'Total Penjualan (Rp)', '% Kontribusi']
               ).map(h => (
                 <th key={h} style={{
                   padding: isMobile ? '7px 8px' : '8px 10px',

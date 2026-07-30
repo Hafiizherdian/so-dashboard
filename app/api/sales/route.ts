@@ -303,12 +303,12 @@ export async function GET(req: NextRequest) {
       `, vSO)
     : [];
 
-    const catRows = canSOData
+    const catRows = canPenjualanData
       ? await query<{ kategori: string; penjualan: string }>(`
-          SELECT produk AS kategori, COALESCE(SUM(qty_order * harga),0) AS penjualan
-          FROM so_outstanding ${wSO}
-          GROUP BY produk ORDER BY penjualan DESC LIMIT 10
-        `, vSO)
+          SELECT kategori, COALESCE(SUM(sub_total),0) AS penjualan
+          FROM sales_transactions ${wSales}
+          GROUP BY kategori ORDER BY penjualan DESC LIMIT 10
+        `, vSales)
       : [];
 
     const custRows = canPenjualanData
@@ -428,10 +428,10 @@ export async function GET(req: NextRequest) {
               qty_sisa:      Number(r.qty_sisa),
             }))
           : [],
-        categories: canSOData
+        categories: canPenjualanData
           ? catRows.map(r => ({
               kategori:        r.kategori || '(Lainnya)',
-              total_penjualan: Number(r.penjualan),//ini SO bukan penjualan, mau tak ganti tapi kok males, datanya udah bener cuman nama doang salah
+              total_penjualan: Number(r.penjualan),
             }))
           : [],
         topCustomers: canPenjualanData
