@@ -198,7 +198,7 @@ export default function OutstandingTab({ data, theme, tahun }: Props) {
     </Card>
   );
 
-  // ── Top SO Outstanding ──
+// ── Top SO Outstanding (table) ──
   const TopSONode = (
     <Card
       theme={theme}
@@ -207,30 +207,67 @@ export default function OutstandingTab({ data, theme, tahun }: Props) {
       color={outColor} accent={outColor}
       sub="SO dengan sisa qty terbanyak"
     >
-      <div style={{ flex: 1, overflowY: 'auto' }}>
-        {topOutstanding.length > 0 ? topOutstanding.map((r, i) => {
-          const sisa = Number(r.qty_sisa ?? 0);
-          const pct  = (sisa / maxSisa) * 100;
-          return (
-            <div key={`${r.nomor_so}-${i}`} style={{ padding: '6px 0', borderBottom: i < topOutstanding.length - 1 ? `1px solid ${t.border}` : 'none' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 3 }}>
-                <div style={{ flex: 1, marginRight: 8, overflow: 'hidden' }}>
-                  <div style={{ fontSize: 10, fontWeight: 700, color: t.text, fontFamily: FONT_MONO, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.nomor_so}</div>
-                  <div style={{ fontSize: 9, color: t.textMuted, fontFamily: FONT_MONO, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.pelanggan}</div>
-                </div>
-                <span style={{ fontSize: 11, fontWeight: 700, color: outColor, fontFamily: FONT_MONO, flexShrink: 0 }}>{sisa.toLocaleString('id-ID')}</span>
-              </div>
-              <ProgressBar pct={pct} color={outColor} bg={t.borderCard} height={3} />
-            </div>
-          );
-        }) : (
-          <div style={{ color: t.textMuted, fontSize: 11, textAlign: 'center', paddingTop: 20 }}>Tidak ada outstanding</div>
-        )}
+      <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch', flex: 1 }}>
+        <table style={{ minWidth: isMobile ? 280 : 380, width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
+          <thead>
+            <tr>
+              {(isMobile
+                ? ['No', 'No. SO', 'Sisa']
+                : ['No', 'No. SO', 'Pelanggan', 'Qty Sisa']
+              ).map(h => (
+                <th key={h} style={{
+                  padding: isMobile ? '7px 8px' : '8px 10px',
+                  textAlign: h === 'No' ? 'center' : (h === 'Sisa' || h === 'Qty Sisa') ? 'right' : 'left',
+                  fontSize: 9, fontWeight: 700, textTransform: 'uppercase',
+                  letterSpacing: '0.08em', color: t.textMuted,
+                  borderBottom: `1px solid ${t.border}`,
+                  fontFamily: FONT_MONO, background: t.tableHead,
+                }}>{h}</th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {topOutstanding.map((r, i) => {
+              const sisa = Number(r.qty_sisa ?? 0);
+              return (
+                <tr
+                  key={`${r.nomor_so}-${i}`}
+                  style={{ background: i % 2 === 1 ? t.tableAlt : 'transparent' }}
+                  onMouseEnter={e => (e.currentTarget.style.background = t.rowHover)}
+                  onMouseLeave={e => (e.currentTarget.style.background = i % 2 === 1 ? t.tableAlt : 'transparent')}
+                >
+                  <td style={{ padding: isMobile ? '7px 8px' : '8px 10px', textAlign: 'center', color: t.text, fontFamily: FONT_MONO, fontSize: 10 }}>{i + 1}</td>
+                  <td style={{ padding: isMobile ? '7px 8px' : '8px 10px', color: t.text, fontFamily: FONT_MONO, fontSize: isMobile ? 10 : 11, fontWeight: 700 }}>
+                    {isMobile ? (
+                      <div>
+                        <div style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 120 }}>{r.nomor_so}</div>
+                        <div style={{ fontSize: 9, color: t.textMuted, marginTop: 1, fontWeight: 400, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 120 }}>{r.pelanggan}</div>
+                      </div>
+                    ) : (
+                      <div style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 160 }}>{r.nomor_so}</div>
+                    )}
+                  </td>
+                  {!isMobile && (
+                    <td style={{ padding: '8px 10px', color: t.textSub, fontFamily: FONT_MONO, fontSize: 11, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 180 }}>{r.pelanggan}</td>
+                  )}
+                  <td style={{ padding: isMobile ? '7px 8px' : '8px 10px', textAlign: 'right', color: outColor, fontFamily: FONT_MONO, fontSize: isMobile ? 10 : 11, fontWeight: 700 }}>{sisa.toLocaleString('id-ID')}</td>
+                </tr>
+              );
+            })}
+            {topOutstanding.length === 0 && (
+              <tr>
+                <td colSpan={isMobile ? 3 : 4} style={{ padding: '20px', textAlign: 'center', color: t.textMuted, fontSize: 11, fontFamily: FONT_MONO }}>
+                  Tidak ada outstanding
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
       </div>
     </Card>
   );
 
-  // ── Produk Outstanding ──
+  // ── Produk Outstanding (table) ──
   const ProdukNode = (
     <Card
       theme={theme}
@@ -239,22 +276,55 @@ export default function OutstandingTab({ data, theme, tahun }: Props) {
       color="#8b5cf6" accent="#8b5cf6"
       sub="Qty sisa per produk"
     >
-      <div style={{ flex: 1, overflowY: 'auto' }}>
-        {keteranganBreakdown.length > 0 ? keteranganBreakdown.map((k, i) => {
-          const qty = Number(k.penjualan ?? 0);
-          const pct = (qty / maxKet) * 100;
-          return (
-            <div key={`${k.keterangan}-${i}`} style={{ padding: '5px 0', borderBottom: i < keteranganBreakdown.length - 1 ? `1px solid ${t.border}` : 'none' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 3 }}>
-                <span style={{ fontSize: 10, color: t.text, fontFamily: FONT_MONO, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1, marginRight: 8 }}>{k.keterangan}</span>
-                <span style={{ fontSize: 10, fontWeight: 700, color: '#8b5cf6', fontFamily: FONT_MONO, flexShrink: 0 }}>{qty.toLocaleString('id-ID')}</span>
-              </div>
-              <ProgressBar pct={pct} color="#8b5cf6" bg={t.borderCard} height={3} />
-            </div>
-          );
-        }) : (
-          <div style={{ color: t.textMuted, fontSize: 11, textAlign: 'center', paddingTop: 20 }}>Tidak ada data</div>
-        )}
+      <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch', flex: 1 }}>
+        <table style={{ minWidth: isMobile ? 260 : 340, width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
+          <thead>
+            <tr>
+              {(isMobile
+                ? ['No', 'Produk', 'Sisa']
+                : ['No', 'Produk', 'Qty Sisa', 'Jumlah SO']
+              ).map(h => (
+                <th key={h} style={{
+                  padding: isMobile ? '7px 8px' : '8px 10px',
+                  textAlign: h === 'No' ? 'center' : (h === 'Sisa' || h === 'Qty Sisa' || h === 'Jumlah SO') ? 'right' : 'left',
+                  fontSize: 9, fontWeight: 700, textTransform: 'uppercase',
+                  letterSpacing: '0.08em', color: t.textMuted,
+                  borderBottom: `1px solid ${t.border}`,
+                  fontFamily: FONT_MONO, background: t.tableHead,
+                }}>{h}</th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {keteranganBreakdown.map((k, i) => {
+              const qty = Number(k.penjualan ?? 0);
+              return (
+                <tr
+                  key={`${k.keterangan}-${i}`}
+                  style={{ background: i % 2 === 1 ? t.tableAlt : 'transparent' }}
+                  onMouseEnter={e => (e.currentTarget.style.background = t.rowHover)}
+                  onMouseLeave={e => (e.currentTarget.style.background = i % 2 === 1 ? t.tableAlt : 'transparent')}
+                >
+                  <td style={{ padding: isMobile ? '7px 8px' : '8px 10px', textAlign: 'center', color: t.text, fontFamily: FONT_MONO, fontSize: 10 }}>{i + 1}</td>
+                  <td style={{ padding: isMobile ? '7px 8px' : '8px 10px', color: t.text, fontFamily: FONT_MONO, fontSize: isMobile ? 10 : 11, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: isMobile ? 130 : 180 }}>
+                    {k.keterangan}
+                  </td>
+                  <td style={{ padding: isMobile ? '7px 8px' : '8px 10px', textAlign: 'right', color: '#8b5cf6', fontFamily: FONT_MONO, fontSize: isMobile ? 10 : 11, fontWeight: 700 }}>{qty.toLocaleString('id-ID')}</td>
+                  {!isMobile && (
+                    <td style={{ padding: '8px 10px', textAlign: 'right', color: t.textSub, fontFamily: FONT_MONO, fontSize: 11 }}>{Number((k as any).count ?? 0).toLocaleString('id-ID')}</td>
+                  )}
+                </tr>
+              );
+            })}
+            {keteranganBreakdown.length === 0 && (
+              <tr>
+                <td colSpan={isMobile ? 3 : 4} style={{ padding: '20px', textAlign: 'center', color: t.textMuted, fontSize: 11, fontFamily: FONT_MONO }}>
+                  Tidak ada data
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
       </div>
     </Card>
   );
