@@ -41,7 +41,7 @@ export default function SalesOrderTab({ data, theme, tahun }: Props) {
     .filter((m: any) => !tahun || tahun === 'all' || Number(m.tahun) === Number(tahun));
   const weeklySO     = Array.isArray((data as any).weeklySO)  ? (data as any).weeklySO  : [];
   const topCustomers = Array.isArray(data.topCustomers)       ? data.topCustomers       : [];
-  const categories   = Array.isArray(data.categoriesSO)       ? data.categoriesSO         : [];
+  const categories: { kategori: string; total_qty: number; total_penjualan: number }[] = data.categoriesSO ?? [];
 
   const ratioData = monthly.map((m: any) => ({
     label:     m.label,
@@ -222,12 +222,12 @@ export default function SalesOrderTab({ data, theme, tahun }: Props) {
           <thead>
             <tr>
               {(isMobile
-                ? ['#', 'Kategori', '%']
-                : ['#', 'Kategori', 'Total SO (Rp)', '% Kontribusi']
+                ? ['#', 'Kategori']
+                : ['#', 'Kategori', 'Qty Order', 'Total SO (Rp)']
               ).map(h => (
                 <th key={h} style={{
                   padding: isMobile ? '7px 8px' : '8px 10px',
-                  textAlign: h === '#' ? 'center' : (h.includes('Rp') || h.includes('%') || h === '%') ? 'right' : 'left',
+                  textAlign: h === '#' ? 'center' : (h.includes('Rp') || h.includes('%') || h === 'Qty Order') ? 'right' : 'left',
                   fontSize: 9, fontWeight: 700, textTransform: 'uppercase',
                   letterSpacing: '0.08em', color: t.textMuted,
                   borderBottom: `1px solid ${t.border}`,
@@ -239,6 +239,7 @@ export default function SalesOrderTab({ data, theme, tahun }: Props) {
           <tbody>
             {categories.map((c, i) => {
               const val = Number(c.total_penjualan ?? 0);
+              const qty = Number(c.total_qty ?? 0);
               const pct = (val / totalCatVal) * 100;
               return (
                 <tr
@@ -252,25 +253,29 @@ export default function SalesOrderTab({ data, theme, tahun }: Props) {
                     {isMobile ? (
                       <div>
                         <div style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 140 }}>{c.kategori || '(Lainnya)'}</div>
-                        <div style={{ fontSize: 9, color: t.textSub, marginTop: 1 }}>{fmtRpFull(val)}</div>
+                        <div style={{ fontSize: 9, color: t.textSub, marginTop: 1 }}>{fmtRpFull(val)} · {qty.toLocaleString('id-ID')} pcs</div>
                       </div>
                     ) : (c.kategori || '(Lainnya)')}
                   </td>
+                  {/* Kolom Qty Order hanya desktop/tablet */}
+                  {!isMobile && (
+                    <td style={{ padding: '8px 10px', textAlign: 'right', color: t.text, fontFamily: FONT_MONO, fontSize: 11 }}>{qty.toLocaleString('id-ID')}</td>
+                  )}
                   {/* Kolom Penjualan hanya desktop/tablet */}
                   {!isMobile && (
                     <td style={{ padding: '8px 10px', textAlign: 'right', color: t.text, fontFamily: FONT_MONO, fontSize: 11, fontWeight: 700 }}>{fmtRpFull(val)}</td>
                   )}
-                  <td style={{ padding: isMobile ? '7px 8px' : '8px 10px', textAlign: 'right', color: t.textSub, fontFamily: FONT_MONO, fontSize: 11 }}>
+                  {/* <td style={{ padding: isMobile ? '7px 8px' : '8px 10px', textAlign: 'right', color: t.textSub, fontFamily: FONT_MONO, fontSize: 11 }}>
                     <span style={{ padding: '2px 7px', borderRadius: 8, fontSize: 9, fontWeight: 600, background: t.infoBg, color: t.infoText, border: `1px solid ${t.infoBorder}` }}>
                       {pct.toFixed(1)}%
                     </span>
-                  </td>
+                  </td> */}
                 </tr>
               );
             })}
             {categories.length === 0 && (
               <tr>
-                <td colSpan={isMobile ? 3 : 4} style={{ padding: '20px', textAlign: 'center', color: t.textMuted, fontSize: 11, fontFamily: FONT_MONO }}>
+                <td colSpan={isMobile ? 3 : 5} style={{ padding: '20px', textAlign: 'center', color: t.textMuted, fontSize: 11, fontFamily: FONT_MONO }}>
                   Tidak ada data
                 </td>
               </tr>

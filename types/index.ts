@@ -53,6 +53,12 @@ export interface CategoryBreakdown {
   pct: number;
 }
 
+export interface CategoryBreakdownSO {
+  kategori: string;
+  total_qty: number;
+  total_penjualan: number;
+}
+
 export interface MonthlyTrend {
   bulan: number;
   label: string;
@@ -91,7 +97,7 @@ export interface DashboardData {
   monthly: MonthlyTrend[];
   weekly: WeeklyTrend[];
   categories: CategoryBreakdown[];
-  categoriesSO?: CategoryBreakdown[];
+  categoriesSO?: CategoryBreakdownSO[];
   topCustomers: TopCustomer[];
   topProducts: TopProduct[];
   typeCustomerBreakdown: { type_customer: string; penjualan: number; pct: number; transaksi: number }[];
