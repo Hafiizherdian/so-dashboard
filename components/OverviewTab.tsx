@@ -123,12 +123,20 @@ export default function OverviewTab({ data, theme, availH }: Props) {
     return { ...c, pct, fill: CC[i % CC.length] };
   });
 
-  const ketData = keteranganBreakdown.slice(0, 5).map(k => ({
-    keterangan: k.keterangan ?? '(kosong)',
-    qty:        Number(k.penjualan ?? 0),
-    count:      Number(k.count     ?? 0),
-  }));
+  const ketAgg = new Map<string, { qty: number; count: number }>();
+  keteranganBreakdown.forEach((k: any) => {
+    const key = k.keterangan ?? '(kosong)';
+    const prev = ketAgg.get(key) ?? { qty: 0, count: 0 };
+    ketAgg.set(key, {
+      qty:   prev.qty + Number(k.penjualan ?? 0),
+      count: prev.count + 1,
+    });
+  });
 
+  const ketData = Array.from(ketAgg.entries())
+    .map(([keterangan, v]) => ({ keterangan, qty: v.qty, count: v.count }))
+    .sort((a, b) => b.qty - a.qty)
+    .slice(0, 5);
   const BULAN_NAMES = ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agt','Sep','Okt','Nov','Des'];
   const BULAN_NAMES_SHORT = BULAN_NAMES;
 
