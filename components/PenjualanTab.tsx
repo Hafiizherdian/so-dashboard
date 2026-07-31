@@ -259,9 +259,13 @@ export default function PenjualanTab({ data, theme }: Props) {
           <thead>
             <tr>
               <th style={{ ...thS, cursor: 'default' }}>Pelanggan</th>
-              {/* Sembunyikan kolom Tipe di mobile */}
               {!isMobile && (
                 <th style={{ ...thS, cursor: 'default' }}>Tipe</th>
+              )}
+              {!isMobile && (
+                <th style={{ ...thS, textAlign: 'right', cursor: 'default' }}>
+                  Qty
+                </th>
               )}
               <th
                 style={{ ...thS, textAlign: 'right' }}
@@ -319,6 +323,14 @@ export default function PenjualanTab({ data, theme }: Props) {
                     </span>
                   </td>
                 )}
+                {!isMobile && (
+                  <td style={{
+                    padding: '9px 10px', textAlign: 'right', color: t.textSub,
+                    fontFamily: FONT_MONO, fontSize: 11,
+                  }}>
+                    {Number((c as any).qty_terkirim ?? 0).toLocaleString('id-ID')}
+                  </td>
+                )}
                 <td style={{
                   padding: isMobile ? '8px 8px' : '9px 10px',
                   textAlign: 'right', color: t.text,
@@ -337,7 +349,7 @@ export default function PenjualanTab({ data, theme }: Props) {
             ))}
             {filteredCustomers.length === 0 && (
               <tr>
-                <td colSpan={isMobile ? 3 : 4} style={{ padding: 32, textAlign: 'center', color: t.textMuted, fontSize: 12, fontFamily: FONT_MONO }}>
+                <td colSpan={isMobile ? 3 : 5} style={{ padding: 32, textAlign: 'center', color: t.textMuted, fontSize: 12, fontFamily: FONT_MONO }}>
                   Tidak ada data
                 </td>
               </tr>

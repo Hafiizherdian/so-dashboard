@@ -103,8 +103,8 @@ export const fmtRpFull = (v: number): string =>
   `Rp ${Math.round(v).toLocaleString('id-ID')}`;
 
 export const fmtNum = (v: number): string => {
-  if (v >= 1e6) return `${(v/1e6).toFixed(1)}jt`;
-  if (v >= 1e3) return `${(v/1e3).toFixed(0)}rb`;
+  if (v >= 1e16) return `${(v/1e6).toFixed(1)}jt`;
+  if (v >= 1e16) return `${(v/1e3).toFixed(0)}rb`;
   return Math.round(v).toLocaleString('id-ID');
 };
 

@@ -202,7 +202,7 @@ export default function OutstandingTab({ data, theme, tahun }: Props) {
   const TopSONode = (
     <Card
       theme={theme}
-      title="Top SO Outstanding"
+      title="Top Outstanding SO "
       icon={<AlertCircle size={10} color={outColor} />}
       color={outColor} accent={outColor}
       sub="SO dengan sisa qty terbanyak"
@@ -212,12 +212,12 @@ export default function OutstandingTab({ data, theme, tahun }: Props) {
           <thead>
             <tr>
               {(isMobile
-                ? ['No', 'No. SO', 'Sisa']
-                : ['No', 'No. SO', 'Pelanggan', 'Qty Sisa']
+                ? ['No', 'Produk', 'Sisa']
+                : ['No', 'Produk', 'Pelanggan', 'Qty Sisa', 'Jumlah SO']
               ).map(h => (
                 <th key={h} style={{
                   padding: isMobile ? '7px 8px' : '8px 10px',
-                  textAlign: h === 'No' ? 'center' : (h === 'Sisa' || h === 'Qty Sisa') ? 'right' : 'left',
+                  textAlign: h === 'No' ? 'center' : (h === 'Sisa' || h === 'Qty Sisa'|| h === 'Jumlah SO') ? 'right' : 'left',
                   fontSize: 9, fontWeight: 700, textTransform: 'uppercase',
                   letterSpacing: '0.08em', color: t.textMuted,
                   borderBottom: `1px solid ${t.border}`,
@@ -229,9 +229,10 @@ export default function OutstandingTab({ data, theme, tahun }: Props) {
           <tbody>
             {topOutstanding.map((r, i) => {
               const sisa = Number(r.qty_sisa ?? 0);
+              const jumlahSO = Number((r as any).jumlah_so ?? 0);
               return (
                 <tr
-                  key={`${r.nomor_so}-${i}`}
+                  key={`${r.produk}-${i}`}
                   style={{ background: i % 2 === 1 ? t.tableAlt : 'transparent' }}
                   onMouseEnter={e => (e.currentTarget.style.background = t.rowHover)}
                   onMouseLeave={e => (e.currentTarget.style.background = i % 2 === 1 ? t.tableAlt : 'transparent')}
@@ -240,17 +241,18 @@ export default function OutstandingTab({ data, theme, tahun }: Props) {
                   <td style={{ padding: isMobile ? '7px 8px' : '8px 10px', color: t.text, fontFamily: FONT_MONO, fontSize: isMobile ? 10 : 11, fontWeight: 700 }}>
                     {isMobile ? (
                       <div>
-                        <div style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 120 }}>{r.nomor_so}</div>
+                        <div style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 120 }}>{r.produk}</div>
                         <div style={{ fontSize: 9, color: t.textMuted, marginTop: 1, fontWeight: 400, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 120 }}>{r.pelanggan}</div>
                       </div>
                     ) : (
-                      <div style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 160 }}>{r.nomor_so}</div>
+                      <div style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 160 }}>{r.produk}</div>
                     )}
                   </td>
                   {!isMobile && (
                     <td style={{ padding: '8px 10px', color: t.textSub, fontFamily: FONT_MONO, fontSize: 11, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 180 }}>{r.pelanggan}</td>
                   )}
                   <td style={{ padding: isMobile ? '7px 8px' : '8px 10px', textAlign: 'right', color: outColor, fontFamily: FONT_MONO, fontSize: isMobile ? 10 : 11, fontWeight: 700 }}>{sisa.toLocaleString('id-ID')}</td>
+                  <td style={{ padding: '8px 10px', textAlign: 'right', color: t.textSub, fontFamily: FONT_MONO, fontSize: 11 }}>{jumlahSO.toLocaleString('id-ID')}</td>
                 </tr>
               );
             })}
@@ -267,6 +269,47 @@ export default function OutstandingTab({ data, theme, tahun }: Props) {
     </Card>
   );
 
+  // ── Sort state untuk tabel Outstanding per Produk ──
+  type ProdukSortKey = 'keterangan' | 'nomor_so' | 'tanggal' | 'penjualan';
+  const [produkSortKey, setProdukSortKey] = useState<ProdukSortKey>('penjualan');
+  const [produkSortDir, setProdukSortDir] = useState<'asc' | 'desc'>('desc');
+
+  const sortedKeterangan = React.useMemo(() => {
+    const arr = [...keteranganBreakdown];
+    arr.sort((a: any, b: any) => {
+      let va = a[produkSortKey];
+      let vb = b[produkSortKey];
+      if (produkSortKey === 'penjualan') {
+        va = Number(va ?? 0);
+        vb = Number(vb ?? 0);
+      } else if (produkSortKey === 'tanggal') {
+        va = va ? new Date(va).getTime() : 0;
+        vb = vb ? new Date(vb).getTime() : 0;
+      } else {
+        va = String(va ?? '').toLowerCase();
+        vb = String(vb ?? '').toLowerCase();
+      }
+      if (va < vb) return produkSortDir === 'asc' ? -1 : 1;
+      if (va > vb) return produkSortDir === 'asc' ? 1 : -1;
+      return 0;
+    });
+    return arr;
+  }, [keteranganBreakdown, produkSortKey, produkSortDir]);
+
+  function handleProdukSort(key: ProdukSortKey) {
+    if (produkSortKey === key) {
+      setProdukSortDir(d => (d === 'asc' ? 'desc' : 'asc'));
+    } else {
+      setProdukSortKey(key);
+      setProdukSortDir(key === 'penjualan' ? 'desc' : 'asc');
+    }
+  }
+
+  const ProdukSortIcon = ({ active, dir }: { active: boolean; dir: 'asc' | 'desc' }) => (
+    <span style={{ fontSize: 8, marginLeft: 3, opacity: active ? 1 : 0.3 }}>
+      {active ? (dir === 'asc' ? '▲' : '▼') : '⇅'}
+    </span>
+  );
   // ── Produk Outstanding (table) ──
   const ProdukNode = (
     <Card
@@ -274,51 +317,102 @@ export default function OutstandingTab({ data, theme, tahun }: Props) {
       title="Outstanding per Produk"
       icon={<Package size={10} color="#8b5cf6" />}
       color="#8b5cf6" accent="#8b5cf6"
-      sub="Qty sisa per produk"
+      sub="Qty sisa per baris SO"
     >
       <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch', flex: 1 }}>
-        <table style={{ minWidth: isMobile ? 260 : 340, width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
+        <table style={{ minWidth: isMobile ? 260 : 420, width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
           <thead>
             <tr>
-              {(isMobile
-                ? ['No', 'Produk', 'Sisa']
-                : ['No', 'Produk', 'Qty Sisa', 'Jumlah SO']
-              ).map(h => (
-                <th key={h} style={{
-                  padding: isMobile ? '7px 8px' : '8px 10px',
-                  textAlign: h === 'No' ? 'center' : (h === 'Sisa' || h === 'Qty Sisa' || h === 'Jumlah SO') ? 'right' : 'left',
-                  fontSize: 9, fontWeight: 700, textTransform: 'uppercase',
-                  letterSpacing: '0.08em', color: t.textMuted,
-                  borderBottom: `1px solid ${t.border}`,
-                  fontFamily: FONT_MONO, background: t.tableHead,
-                }}>{h}</th>
-              ))}
+              <th style={{
+                padding: isMobile ? '7px 8px' : '8px 10px', textAlign: 'center',
+                fontSize: 9, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em',
+                color: t.textMuted, borderBottom: `1px solid ${t.border}`, fontFamily: FONT_MONO, background: t.tableHead,
+              }}>No</th>
+
+              <th
+                onClick={() => handleProdukSort('keterangan')}
+                style={{
+                  padding: isMobile ? '7px 8px' : '8px 10px', textAlign: 'left', cursor: 'pointer', userSelect: 'none',
+                  fontSize: 9, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em',
+                  color: t.textMuted, borderBottom: `1px solid ${t.border}`, fontFamily: FONT_MONO, background: t.tableHead,
+                }}
+              >
+                Produk <ProdukSortIcon active={produkSortKey === 'keterangan'} dir={produkSortDir} />
+              </th>
+
+              {!isMobile && (
+                <th
+                  onClick={() => handleProdukSort('nomor_so')}
+                  style={{
+                    padding: '8px 10px', textAlign: 'left', cursor: 'pointer', userSelect: 'none',
+                    fontSize: 9, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em',
+                    color: t.textMuted, borderBottom: `1px solid ${t.border}`, fontFamily: FONT_MONO, background: t.tableHead,
+                  }}
+                >
+                  No SO <ProdukSortIcon active={produkSortKey === 'nomor_so'} dir={produkSortDir} />
+                </th>
+              )}
+
+              {!isMobile && (
+                <th
+                  onClick={() => handleProdukSort('tanggal')}
+                  style={{
+                    padding: '8px 10px', textAlign: 'left', cursor: 'pointer', userSelect: 'none', whiteSpace: 'nowrap',
+                    fontSize: 9, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em',
+                    color: t.textMuted, borderBottom: `1px solid ${t.border}`, fontFamily: FONT_MONO, background: t.tableHead,
+                  }}
+                >
+                  Tanggal SO <ProdukSortIcon active={produkSortKey === 'tanggal'} dir={produkSortDir} />
+                </th>
+              )}
+
+              <th
+                onClick={() => handleProdukSort('penjualan')}
+                style={{
+                  padding: isMobile ? '7px 8px' : '8px 10px', textAlign: 'right', cursor: 'pointer', userSelect: 'none',
+                  fontSize: 9, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em',
+                  color: t.textMuted, borderBottom: `1px solid ${t.border}`, fontFamily: FONT_MONO, background: t.tableHead,
+                }}
+              >
+                Qty Sisa <ProdukSortIcon active={produkSortKey === 'penjualan'} dir={produkSortDir} />
+              </th>
             </tr>
           </thead>
           <tbody>
-            {keteranganBreakdown.map((k, i) => {
+            {sortedKeterangan.map((k, i) => {
               const qty = Number(k.penjualan ?? 0);
+              const tglFormatted = k.tanggal ? new Date(k.tanggal).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' }) : '-';
               return (
                 <tr
-                  key={`${k.keterangan}-${i}`}
+                  key={`${k.keterangan}-${k.nomor_so}-${i}`}
                   style={{ background: i % 2 === 1 ? t.tableAlt : 'transparent' }}
                   onMouseEnter={e => (e.currentTarget.style.background = t.rowHover)}
                   onMouseLeave={e => (e.currentTarget.style.background = i % 2 === 1 ? t.tableAlt : 'transparent')}
                 >
                   <td style={{ padding: isMobile ? '7px 8px' : '8px 10px', textAlign: 'center', color: t.text, fontFamily: FONT_MONO, fontSize: 10 }}>{i + 1}</td>
-                  <td style={{ padding: isMobile ? '7px 8px' : '8px 10px', color: t.text, fontFamily: FONT_MONO, fontSize: isMobile ? 10 : 11, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: isMobile ? 130 : 180 }}>
-                    {k.keterangan}
+                  <td style={{ padding: isMobile ? '7px 8px' : '8px 10px', color: t.text, fontFamily: FONT_MONO, fontSize: isMobile ? 10 : 11 }}>
+                    {isMobile ? (
+                      <div>
+                        <div style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 130 }}>{k.keterangan}</div>
+                        <div style={{ fontSize: 9, color: t.textMuted, marginTop: 1 }}>{k.nomor_so} · {tglFormatted}</div>
+                      </div>
+                    ) : (
+                      <div style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 180 }}>{k.keterangan}</div>
+                    )}
                   </td>
-                  <td style={{ padding: isMobile ? '7px 8px' : '8px 10px', textAlign: 'right', color: '#8b5cf6', fontFamily: FONT_MONO, fontSize: isMobile ? 10 : 11, fontWeight: 700 }}>{qty.toLocaleString('id-ID')}</td>
                   {!isMobile && (
-                    <td style={{ padding: '8px 10px', textAlign: 'right', color: t.textSub, fontFamily: FONT_MONO, fontSize: 11 }}>{Number((k as any).count ?? 0).toLocaleString('id-ID')}</td>
+                    <td style={{ padding: '8px 10px', color: t.textSub, fontFamily: FONT_MONO, fontSize: 11 }}>{k.nomor_so}</td>
                   )}
+                  {!isMobile && (
+                    <td style={{ padding: '8px 10px', color: t.textSub, fontFamily: FONT_MONO, fontSize: 11, whiteSpace: 'nowrap' }}>{tglFormatted}</td>
+                  )}
+                  <td style={{ padding: isMobile ? '7px 8px' : '8px 10px', textAlign: 'right', color: '#8b5cf6', fontFamily: FONT_MONO, fontSize: isMobile ? 10 : 11, fontWeight: 700 }}>{qty.toLocaleString('id-ID')}</td>
                 </tr>
               );
             })}
-            {keteranganBreakdown.length === 0 && (
+            {sortedKeterangan.length === 0 && (
               <tr>
-                <td colSpan={isMobile ? 3 : 4} style={{ padding: '20px', textAlign: 'center', color: t.textMuted, fontSize: 11, fontFamily: FONT_MONO }}>
+                <td colSpan={isMobile ? 3 : 5} style={{ padding: '20px', textAlign: 'center', color: t.textMuted, fontSize: 11, fontFamily: FONT_MONO }}>
                   Tidak ada data
                 </td>
               </tr>
@@ -328,7 +422,7 @@ export default function OutstandingTab({ data, theme, tahun }: Props) {
       </div>
     </Card>
   );
-
+  
   // ══════════════════════════════════════════
   // MOBILE  (< 640px) — full stack vertikal
   // ══════════════════════════════════════════

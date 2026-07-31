@@ -6,7 +6,7 @@ import {
   Area, Line,
 } from 'recharts';
 import { ShoppingCart, TrendingUp, Package, Users } from 'lucide-react';
-import { Theme, tk, fmtRp, fmtRpFull, FONT_MONO } from '@/lib/theme';
+import { Theme, tk, fmtRp, fmtRpFull,fmtNum, FONT_MONO } from '@/lib/theme';
 import { DashboardData } from '@/types/index';
 import { Card, ChartTooltip, mkTick, ProgressBar } from '@/components/ui';
 
@@ -40,7 +40,7 @@ export default function SalesOrderTab({ data, theme, tahun }: Props) {
   const monthly = (Array.isArray(data.monthly) ? data.monthly : [])
     .filter((m: any) => !tahun || tahun === 'all' || Number(m.tahun) === Number(tahun));
   const weeklySO     = Array.isArray((data as any).weeklySO)  ? (data as any).weeklySO  : [];
-  const topCustomers = Array.isArray(data.topCustomers)       ? data.topCustomers       : [];
+  const topCustomers = Array.isArray(data.topCustomersSO)       ? data.topCustomersSO       : [];
   const categories: { kategori: string; total_qty: number; total_penjualan: number }[] = data.categoriesSO ?? [];
 
   const ratioData = monthly.map((m: any) => ({
@@ -175,9 +175,10 @@ export default function SalesOrderTab({ data, theme, tahun }: Props) {
   const TopPelangganNode = (
     <Card
       theme={theme}
-      title="Top Pelanggan"
+      title="Top Pelanggan (Qty)"
       icon={<Users size={10} color="#f59e0b" />}
       color="#f59e0b" accent="#f59e0b"
+      sub="Berdasarkan nilai SO (qty × harga)"
     >
       <div style={{ display: 'flex', flexDirection: 'column', gap: 0, flex: 1, overflowY: 'auto' }}>
         {topCustomers.slice(0, 7).map((c, i) => {
@@ -188,10 +189,10 @@ export default function SalesOrderTab({ data, theme, tahun }: Props) {
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 3 }}>
                 <div style={{ flex: 1, marginRight: 8, overflow: 'hidden' }}>
                   <div style={{ fontSize: 10, color: t.text, fontFamily: FONT_MONO, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{c.pelanggan}</div>
-                  <div style={{ fontSize: 9, color: t.textMuted, fontFamily: FONT_MONO }}>{c.type_customer ?? '—'} · {Number(c.transaksi ?? 0)} trx</div>
+                  <div style={{ fontSize: 9, color: t.textMuted, fontFamily: FONT_MONO }}>{Number(c.transaksi ?? 0)} SO </div>
                 </div>
                 <span style={{ fontSize: 10, fontWeight: 700, color: '#f59e0b', fontFamily: FONT_MONO, flexShrink: 0 }}>
-                  {fmtRpFull(val)}
+                  {fmtNum(val)} 
                 </span>
               </div>
               <ProgressBar pct={pct} color="#f59e0b" bg={t.borderCard} height={3} />
@@ -213,7 +214,7 @@ export default function SalesOrderTab({ data, theme, tahun }: Props) {
           <Package size={11} color="#10b981" />
         </div>
         <div>
-          <div style={{ fontSize: 11, fontWeight: 700, color: t.text }}>Produk</div>
+          <div style={{ fontSize: 11, fontWeight: 700, color: t.text }}>Top Produk</div>
           <div style={{ fontSize: 9, color: t.textMuted, fontFamily: FONT_MONO }}>{categories.length} kategori</div>
         </div>
       </div>

@@ -39,6 +39,14 @@ export interface TopCustomer {
   transaksi: number;
 }
 
+export interface TopCustomerSO {
+  pelanggan: string;
+  total_qty: number;
+  total_penjualan: number;
+  qty_terkirim: number;
+  transaksi: number;
+}
+
 export interface TopProduct {
   produk: string;
   kategori: string;
@@ -99,13 +107,20 @@ export interface DashboardData {
   categories: CategoryBreakdown[];
   categoriesSO?: CategoryBreakdownSO[];
   topCustomers: TopCustomer[];
+  topCustomersSO?: TopCustomerSO[];
   topProducts: TopProduct[];
   typeCustomerBreakdown: { type_customer: string; penjualan: number; pct: number; transaksi: number }[];
   jenisBreakdown: { jenis: string; penjualan: number; pct: number; transaksi: number }[];
-  keteranganBreakdown: { keterangan: string; penjualan: number; count: number }[];
-  topOutstanding?: {
+  keteranganBreakdown: {
+    keterangan: string;
     nomor_so: string;
+    tanggal: string;
+    penjualan: number;
+  }[];
+  topOutstanding?: {
+    produk: string;
     pelanggan: string;
+    jumlah_so: number;
     qty_sisa: number;
   }[];
   allYears?: number[];

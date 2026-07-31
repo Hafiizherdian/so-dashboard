@@ -329,10 +329,12 @@ export async function GET(req: NextRequest) {
           pelanggan:     string;
           type_customer: string;
           penjualan:     string;
+          qty:           string;
           transaksi:     string;
         }>(`
           SELECT pelanggan, type_customer,
                  COALESCE(SUM(sub_total),0) AS penjualan,
+                 COALESCE(SUM(qty_terkirim),0)  AS qty,
                  COUNT(*) AS transaksi
           FROM sales_transactions ${wSales}
           GROUP BY pelanggan, type_customer
@@ -342,15 +344,37 @@ export async function GET(req: NextRequest) {
 
     const soOutstandingRows = canSOData
       ? await query<{
+          produk: string;
           nomor_so:  string;
           pelanggan: string;
+          jumlah_so: string;
           sisa:      string;
         }>(`
-          SELECT nomor_so, pelanggan, SUM(qty_sisa) AS sisa
+          SELECT produk,
+                 COUNT(DISTINCT nomor_so) AS jumlah_so, 
+                 pelanggan, 
+                 SUM(qty_sisa) AS sisa
           FROM so_outstanding ${wSO}
-          GROUP BY nomor_so, pelanggan
+          GROUP BY produk, pelanggan
           HAVING SUM(qty_sisa) > 0
-          ORDER BY sisa DESC LIMIT 5
+          ORDER BY sisa DESC LIMIT 10
+        `, vSO)
+      : [];
+
+    const custSORows = canSOData
+      ? await query<{
+          pelanggan: string;
+          qty:       string;
+          penjualan: string;
+          transaksi: string;
+        }>(`
+          SELECT pelanggan,
+                 COALESCE(SUM(qty_order),0)         AS qty,
+                 COALESCE(SUM(qty_order ),0)  AS penjualan,
+                 COUNT(DISTINCT nomor_so)            AS transaksi
+          FROM so_outstanding ${wSO}
+          GROUP BY pelanggan
+          ORDER BY penjualan DESC LIMIT 10
         `, vSO)
       : [];
 
@@ -372,13 +396,14 @@ export async function GET(req: NextRequest) {
       typeRows.reduce((acc, r) => acc + Number(r.penjualan), 0) || 1;
 
     const ketRows = canSOData
-      ? await query<{ label: string; qty: string; count: string }>(`
+      ? await query<{ label: string; no_so: string; tanggal: string; qty: string }>(`
           SELECT produk        AS label,
-                 SUM(qty_sisa) AS qty,
-                 COUNT(*)      AS count
+                 nomor_so      AS no_so,
+                 tanggal       AS tanggal,
+                 SUM(qty_sisa) AS qty
           FROM so_outstanding
           ${andWhere(wSO, 'qty_sisa > 0')}
-          GROUP BY produk
+          GROUP BY produk, nomor_so, tanggal
           ORDER BY qty DESC 
         `, vSO)
       : [];
@@ -459,6 +484,15 @@ export async function GET(req: NextRequest) {
               pelanggan:       r.pelanggan,
               type_customer:   r.type_customer,
               total_penjualan: Number(r.penjualan),
+              qty_terkirim:       Number(r.qty),
+              transaksi:       Number(r.transaksi),
+            }))
+          : [],
+        topCustomersSO: canSOData
+          ? custSORows.map(r => ({
+              pelanggan:       r.pelanggan,
+              total_qty:       Number(r.qty),
+              total_penjualan: Number(r.penjualan),
               transaksi:       Number(r.transaksi),
             }))
           : [],
@@ -482,14 +516,17 @@ export async function GET(req: NextRequest) {
         keteranganBreakdown: canSOData
           ? ketRows.map(r => ({
               keterangan: r.label || '(kosong)',
+              nomor_so:   r.no_so,
+              tanggal:    r.tanggal,
               penjualan:  Number(r.qty),
-              count:      Number(r.count),
             }))
           : [],
         topOutstanding: canSOData
           ? soOutstandingRows.map(r => ({
+              produk: r.produk,
               nomor_so:  r.nomor_so,
               pelanggan: r.pelanggan,
+              jumlah_so: Number(r.jumlah_so),
               qty_sisa:  Number(r.sisa),
             }))
           : [],
