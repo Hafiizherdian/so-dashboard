@@ -351,7 +351,7 @@ export async function GET(req: NextRequest) {
           sisa:      string;
         }>(`
           SELECT produk,
-                 COUNT(DISTINCT nomor_so) AS jumlah_so, 
+                 COUNT(*) FILTER (WHERE qty_sisa > 0) AS jumlah_so,
                  pelanggan, 
                  SUM(qty_sisa) AS sisa
           FROM so_outstanding ${wSO}
