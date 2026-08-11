@@ -25,7 +25,6 @@ import UploadWIPTab from '@/components/UploadPlanTab';
 import LhkpTab from '@/components/LhkpTab';
 import UploadLhkpTab from '@/components/UploadLhkpTab';
 
-const MONTHS = [{ value: 'all', label: 'Semua Bulan' }, ...['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'].map((l,i) => ({ value: String(i+1), label: l }))];
 
 // Icon di-map terpisah dari data menu (ALL_MENUS ada di lib/menu.ts, dipakai juga oleh UserManagement)
 const MENU_ICONS: Record<string, any> = {
@@ -237,6 +236,7 @@ function FilterBar({ filters, setFilters, appliedFilters, opts, onApply, onReset
     k => filters[k] !== appliedFilters[k]
   );
 
+  const MONTHS = [{ value: 'all', label: 'Semua Bulan' }, ...['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'].map((l,i) => ({ value: String(i+1), label: l }))];
   const WEEKS=[{value:'all',label:'Semua Minggu'},...Array.from({length:52},(_,i)=>({value:String(i+1),label:`W${i+1}`}))];
   const YEARS=[{value:'all',label:'Semua Tahun'},...opts.years.map(y=>({value:String(y),label:String(y)}))];
   const TYPES=[{value:'all',label:'Semua Tipe'},...opts.typeCustomers.map(a=>({value:a,label:a}))];

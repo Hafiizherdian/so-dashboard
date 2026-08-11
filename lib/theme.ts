@@ -92,6 +92,8 @@ export type Tokens = typeof tk['dark'] | typeof tk['light'];
 
 export const CC = ['#6366f1','#10b981','#f59e0b','#ef4444','#8b5cf6','#0d9488','#f97316','#ec4899','#3b82f6','#84cc16'];
 
+export const PIE_COLORS = ['#10b981', '#ec4899', '#06b6d4', '#3b82f6', '#f59e0b', '#8b5cf6', '#eab308'];
+
 export const fmtRp = (v: number): string => {
   if (v >= 1e9) return `Rp ${(v/1e9).toFixed(1)}M`;
   if (v >= 1e6) return `Rp ${(v/1e6).toFixed(1)}jt`;

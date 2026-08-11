@@ -3,9 +3,10 @@ import React, { useState, useEffect } from 'react';
 import {
   XAxis, YAxis, CartesianGrid, Tooltip,
   ResponsiveContainer, Cell, BarChart, Bar,
+  PieChart, Pie
 } from 'recharts';
 import { TrendingUp, ShoppingCart, Receipt, AlertCircle, Users, Package, Tag } from 'lucide-react';
-import { Theme, tk, CC, fmtRp, fmtRpFull, FONT_MONO } from '@/lib/theme';
+import { Theme, tk, CC, PIE_COLORS, fmtRp, fmtRpFull, FONT_MONO } from '@/lib/theme';
 import { DashboardData } from '@/types/index';
 import { KpiCard, Card, ChartTooltip, ProgressBar } from '@/components/ui';
 
@@ -60,6 +61,7 @@ export default function OverviewTab({ data, theme, availH }: Props) {
   const isDesktop = bp === 'desktop';
 
   const [chartMode, setChartMode] = useState<ChartMode>('penj');
+  const [pieActiveIndex, setPieActiveIndex] = useState<number>(-1);
 
   const raw = (data ?? {}) as Partial<DashboardData>;
 
@@ -113,7 +115,7 @@ export default function OverviewTab({ data, theme, availH }: Props) {
   const tcData = typeCustomerBreakdown.slice(0, 6).map((r, i) => {
     const penjualan = Number(r.penjualan ?? 0);
     const pct = Number(r.pct ?? 0) > 0 ? Number(r.pct) : (penjualan / totalTcPenjualan) * 100;
-    return { name: r.type_customer ?? '—', value: penjualan, pct, fill: CC[i % CC.length] };
+    return { name: r.type_customer ?? '—', value: penjualan, pct, fill: PIE_COLORS[i % PIE_COLORS.length] };
   });
 
   const totalCatPenjualan = categories.reduce((s, r) => s + Number(r.total_penjualan ?? 0), 0) || 1;
@@ -168,7 +170,7 @@ export default function OverviewTab({ data, theme, availH }: Props) {
       key={mode}
       onClick={() => setChartMode(mode)}
       style={{
-        fontSize: 8, padding: '2px 8px', borderRadius: 4, border: 'none',
+        fontSize: 10, padding: '4px 10px', borderRadius: 4, border: 'none',
         fontFamily: FONT_MONO, cursor: 'pointer',
         background: chartMode === mode ? t.card1bg : 'transparent',
         color:      chartMode === mode ? t.text    : t.textMuted,
@@ -196,19 +198,24 @@ export default function OverviewTab({ data, theme, availH }: Props) {
       theme={theme}
       title="Tren Bulanan"
       icon={<TrendingUp size={10} color="#6366f1" />}
-      color="#6366f1" accent="#6366f1"
+      color="#6366f1" 
+      accent="#6366f1"
       sub={
         allYears.length > 1
           ? `${allYears[0]}–${allYears[allYears.length - 1]} · grouped per bulan`
           : `${monthly.length} bulan`
       }
-    >
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0, marginBottom: 8, flexWrap: 'wrap', gap: 4 }}>
-        <YearLegend />
-        <div style={{ display: 'flex', gap: 2, background: t.inputBg, borderRadius: 6, padding: 2, flexShrink: 0 }}>
+      // 1. TAMBAHKAN ACTION DI SINI
+      action={
+        <div style={{ display: 'flex', gap: 2, background: t.inputBg, borderRadius: 6, padding: 2 }}>
           {tabBtn('penj', 'Penjualan (Rp)')}
           {tabBtn('so',   'SO & Outstanding')}
         </div>
+      }
+    >
+      {/* 2. Hapus tabBtn dari dalam sini, sisakan YearLegend saja */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-start', flexShrink: 0, marginBottom: 24 }}>
+        <YearLegend />
       </div>
 
       {/* Kontainer ini sekarang mengunci tinggi grafik hasil perpendekan di atas */}
@@ -285,10 +292,62 @@ export default function OverviewTab({ data, theme, availH }: Props) {
   const TipePelangganNode = (
     <Card theme={theme} title="Tipe Pelanggan" icon={<Users size={10} color="#8b5cf6" />} color="#8b5cf6" accent="#8b5cf6">
       {tcData.length > 0 ? (
-        <div style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0, gap: 6 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0, gap: 12 }}>
+          
+          {/* BAGIAN 1: GRAFIK PIE (Dipindah ke atas) */}
+          {!isMobile && (
+            <div style={{ flex: 1, minHeight: 100, display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart margin={{ top: 0, right: 0, left: 0, bottom: 0 }}>
+                  <Tooltip content={<ChartTooltip theme={theme} currency={true} />} />
+                  <Pie
+                    data={tcData}
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={0}
+                    outerRadius="95%" // Sedikit dibesarkan agar proporsional
+                    dataKey="value"
+                    stroke="none"
+                  >
+                    {tcData.map((d, i) => (
+                      <Cell 
+                        key={`cell-${i}`} 
+                        fill={d.fill} 
+                        // Efek hover: meredupkan potongan lain jika ada yang disorot
+                        style={{ 
+                          cursor: 'pointer',
+                          opacity: pieActiveIndex === i || pieActiveIndex === -1 ? 1 : 0.3,
+                          transition: 'opacity 0.2s ease-in-out' 
+                        }}
+                        onMouseEnter={() => setPieActiveIndex(i)}
+                        onMouseLeave={() => setPieActiveIndex(-1)}
+                      />
+                    ))}
+                  </Pie>
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
+          )}
+
+          {/* BAGIAN 2: TULISAN / LEGENDA (Dipindah ke bawah) */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
             {tcData.map((d, i) => (
-              <div key={d.name} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '3px 0', borderBottom: i < tcData.length - 1 ? `1px solid ${t.border}` : 'none' }}>
+              <div 
+                key={d.name} 
+                // Efek hover sinkron dengan pie chart
+                style={{ 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  gap: 6, 
+                  padding: '4px 0', 
+                  borderBottom: i < tcData.length - 1 ? `1px solid ${t.border}` : 'none',
+                  opacity: pieActiveIndex === i || pieActiveIndex === -1 ? 1 : 0.4,
+                  transition: 'opacity 0.2s ease-in-out',
+                  cursor: 'pointer'
+                }}
+                onMouseEnter={() => setPieActiveIndex(i)}
+                onMouseLeave={() => setPieActiveIndex(-1)}
+              >
                 <span style={{ width: 7, height: 7, borderRadius: 2, background: d.fill, flexShrink: 0 }} />
                 <span style={{ flex: 1, fontSize: 9.5, color: t.textSub, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontFamily: FONT_MONO }}>{d.name}</span>
                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', flexShrink: 0 }}>
@@ -298,21 +357,7 @@ export default function OverviewTab({ data, theme, availH }: Props) {
               </div>
             ))}
           </div>
-          {!isMobile && (
-            <div style={{ flex: 1, minHeight: 60 }}>
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={tcData} layout="vertical" margin={{ top: 0, right: 4, left: 0, bottom: 0 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke={gs} horizontal={false} />
-                  <XAxis type="number" tickFormatter={fmtRp} tick={{ fontSize: 7, fill: t.textMuted, fontFamily: FONT_MONO }} axisLine={false} tickLine={false} />
-                  <YAxis type="category" dataKey="name" tick={{ fontSize: 7, fill: t.textMuted, fontFamily: FONT_MONO }} axisLine={false} tickLine={false} width={60} />
-                  <Tooltip content={<ChartTooltip theme={theme} currency={true} />} />
-                  <Bar dataKey="value" name="Penjualan" radius={[0, 3, 3, 0]} maxBarSize={10}>
-                    {tcData.map((d, i) => <Cell key={i} fill={d.fill} />)}
-                  </Bar>
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
-          )}
+          
         </div>
       ) : <div style={{ color: t.textMuted, fontSize: 11, textAlign: 'center', paddingTop: 16 }}>Tidak ada data</div>}
     </Card>
@@ -370,9 +415,19 @@ export default function OverviewTab({ data, theme, availH }: Props) {
 
   const KategoriProdukNode = (
     <Card theme={theme} title="Kategori Produk" icon={<Package size={10} color="#10b981" />} color="#10b981" accent="#10b981">
-      <div style={{ flex: 1, overflowY: 'auto' }}>
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflowY: 'auto' }}>
         {categoriesWithPct.map((c, i) => (
-          <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '4px 0', borderBottom: i < categoriesWithPct.length - 1 ? `1px solid ${t.border}` : 'none' }}>
+          <div 
+            key={i} 
+            style={{ 
+              flex: 1, 
+              display: 'flex', 
+              alignItems: 'center', 
+              gap: 6, 
+              padding: '0 4px', 
+              borderBottom: i < categoriesWithPct.length - 1 ? `1px solid ${t.border}` : 'none' 
+            }}
+          >
             <span style={{ width: 6, height: 6, borderRadius: 2, background: c.fill, flexShrink: 0 }} />
             <span style={{ flex: 1, fontSize: 9.5, color: t.textSub, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontFamily: FONT_MONO }}>{c.kategori}</span>
             <span style={{ fontSize: 9.5, fontWeight: 700, color: t.text, fontFamily: FONT_MONO, flexShrink: 0 }}>{c.pct.toFixed(1)}%</span>

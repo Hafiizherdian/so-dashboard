@@ -62,27 +62,52 @@ export function KpiCard({ bg, border, labelColor, accent, label, value, sub, bad
 }
 
 // ─── Card ───────────────────────────────────────────────────────────────────
-export function Card({ children, theme, title, icon, color, sub, style, accent }: {
+export function Card({ children, theme, title, icon, color, sub, style, accent, action }: {
   children: React.ReactNode; theme: Theme;
   title?: string; icon?: React.ReactNode; color?: string; sub?: string;
-  style?: React.CSSProperties; accent?: string;
+  style?: React.CSSProperties; accent?: string; action?: React.ReactNode;
 }) {
   const t = tk[theme];
   return (
     <div style={{ background: t.cardbg, border: `1px solid ${t.borderCard}`, borderRadius: 13, padding: '10px 12px 10px', display: 'flex', flexDirection: 'column', overflow: 'hidden', boxShadow: t.shadowCard, position: 'relative', ...style }}>
+      
+      {/* Menggunakan warna aksen flat solid tanpa efek gradient */}
       {accent && <div style={{ position: 'absolute', top: 0, left: 16, right: 16, height: 2, borderRadius: '0 0 2px 2px', background: `linear-gradient(90deg,${accent}66,${accent}22)` }} />}
-      {title && (
-        <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: 10, flexShrink: 0 }}>
-          {icon && color && (
-            <div style={{ width: 22, height: 22, borderRadius: 6, background: `${color}15`, border: `1px solid ${color}28`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>{icon}</div>
+      
+      {/* Membungkus title dan action dalam satu flex container */}
+      {(title || action) && (
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10, flexShrink: 0, gap: 8 }}>
+          
+          {/* Sisi Kiri: Icon, Title, dan Subtitle */}
+          {title && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 7, minWidth: 0, flex: 1 }}>
+              {icon && color && (
+                <div style={{ width: 22, height: 22, borderRadius: 6, background: `${color}15`, border: `1px solid ${color}28`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                  {icon}
+                </div>
+              )}
+              <div style={{ minWidth: 0, flex: 1 }}>
+                <div style={{ fontSize: 11, fontWeight: 700, color: t.text, fontFamily: FONT_SANS, lineHeight: 1.25, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  {title}
+                </div>
+                {sub && <div style={{ fontSize: 9, color: t.textMuted, fontFamily: FONT_MONO, marginTop: 1 }}>{sub}</div>}
+              </div>
+            </div>
           )}
-          <div style={{ minWidth: 0, flex: 1 }}>
-            <div style={{ fontSize: 11, fontWeight: 700, color: t.text, fontFamily: FONT_SANS, lineHeight: 1.25, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{title}</div>
-            {sub && <div style={{ fontSize: 9, color: t.textMuted, fontFamily: FONT_MONO, marginTop: 1 }}>{sub}</div>}
-          </div>
+
+          {/* Sisi Kanan: Action (Tempat Tab Button Anda) */}
+          {action && (
+            <div style={{ flexShrink: 0 }}>
+              {action}
+            </div>
+          )}
+          
         </div>
       )}
-      <div style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column' }}>{children}</div>
+      
+      <div style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column' }}>
+        {children}
+      </div>
     </div>
   );
 }
