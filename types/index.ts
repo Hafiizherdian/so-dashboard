@@ -108,7 +108,12 @@ export interface DashboardData {
   categoriesSO?: CategoryBreakdownSO[];
   topCustomers: TopCustomer[];
   topCustomersSO?: TopCustomerSO[];
-  topProducts: TopProduct[];
+  topProducts?: {
+  deskripsi_produk: string;
+  kategori: string;
+  qty_terkirim: number;
+  total_penjualan: number;
+}[];
   typeCustomerBreakdown: { type_customer: string; penjualan: number; pct: number; transaksi: number }[];
   jenisBreakdown: { jenis: string; penjualan: number; pct: number; transaksi: number }[];
   keteranganBreakdown: {

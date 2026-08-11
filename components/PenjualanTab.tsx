@@ -4,15 +4,12 @@ import {
   ComposedChart, Bar, XAxis, YAxis, CartesianGrid,
   Tooltip, ResponsiveContainer, Cell, BarChart,
 } from 'recharts';
-import { Receipt, Users, Package, ChevronUp, ChevronDown } from 'lucide-react';
+import { Receipt, Users, Package } from 'lucide-react';
 import { Theme, tk, CC, fmtRp, fmtRpFull, FONT_MONO } from '@/lib/theme';
 import { DashboardData } from '@/types/index';
 import { Card, ChartTooltip, mkTick } from '@/components/ui';
 
 interface Props { data: DashboardData; theme: Theme; }
-
-type SortKey = 'total_penjualan' | 'transaksi';
-type SortDir  = 'asc' | 'desc';
 
 // ── Breakpoint hook ──
 function useBreakpoint() {
@@ -38,10 +35,6 @@ export default function PenjualanTab({ data, theme }: Props) {
   const isMobile  = bp === 'mobile';
   const isTablet  = bp === 'tablet';
 
-  const [sortKey, setSortKey] = useState<SortKey>('total_penjualan');
-  const [sortDir, setSortDir] = useState<SortDir>('desc');
-  const [search,  setSearch]  = useState('');
-
   const weekly                = Array.isArray(data.weekly)                ? data.weekly                : [];
   const weeklyHasMultiYear = new Set(weekly.map((w: any) => w.tahun)).size > 1;
   const weeklyChartData = weekly.map((w: any) => ({
@@ -52,37 +45,21 @@ export default function PenjualanTab({ data, theme }: Props) {
   }));
   const weeklyYears = Array.from(new Set(weekly.map((w: any) => w.tahun))).sort();
   const yearColor = (tahun: number) => CC[weeklyYears.indexOf(tahun) % CC.length];
-  const topCustomers          = Array.isArray(data.topCustomers)          ? data.topCustomers          : [];
   const categories            = Array.isArray(data.categories)            ? data.categories            : [];
-  const typeCustomerBreakdown = Array.isArray(data.typeCustomerBreakdown) ? data.typeCustomerBreakdown : [];
   const jenisBreakdown        = Array.isArray((data as any).jenisBreakdown) ? (data as any).jenisBreakdown : [];
+  const topProducts           = Array.isArray((data as any).topProducts)  ? (data as any).topProducts  : [];
 
-  const toggleSort = (k: SortKey) => {
-    if (k === sortKey) setSortDir(d => d === 'asc' ? 'desc' : 'asc');
-    else { setSortKey(k); setSortDir('desc'); }
-  };
-
-  const filteredCustomers = topCustomers
-    .filter(c => (c.pelanggan ?? '').toLowerCase().includes(search.toLowerCase()))
-    .sort((a, b) => {
-      const av = Number(a[sortKey] ?? 0);
-      const bv = Number(b[sortKey] ?? 0);
-      return sortDir === 'asc' ? av - bv : bv - av;
-    });
-
-  const SortIcon = ({ k }: { k: SortKey }) =>
-    k === sortKey
-      ? (sortDir === 'asc'
-          ? <ChevronUp  size={10} color="#6366f1" />
-          : <ChevronDown size={10} color="#6366f1" />)
-      : <ChevronUp size={10} color={t.textFaint} />;
+  // ── Top 10 produk by qty (sudah urut DESC dari API, jaga-jaga di-sort ulang) ──
+  const top10ByQty = [...topProducts]
+    .sort((a, b) => Number((b as any).qty_terkirim ?? 0) - Number((a as any).qty_terkirim ?? 0))
+    // .slice(0, 20);
 
   const thS: React.CSSProperties = {
     padding: isMobile ? '7px 8px' : '8px 10px',
     textAlign: 'left', fontSize: 9, fontWeight: 700,
     textTransform: 'uppercase', letterSpacing: '0.08em', color: t.textMuted,
     borderBottom: `1px solid ${t.border}`, fontFamily: FONT_MONO,
-    whiteSpace: 'nowrap', cursor: 'pointer', userSelect: 'none',
+    whiteSpace: 'nowrap', cursor: 'default', userSelect: 'none',
     background: t.tableHead,
   };
 
@@ -94,49 +71,6 @@ export default function PenjualanTab({ data, theme }: Props) {
   // ── Chart heights ──
   const weeklyChartH    = isMobile ? 140 : 180;
   const categoryChartH  = isMobile ? 140 : 160;
-
-  // ── Tipe Pelanggan node ──
-  // const TipePelangganNode = (
-  //   <Card
-  //     theme={theme} title="Tipe Pelanggan"
-  //     icon={<Users size={10} color="#f59e0b" />}
-  //     color="#f59e0b" accent="#f59e0b"
-  //   >
-  //     <div style={{ display: 'flex', flexDirection: 'column', gap: 6, flex: 1, justifyContent: 'center' }}>
-  //       {typeCustomerBreakdown.length === 0 && (
-  //         <span style={{ fontSize: 11, color: t.textMuted, fontFamily: FONT_MONO, textAlign: 'center' }}>
-  //           Tidak ada data
-  //         </span>
-  //       )}
-  //       {typeCustomerBreakdown.slice(0, 6).map((k, i) => {
-  //         const maxVal = Number(typeCustomerBreakdown[0]?.penjualan ?? 1) || 1;
-  //         const pct    = (Number(k.penjualan ?? 0) / maxVal) * 100;
-  //         const color  = CC[i % CC.length];
-  //         return (
-  //           <div key={k.type_customer} style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
-  //             <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-  //               <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-  //                 <span style={{ width: 6, height: 6, borderRadius: 2, background: color, flexShrink: 0 }} />
-  //                 <span style={{ fontSize: 10, color: t.textSub, fontFamily: FONT_MONO }}>
-  //                   {k.type_customer}
-  //                 </span>
-  //                 <span style={{ fontSize: 9, color: t.textMuted, fontFamily: FONT_MONO }}>
-  //                   ({Number(k.pct ?? 0).toFixed(1)}%)
-  //                 </span>
-  //               </div>
-  //               <span style={{ fontSize: 10, fontWeight: 700, color: t.text, fontFamily: FONT_MONO }}>
-  //                 {fmtRpFull(Number(k.penjualan ?? 0))}
-  //               </span>
-  //             </div>
-  //             <div style={{ height: 3, borderRadius: 2, background: t.borderCard, overflow: 'hidden' }}>
-  //               <div style={{ height: '100%', width: `${pct}%`, background: color, borderRadius: 2 }} />
-  //             </div>
-  //           </div>
-  //         );
-  //       })}
-  //     </div>
-  //   </Card>
-  // );
 
   const JenisNode = (
   <Card
@@ -205,8 +139,7 @@ export default function PenjualanTab({ data, theme }: Props) {
     </Card>
   );
 
-  // ── Customer table ──
-  // Mobile: sembunyikan kolom Tipe, tampilkan hanya Pelanggan + Penjualan + Transaksi
+  // ── Top 10 Customer table (by qty) ──
   const CustomerTable = (
     <div style={{
       background: t.cardbg, border: `1px solid ${t.borderCard}`,
@@ -216,38 +149,21 @@ export default function PenjualanTab({ data, theme }: Props) {
       <div style={{
         padding: isMobile ? '8px 12px' : '10px 14px',
         borderBottom: `1px solid ${t.border}`,
-        display: 'flex', alignItems: 'center',
-        justifyContent: 'space-between', gap: 10,
-        flexWrap: isMobile ? 'wrap' : 'nowrap',
+        display: 'flex', alignItems: 'center', gap: 10,
       }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
-          <div style={{
-            width: 22, height: 22, borderRadius: 6,
-            background: '#6366f115', border: '1px solid #6366f128',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-          }}>
-            <Users size={11} color="#6366f1" />
-          </div>
-          <div>
-            <div style={{ fontSize: 11, fontWeight: 700, color: t.text }}>Data Pelanggan</div>
-            <div style={{ fontSize: 9, color: t.textMuted, fontFamily: FONT_MONO }}>
-              {filteredCustomers.length} pelanggan
-            </div>
+        <div style={{
+          width: 22, height: 22, borderRadius: 6,
+          background: '#6366f115', border: '1px solid #6366f128',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+        }}>
+          <Users size={11} color="#6366f1" />
+        </div>
+        <div>
+          <div style={{ fontSize: 11, fontWeight: 700, color: t.text }}>Top 10 Produk</div>
+          <div style={{ fontSize: 9, color: t.textMuted, fontFamily: FONT_MONO }}>
+            berdasarkan qty terkirim
           </div>
         </div>
-        <input
-          type="text"
-          placeholder="Cari pelanggan…"
-          value={search}
-          onChange={e => setSearch(e.target.value)}
-          style={{
-            height: 26, padding: '0 10px', fontSize: 11, borderRadius: 7,
-            background: t.inputBg, border: `1px solid ${t.borderInput}`,
-            color: t.text, outline: 'none',
-            width: isMobile ? '100%' : 180,
-            fontFamily: FONT_MONO,
-          }}
-        />
       </div>
 
       {/* Table */}
@@ -258,60 +174,30 @@ export default function PenjualanTab({ data, theme }: Props) {
         }}>
           <thead>
             <tr>
-              <th style={{ ...thS, cursor: 'default' }}>Pelanggan</th>
-              {!isMobile && (
-                <th style={{ ...thS, cursor: 'default' }}>Tipe</th>
-              )}
-              {!isMobile && (
-                <th style={{ ...thS, textAlign: 'right', cursor: 'default' }}>
-                  Qty
-                </th>
-              )}
-              <th
-                style={{ ...thS, textAlign: 'right' }}
-                onClick={() => toggleSort('total_penjualan')}
-              >
-                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3, float: 'right' }}>
-                  Penjualan <SortIcon k="total_penjualan" />
-                </span>
-              </th>
-              <th
-                style={{ ...thS, textAlign: 'right' }}
-                onClick={() => toggleSort('transaksi')}
-              >
-                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3, float: 'right' }}>
-                  {isMobile ? 'Trx' : 'Transaksi'} <SortIcon k="transaksi" />
-                </span>
-              </th>
+              <th style={{ ...thS, width: 28, textAlign: 'center' }}>#</th>
+              {!isMobile && <th style={thS}>Kategori</th>}
+              <th style={thS}>Produk</th>
+              <th style={{ ...thS, textAlign: 'right' }}>Qty</th>
+              {!isMobile && <th style={{ ...thS, textAlign: 'right' }}>Penjualan</th>}
             </tr>
           </thead>
           <tbody>
-            {filteredCustomers.map((c, i) => (
+            {top10ByQty.map((c: any, i: number) => (
               <tr
-                key={`${c.pelanggan}-${i}`}
+                key={`${c.deskripsi_produk}-${c.kategori}-${i}`}
                 style={{ background: i % 2 === 1 ? t.tableAlt : 'transparent' }}
                 onMouseEnter={e => (e.currentTarget.style.background = t.rowHover)}
                 onMouseLeave={e => (e.currentTarget.style.background = i % 2 === 1 ? t.tableAlt : 'transparent')}
               >
                 <td style={{
                   padding: isMobile ? '8px 8px' : '9px 10px',
-                  color: t.text, fontFamily: FONT_MONO,
-                  fontSize: isMobile ? 10 : 11,
-                  maxWidth: isMobile ? 140 : 220,
-                  overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                  textAlign: 'center', color: t.textMuted,
+                  fontFamily: FONT_MONO, fontSize: isMobile ? 10 : 11, fontWeight: 700,
                 }}>
-                  {/* Mobile: tampilkan tipe sebagai sub-text */}
-                  {isMobile ? (
-                    <div>
-                      <div style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                        {c.pelanggan}
-                      </div>
-                      <div style={{ fontSize: 8, color: t.textMuted, marginTop: 1 }}>
-                        {c.type_customer ?? '—'}
-                      </div>
-                    </div>
-                  ) : c.pelanggan}
+                  {i + 1}
                 </td>
+                
+                {/* Kolom Kategori (Desktop/Tablet) */}
                 {!isMobile && (
                   <td style={{ padding: '9px 10px', fontSize: 10 }}>
                     <span style={{
@@ -319,35 +205,51 @@ export default function PenjualanTab({ data, theme }: Props) {
                       fontWeight: 600, fontFamily: FONT_MONO,
                       background: t.infoBg, color: t.infoText, border: `1px solid ${t.infoBorder}`,
                     }}>
-                      {c.type_customer ?? '—'}
+                      {c.kategori ?? '—'}
                     </span>
                   </td>
                 )}
-                {!isMobile && (
-                  <td style={{
-                    padding: '9px 10px', textAlign: 'right', color: t.textSub,
-                    fontFamily: FONT_MONO, fontSize: 11,
-                  }}>
-                    {Number((c as any).qty_terkirim ?? 0).toLocaleString('id-ID')}
-                  </td>
-                )}
+
+                {/* Kolom Produk */}
+                <td style={{
+                  padding: isMobile ? '8px 8px' : '9px 10px',
+                  color: t.text, fontFamily: FONT_MONO,
+                  fontSize: isMobile ? 10 : 11,
+                  maxWidth: isMobile ? 140 : 220,
+                  overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                }}>
+                  {/* Mobile: tampilkan kategori di atas produk sebagai sub-text */}
+                  {isMobile ? (
+                    <div>
+                      <div style={{ fontSize: 8, color: t.textMuted, marginBottom: 2 }}>
+                        {c.kategori ?? '—'}
+                      </div>
+                      <div style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        {c.deskripsi_produk}
+                      </div>
+                    </div>
+                  ) : c.deskripsi_produk}
+                </td>
+
                 <td style={{
                   padding: isMobile ? '8px 8px' : '9px 10px',
                   textAlign: 'right', color: t.text,
                   fontFamily: FONT_MONO, fontSize: isMobile ? 10 : 11, fontWeight: 700,
                 }}>
-                  {fmtRpFull(Number(c.total_penjualan ?? 0))}
+                  {Number(c.qty_terkirim ?? 0).toLocaleString('id-ID')}
                 </td>
-                <td style={{
-                  padding: isMobile ? '8px 8px' : '9px 10px',
-                  textAlign: 'right', color: t.textMuted,
-                  fontFamily: FONT_MONO, fontSize: isMobile ? 10 : 11,
-                }}>
-                  {Number(c.transaksi ?? 0).toLocaleString('id-ID')}
-                </td>
+                
+                {!isMobile && (
+                  <td style={{
+                    padding: '9px 10px', textAlign: 'right', color: t.textMuted,
+                    fontFamily: FONT_MONO, fontSize: 11,
+                  }}>
+                    {fmtRpFull(Number(c.total_penjualan ?? 0))}
+                  </td>
+                )}
               </tr>
             ))}
-            {filteredCustomers.length === 0 && (
+            {top10ByQty.length === 0 && (
               <tr>
                 <td colSpan={isMobile ? 3 : 5} style={{ padding: 32, textAlign: 'center', color: t.textMuted, fontSize: 12, fontFamily: FONT_MONO }}>
                   Tidak ada data
@@ -394,13 +296,13 @@ export default function PenjualanTab({ data, theme }: Props) {
           </ResponsiveContainer>
         </Card>
 
-        {/* Kategori + Tipe: 2 kolom */}
+        {/* Kategori + Jenis: 1 kolom */}
         <div style={{ display: 'grid', gridTemplateColumns: '1fr ', gap: 10 }}>
           {KategoriNode}
           {JenisNode}
         </div>
 
-        {/* Customer table full width */}
+        {/* Top 10 customer table full width */}
         {CustomerTable}
       </div>
     );
@@ -440,13 +342,13 @@ export default function PenjualanTab({ data, theme }: Props) {
           </ResponsiveContainer>
         </Card>
 
-        {/* Kategori (3/5) + Tipe Pelanggan (2/5) */}
+        {/* Kategori (3/5) + Jenis (2/5) */}
         <div style={{ display: 'grid', gridTemplateColumns: '3fr 2fr', gap: 12 }}>
           {KategoriNode}
           {JenisNode}
         </div>
 
-        {/* Customer table full width */}
+        {/* Top 10 customer table full width */}
         {CustomerTable}
       </div>
     );
@@ -469,7 +371,6 @@ export default function PenjualanTab({ data, theme }: Props) {
             <CartesianGrid strokeDasharray="3 3" stroke={gs} vertical={false} />
             <XAxis
               dataKey="weekLabel"
-              // tickFormatter={v => `W${v}`}
               tick={ts} axisLine={false} tickLine={false}
               interval={weeklyInterval}
             />

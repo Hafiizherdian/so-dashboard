@@ -278,30 +278,30 @@ export async function GET(req: NextRequest) {
       })
     );
 
-  const weeklyRows = canPenjualanData
-    ? await query<{ tahun: string; week: string; penjualan: string; qty_terkirim: string }>(`
-        SELECT EXTRACT(YEAR FROM tanggal)::INTEGER AS tahun,
-              week,
-              COALESCE(SUM(sub_total),0)    AS penjualan,
-              COALESCE(SUM(qty_terkirim),0) AS qty_terkirim
-        FROM sales_transactions ${wSales}
-        GROUP BY tahun, week
-        ORDER BY tahun, week
-      `, vSales)
-    : [];
+    const weeklyRows = canPenjualanData
+      ? await query<{ tahun: string; week: string; penjualan: string; qty_terkirim: string }>(`
+          SELECT EXTRACT(YEAR FROM tanggal)::INTEGER AS tahun,
+                week,
+                COALESCE(SUM(sub_total),0)    AS penjualan,
+                COALESCE(SUM(qty_terkirim),0) AS qty_terkirim
+          FROM sales_transactions ${wSales}
+          GROUP BY tahun, week
+          ORDER BY tahun, week
+        `, vSales)
+      : [];
 
-  const weeklySORows = canSOData
-    ? await query<{ tahun: string; week: string; qty_order: string; qty_delivered: string; qty_sisa: string }>(`
-        SELECT EXTRACT(YEAR FROM tanggal)::INTEGER AS tahun,
-              week,
-              COALESCE(SUM(qty_order),0)     AS qty_order,
-              COALESCE(SUM(qty_delivered),0) AS qty_delivered,
-              COALESCE(SUM(qty_sisa),0)      AS qty_sisa
-        FROM so_outstanding ${wSO}
-        GROUP BY tahun, week
-        ORDER BY tahun, week
-      `, vSO)
-    : [];
+    const weeklySORows = canSOData
+      ? await query<{ tahun: string; week: string; qty_order: string; qty_delivered: string; qty_sisa: string }>(`
+          SELECT EXTRACT(YEAR FROM tanggal)::INTEGER AS tahun,
+                week,
+                COALESCE(SUM(qty_order),0)     AS qty_order,
+                COALESCE(SUM(qty_delivered),0) AS qty_delivered,
+                COALESCE(SUM(qty_sisa),0)      AS qty_sisa
+          FROM so_outstanding ${wSO}
+          GROUP BY tahun, week
+          ORDER BY tahun, week
+        `, vSO)
+      : [];
 
     const catRows = canPenjualanData
       ? await query<{ kategori: string; penjualan: string }>(`
@@ -339,6 +339,25 @@ export async function GET(req: NextRequest) {
           FROM sales_transactions ${wSales}
           GROUP BY pelanggan, type_customer
           ORDER BY penjualan DESC LIMIT 10
+        `, vSales)
+      : [];
+
+    // Top 10 produk berdasarkan qty_terkirim, di-group per kombinasi unik
+    // deskripsi_produk + kategori (dua produk dengan nama sama tapi beda
+    // kategori dihitung terpisah).
+    const prodRows = canPenjualanData
+      ? await query<{
+          deskripsi_produk: string;
+          kategori:         string;
+          qty:              string;
+          penjualan:        string;
+        }>(`
+          SELECT deskripsi_produk, kategori,
+                 COALESCE(SUM(qty_terkirim),0) AS qty,
+                 COALESCE(SUM(sub_total),0)    AS penjualan
+          FROM sales_transactions ${wSales}
+          GROUP BY deskripsi_produk, kategori
+          ORDER BY qty DESC LIMIT 20
         `, vSales)
       : [];
 
@@ -404,8 +423,8 @@ export async function GET(req: NextRequest) {
           FROM so_outstanding
           ${andWhere(wSO, 'qty_sisa > 0')}
           GROUP BY produk, nomor_so, tanggal
-          ORDER BY qty DESC 
-        `, vSO)
+          ORDER BY qty DESC
+         `, vSO)
       : [];
 
     const jenisRows = canPenjualanData
@@ -486,6 +505,15 @@ export async function GET(req: NextRequest) {
               total_penjualan: Number(r.penjualan),
               qty_terkirim:       Number(r.qty),
               transaksi:       Number(r.transaksi),
+            }))
+          : [],
+        // Top 10 produk berdasarkan qty_terkirim (group by deskripsi_produk + kategori)
+        topProducts: canPenjualanData
+          ? prodRows.map(r => ({
+              deskripsi_produk: r.deskripsi_produk || '(Tanpa Nama)',
+              kategori:         r.kategori || '(Lainnya)',
+              qty_terkirim:     Number(r.qty),
+              total_penjualan:  Number(r.penjualan),
             }))
           : [],
         topCustomersSO: canSOData
