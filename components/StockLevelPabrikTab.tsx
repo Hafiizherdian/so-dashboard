@@ -471,7 +471,7 @@ export default function StockLevelPabrikTab({ theme }: Props) {
         <div key={card.label} style={{ borderRadius: 13, padding: isMobile ? '10px 12px' : '12px 14px', background: card.bg, border: `1px solid ${card.border}` }}>
           <div style={{ fontSize: 9, fontFamily: FONT_MONO, textTransform: 'uppercase', letterSpacing: '0.1em', color: card.color, fontWeight: 700, marginBottom: 5 }}>{card.label}</div>
           <div style={{ fontSize: isMobile ? 17 : 20, fontWeight: 800, color: t.text, fontFamily: FONT_MONO, letterSpacing: '-0.04em', lineHeight: 1 }}>{card.value}</div>
-          <div style={{ fontSize: 9, color: t.textMuted, fontFamily: FONT_MONO, marginTop: 4 }}>{card.sub}</div>
+          <div style={{ fontSize: 9, color: t.text, fontFamily: FONT_MONO, marginTop: 4 }}>{card.sub}</div>
         </div>
       ))}
     </div>
