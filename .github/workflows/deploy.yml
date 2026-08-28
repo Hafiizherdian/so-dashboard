@@ -29,10 +29,10 @@ jobs:
             echo "=== Mengambil pembaharuan list branch dari GitHub ==="
             git fetch origin
 
-            echo "=== Pull kode terbaru dari branch main ==="
-            # Menggunakan flag -f atau set upstream jika sebelumnya server berada di branch lain
+            echo "=== Reset paksa ke origin/main (hindari conflict lockfile/local changes) ==="
             git checkout main || git checkout -b main origin/main
-            git pull origin main
+            git reset --hard origin/main
+            git clean -fd
 
             echo "=== Install dependencies ==="
             npm ci 
