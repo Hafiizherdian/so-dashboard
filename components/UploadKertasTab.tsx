@@ -37,8 +37,9 @@ const NAMA_BULAN = [
 function FormatGuide({ t }: { t: Tokens }) {
   return (
     <div style={{
+      flex: 1,
       padding: '11px 14px', borderRadius: 10,
-      background: t.cardbg, border: `1px solid ${t.border}`,
+      background: t.inputBg, border: `1px solid ${t.border}`,
       fontSize: 11, color: t.text, fontFamily: FONT_MONO, lineHeight: 1.8,
     }}>
       <div style={{ fontWeight: 700, marginBottom: 4, color: '#818cf8' }}>Format kolom Excel:</div>
@@ -46,7 +47,7 @@ function FormatGuide({ t }: { t: Tokens }) {
         {FORMAT_COLS.map(col => (
           <span key={col} style={{
             padding: '1px 7px', borderRadius: 5,
-            background: t.inputBg, border: `1px solid ${t.borderInput}`,
+            background: t.cardbg, border: `1px solid ${t.borderInput}`,
             fontSize: 10, color: t.textSub,
           }}>{col}</span>
         ))}
@@ -212,7 +213,7 @@ function HistoryTable({ history, loading, deleting, delTarget, onDelete, onConfi
                   </td>
                   <td style={{ padding: '9px 12px', color: t.textSub, fontFamily: FONT_MONO, fontSize: 11 }}>{row.periode}</td>
                   <td style={{ padding: '9px 12px', color: t.textSub, fontFamily: FONT_MONO, fontSize: 11 }}>
-                    {row.record_count.toLocaleString('id-ID')}
+                    {row.record_count?.toLocaleString('id-ID') ?? '0'}
                   </td>
                   <td style={{ padding: '9px 12px', color: t.textMuted, fontFamily: FONT_MONO, fontSize: 10 }}>{row.uploaded_by}</td>
                   <td style={{ padding: '9px 12px' }}>
@@ -255,7 +256,7 @@ export default function UploadKertasTab({ theme }: Props) {
   const [periode,     setPeriode]     = useState(new Date().toISOString().slice(0, 7));
   const [dragging,    setDragging]    = useState(false);
   const [uploading,   setUploading]   = useState(false);
-  const [delTarget,   setDelTarget]   = useState<HistoryRow | null>(null); // ← fix: bukan boolean
+  const [delTarget,   setDelTarget]   = useState<HistoryRow | null>(null);
   const [deleting,    setDeleting]    = useState(false);
   const [msg,         setMsg]         = useState<MsgState>(null);
   const [history,     setHistory]     = useState<HistoryRow[]>([]);
@@ -272,7 +273,7 @@ export default function UploadKertasTab({ theme }: Props) {
   const fetchHistory = useCallback(async () => {
     setHistLoading(true);
     try {
-      const r = await apiJson('/api/kertas/upload?limit=30');
+      const r = await apiJson('/api/kertas/upload');
       if (r.success) setHistory(r.data);
     } catch (err) {
       console.error('[UploadKertasTab] fetch history error:', err);
@@ -336,8 +337,8 @@ export default function UploadKertasTab({ theme }: Props) {
     setDeleting(true);
     try {
       await apiFetch(`/api/kertas/delete?id=${delTarget.id}`, { method: 'DELETE' });
-      setDelTarget(null);     // ← fix: null bukan false
-      await fetchHistory();   // ← fix: bukan files()
+      setDelTarget(null);
+      await fetchHistory();
     } catch (err) {
       console.error('[UploadKertasTab] delete error:', err);
     } finally {
@@ -349,105 +350,107 @@ export default function UploadKertasTab({ theme }: Props) {
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16, }}>
       <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
 
-      <FormatGuide t={t} />
+      <div style={{ display: 'flex', gap: 16, alignItems: 'stretch' }}>
+        <div style={{ flex: 1, ...cardStyle(t) }}>
+          <div style={cardHeaderStyle(t)}>
+            <div>
+              <div style={{ fontSize: 12, fontWeight: 700, color: t.text }}>Upload File Stok Kertas</div>
+              <div style={{ fontSize: 9, color: t.textMuted, fontFamily: FONT_MONO }}>
+                Data akan ditambahkan ke tabel Stok Level
+              </div>
+            </div>
+          </div>
 
-      <div style={cardStyle(t)}>
-        <div style={cardHeaderStyle(t)}>
-          <div>
-            <div style={{ fontSize: 12, fontWeight: 700, color: t.text }}>Upload File Stok Kertas</div>
-            <div style={{ fontSize: 9, color: t.textMuted, fontFamily: FONT_MONO }}>
-              Data akan ditambahkan ke tabel Stok Level
+          <div style={{ padding: 16, display: 'flex', flexDirection: 'column', gap: 14 }}>
+            {msg && <AlertBar msg={msg} onClose={() => setMsg(null)} t={t} />}
+
+            <div style={{ position: 'relative' }} ref={calendarRef}>
+              <label style={{
+                display: 'block', fontSize: 10, fontWeight: 700, color: t.textMuted,
+                marginBottom: 5, fontFamily: FONT_MONO, textTransform: 'uppercase', letterSpacing: '0.08em',
+              }}>
+                Periode *
+              </label>
+              <button type="button" onClick={() => setShowCalendar(!showCalendar)}
+                style={{
+                  ...inputStyle(t, { width: 'auto' }), display: 'flex', alignItems: 'center', gap: 10,
+                  cursor: 'pointer', textAlign: 'left', minWidth: 180, padding: '8px 12px',
+                }}>
+                <Calendar size={14} color={t.textMuted} />
+                <span style={{ color: t.text, fontSize: 12, fontFamily: FONT_MONO }}>
+                  {NAMA_BULAN[activeMonth]} {activeYear}
+                </span>
+              </button>
+
+              {showCalendar && (
+                <div style={{
+                  position: 'absolute', top: '100%', left: 0, marginTop: 6, zIndex: 50,
+                  width: 260, background: t.cardbg, border: `1px solid ${t.border}`,
+                  borderRadius: 8, boxShadow: '0 10px 15px -3px rgba(0,0,0,0.3)', padding: 12,
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+                    <button type="button" onClick={() => setCurrentYear(y => y - 1)}
+                      style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: t.text, display: 'flex', padding: 4 }}>
+                      <ChevronLeft size={16} />
+                    </button>
+                    <span style={{ fontSize: 13, fontWeight: 700, color: t.text, fontFamily: FONT_MONO }}>{currentYear}</span>
+                    <button type="button" onClick={() => setCurrentYear(y => y + 1)}
+                      style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: t.text, display: 'flex', padding: 4 }}>
+                      <ChevronRight size={16} />
+                    </button>
+                  </div>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 6 }}>
+                    {NAMA_BULAN.map((bulan, idx) => {
+                      const isSelected = currentYear === parseInt(activeYear, 10) && idx === activeMonth;
+                      return (
+                        <button key={bulan} type="button" onClick={() => handleSelectMonth(idx)}
+                          style={{
+                            padding: '8px 4px', borderRadius: 6, fontSize: 11,
+                            fontFamily: FONT_MONO, cursor: 'pointer', textAlign: 'center',
+                            border: isSelected ? '1px solid #6366f1' : '1px solid transparent',
+                            background: isSelected ? 'rgba(99,102,241,0.15)' : t.inputBg,
+                            color: isSelected ? '#818cf8' : t.textSub, transition: 'all 0.1s',
+                          }}>
+                          {bulan.substring(0, 3)}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <DropZone
+              file={file} dragging={dragging}
+              onDragOver={e => { e.preventDefault(); setDragging(true); }}
+              onDragLeave={() => setDragging(false)}
+              onDrop={e => { e.preventDefault(); setDragging(false); const f = e.dataTransfer.files[0]; if (f) handleFile(f); }}
+              onClick={() => inputRef.current?.click()}
+              onRemove={() => setFile(null)}
+              t={t}
+            />
+            <input ref={inputRef} type="file" accept=".xlsx,.xls" style={{ display: 'none' }}
+              onChange={e => { if (e.target.files?.[0]) handleFile(e.target.files[0]); }} />
+
+            <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+              <button onClick={handleUpload} disabled={!file || uploading} style={btnPrimaryStyle(!file || uploading)}>
+                {uploading ? (
+                  <>
+                    <svg style={{ animation: 'spin 0.8s linear infinite', width: 13, height: 13 }} viewBox="0 0 24 24" fill="none">
+                      <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" opacity="0.2" />
+                      <path d="M4 12a8 8 0 018-8" stroke="currentColor" strokeWidth="3" fill="none" strokeLinecap="round" />
+                    </svg>
+                    Mengupload…
+                  </>
+                ) : (
+                  <><Upload size={13} /> Upload Stok Kertas</>
+                )}
+              </button>
             </div>
           </div>
         </div>
 
-        <div style={{ padding: 16, display: 'flex', flexDirection: 'column', gap: 14 }}>
-          {msg && <AlertBar msg={msg} onClose={() => setMsg(null)} t={t} />}
-
-          <div style={{ position: 'relative' }} ref={calendarRef}>
-            <label style={{
-              display: 'block', fontSize: 10, fontWeight: 700, color: t.textMuted,
-              marginBottom: 5, fontFamily: FONT_MONO, textTransform: 'uppercase', letterSpacing: '0.08em',
-            }}>
-              Periode *
-            </label>
-            <button type="button" onClick={() => setShowCalendar(!showCalendar)}
-              style={{
-                ...inputStyle(t, { width: 'auto' }), display: 'flex', alignItems: 'center', gap: 10,
-                cursor: 'pointer', textAlign: 'left', minWidth: 180, padding: '8px 12px',
-              }}>
-              <Calendar size={14} color={t.textMuted} />
-              <span style={{ color: t.text, fontSize: 12, fontFamily: FONT_MONO }}>
-                {NAMA_BULAN[activeMonth]} {activeYear}
-              </span>
-            </button>
-
-            {showCalendar && (
-              <div style={{
-                position: 'absolute', top: '100%', left: 0, marginTop: 6, zIndex: 50,
-                width: 260, background: t.cardbg, border: `1px solid ${t.border}`,
-                borderRadius: 8, boxShadow: '0 10px 15px -3px rgba(0,0,0,0.3)', padding: 12,
-              }}>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
-                  <button type="button" onClick={() => setCurrentYear(y => y - 1)}
-                    style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: t.text, display: 'flex', padding: 4 }}>
-                    <ChevronLeft size={16} />
-                  </button>
-                  <span style={{ fontSize: 13, fontWeight: 700, color: t.text, fontFamily: FONT_MONO }}>{currentYear}</span>
-                  <button type="button" onClick={() => setCurrentYear(y => y + 1)}
-                    style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: t.text, display: 'flex', padding: 4 }}>
-                    <ChevronRight size={16} />
-                  </button>
-                </div>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 6 }}>
-                  {NAMA_BULAN.map((bulan, idx) => {
-                    const isSelected = currentYear === parseInt(activeYear, 10) && idx === activeMonth;
-                    return (
-                      <button key={bulan} type="button" onClick={() => handleSelectMonth(idx)}
-                        style={{
-                          padding: '8px 4px', borderRadius: 6, fontSize: 11,
-                          fontFamily: FONT_MONO, cursor: 'pointer', textAlign: 'center',
-                          border: isSelected ? '1px solid #6366f1' : '1px solid transparent',
-                          background: isSelected ? 'rgba(99,102,241,0.15)' : t.inputBg,
-                          color: isSelected ? '#818cf8' : t.textSub, transition: 'all 0.1s',
-                        }}>
-                        {bulan.substring(0, 3)}
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
-          </div>
-
-          <DropZone
-            file={file} dragging={dragging}
-            onDragOver={e => { e.preventDefault(); setDragging(true); }}
-            onDragLeave={() => setDragging(false)}
-            onDrop={e => { e.preventDefault(); setDragging(false); const f = e.dataTransfer.files[0]; if (f) handleFile(f); }}
-            onClick={() => inputRef.current?.click()}
-            onRemove={() => setFile(null)}
-            t={t}
-          />
-          <input ref={inputRef} type="file" accept=".xlsx,.xls" style={{ display: 'none' }}
-            onChange={e => { if (e.target.files?.[0]) handleFile(e.target.files[0]); }} />
-
-          <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-            <button onClick={handleUpload} disabled={!file || uploading} style={btnPrimaryStyle(!file || uploading)}>
-              {uploading ? (
-                <>
-                  <svg style={{ animation: 'spin 0.8s linear infinite', width: 13, height: 13 }} viewBox="0 0 24 24" fill="none">
-                    <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" opacity="0.2" />
-                    <path d="M4 12a8 8 0 018-8" stroke="currentColor" strokeWidth="3" fill="none" strokeLinecap="round" />
-                  </svg>
-                  Mengupload…
-                </>
-              ) : (
-                <><Upload size={13} /> Upload Stok Kertas</>
-              )}
-            </button>
-          </div>
-        </div>
+        <FormatGuide t={t} />
       </div>
 
       <HistoryTable

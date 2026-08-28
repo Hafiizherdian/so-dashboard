@@ -2,8 +2,8 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import {
   TrendingUp, ShoppingCart, Receipt, AlertCircle, Upload, Layers,
-  Sun, Moon, LogOut, ChevronLeft, BarChart3, Users, Settings, Package,
-  ClipboardList,
+  Sun, Moon, LogOut, ChevronLeft, NotepadTextDashed, Users, Settings, Package,
+  ClipboardList, Boxes,
 } from 'lucide-react';
 import { AuthProvider, useAuth } from '@/lib/AuthContext';
 import { ALL_MENUS, MenuDef } from '@/lib/menu';
@@ -24,22 +24,30 @@ import WipTab from '@/components/PlanproduksiTab';
 import UploadWIPTab from '@/components/UploadPlanTab';
 import LhkpTab from '@/components/LhkpTab';
 import UploadLhkpTab from '@/components/UploadLhkpTab';
+import UploadProdukTab from '@/components/UploadProdukTab';
+import StockLevelPabrikTab from '@/components/StockLevelPabrikTab';
+import UploadStockLevelTab from '@/components/UploadStockLevelTab';
+import MasterProdukTab from '@/components/MasterProdukTab';
 
 
 // Icon di-map terpisah dari data menu (ALL_MENUS ada di lib/menu.ts, dipakai juga oleh UserManagement)
 const MENU_ICONS: Record<string, any> = {
-  overview:      TrendingUp,
+  overview:      NotepadTextDashed,
   penjualan:     Receipt,
   so:            ShoppingCart,
   outstanding:   AlertCircle,
   kertas:        Layers,
   Plan:          ClipboardList,
   lhkp:          ClipboardList,
+  StockLevel: Boxes,
   upload:        Upload,
   kertas_upload: Package,
   Plan_upload:   Package,
   lhkp_upload:   Package,
   users:         Users,
+  produk_upload: Package,
+  upload_stock: Package,
+  master_produk: Package,
 };
 
 const ALL_TABS = ALL_MENUS.map(m => ({ ...m, Icon: MENU_ICONS[m.id] || TrendingUp }));
@@ -142,8 +150,8 @@ function Sidebar({ activeTab, setActiveTab, collapsed, setCollapsed, theme, setT
                 <div style={{margin:'6px 8px',borderTop:`1px solid ${t.border}`}}/>
               )}
               <button onClick={()=>setActiveTab(id)} title={collapsed?label:undefined}
-                style={{display:'flex',alignItems:'center',gap:8,width:'100%',minHeight:35,padding:collapsed?'5px 0':'6px 9px',borderRadius:8,border:'none',cursor:'pointer',justifyContent:collapsed?'center':'flex-start',background:active?t.navActiveBg:'transparent',color:active?t.navActiveText:t.textNav,fontSize:12,fontWeight:active?600:400,fontFamily:FONT_SANS,transition:'all 0.12s',marginBottom:1,position:'relative'}}>
-                <Icon size={14} color={active?t.navActiveText:t.textMuted}/>
+                style={{display:'flex',alignItems:'center',gap:8,width:'100%',minHeight:35,padding:collapsed?'5px 0':'6px 9px',borderRadius:8,border:'none',cursor:'pointer',justifyContent:collapsed?'center':'flex-start',background:active?t.navActiveBg:'transparent',color:active?t.navActiveText:t.text,fontSize:12,fontWeight:active?600:400,fontFamily:FONT_SANS,transition:'all 0.12s',marginBottom:1,position:'relative'}}>
+                <Icon size={14} color={active?t.navActiveText:t.text}/>
                 {!collapsed&&<span style={{flex:1,textAlign:'left'}}>{label}</span>}
                 {active&&<span style={{position:'absolute',left:0,top:'22%',bottom:'22%',width:2.5,borderRadius:'0 2px 2px 0',background:t.navActiveDot}}/>}
               </button>
@@ -184,7 +192,7 @@ function MobileHeader({ theme, setTheme }: { theme:Theme; setTheme:(t:Theme)=>vo
     <header style={{background:t.headerbg,backdropFilter:'blur(12px)',borderBottom:`1px solid ${t.border}`,display:'flex',alignItems:'center',justifyContent:'space-between',padding:'0 12px',height:46,flexShrink:0}}>
       <div style={{display:'flex',alignItems:'center',gap:8}}>
         <img src="/logo-s3.jpeg" alt="S3" style={{ width: 26, height: 26, borderRadius: 7, objectFit: 'contain' }}/>
-        <span style={{fontSize:13,fontWeight:800,color:t.text,fontFamily:FONT_MONO,letterSpacing:'-0.02em'}}>SO Dashboard</span>
+        <span style={{fontSize:13,fontWeight:800,color:t.text,fontFamily:FONT_MONO,letterSpacing:'-0.02em'}}>SSS Dashboard</span>
       </div>
       <div style={{display:'flex',alignItems:'center',gap:5}}>
         {user&&<span style={{fontSize:10,fontWeight:600,color:t.textSub,fontFamily:FONT_MONO,padding:'2px 7px',borderRadius:10,background:t.inputBg,border:`1px solid ${t.borderInput}`}}>{user.username}</span>}
@@ -424,18 +432,22 @@ function DashboardInner() {
     if (!visibleTabs.some(vt => vt.id === tab)) return null;
 
     switch(tab){
-      case 'penjualan':     return <PenjualanTab data={data} theme={theme}/>;
-      case 'so':            return <SalesOrderTab data={data} theme={theme} tahun={appliedFilters.tahun}/>;
-      case 'outstanding':   return <OutstandingTab data={data} theme={theme} tahun={appliedFilters.tahun} />;
-      case 'lhkp':          return <LhkpTab theme={theme}/>;
-      case 'lhkp_upload':   return userRole!=='user'?<UploadLhkpTab theme={theme}/>:null;
-      case 'upload':        return userRole!=='user'?<UploadTabComp theme={theme}/>:null;
-      case 'kertas_upload': return userRole!=='user'?<UploadKertasTab theme={theme}/>:null;
-      case 'Plan_upload':   return userRole!=='user'?<UploadWIPTab theme={theme}/>:null;
-      case 'users':         return userRole==='root'?<UserManagement theme={theme}/>:null;
-      case 'kertas':        return <KertasTab theme={theme}/>;
-      case 'Plan':          return <WipTab theme={theme}/>;
-      default:              return <OverviewTab data={data} theme={theme} availH={availH}/>;
+      case 'penjualan':          return <PenjualanTab data={data} theme={theme}/>;
+      case 'so':                 return <SalesOrderTab data={data} theme={theme} tahun={appliedFilters.tahun}/>;
+      case 'outstanding':        return <OutstandingTab data={data} theme={theme} tahun={appliedFilters.tahun} />;
+      case 'lhkp':                return <LhkpTab theme={theme}/>;
+      case 'lhkp_upload':         return userRole!=='user'?<UploadLhkpTab theme={theme}/>:null;
+      case 'StockLevel':          return <StockLevelPabrikTab theme={theme}/>;
+      case 'upload':              return userRole!=='user'?<UploadTabComp theme={theme}/>:null;
+      case 'kertas_upload':       return userRole!=='user'?<UploadKertasTab theme={theme}/>:null;
+      case 'Plan_upload':         return userRole!=='user'?<UploadWIPTab theme={theme}/>:null;
+      case 'users':                return userRole==='root'?<UserManagement theme={theme}/>:null;
+      case 'produk_upload':        return userRole!=='user'?<UploadProdukTab theme={theme}/>:null;
+      case 'upload_stock':         return userRole!=='user'?<UploadStockLevelTab theme={theme}/>:null;
+      case 'master_produk':         return userRole!=='user'?<MasterProdukTab theme={theme}/>:null
+      case 'kertas':                return <KertasTab theme={theme}/>;
+      case 'Plan':                   return <WipTab theme={theme}/>;
+      default:                        return <OverviewTab data={data} theme={theme} availH={availH}/>;
     }
   };
 

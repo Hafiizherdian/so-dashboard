@@ -4,7 +4,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Users, Plus, Pencil, Trash2, X, Check, Eye, EyeOff, ShieldAlert, ShieldCheck, Shield, AlertTriangle } from 'lucide-react';
 import { Theme, tk, FONT_MONO, FONT_SANS } from '@/lib/theme';
 import { useAuth } from '@/lib/AuthContext';
-import { ALL_MENUS } from '@/lib/menu';
+import { ALL_MENUS, STOCK_LEVEL_COLUMNS, stockColId, isStockColId, stripStockColPrefix } from '@/lib/menu'; // ★ BARU: STOCK_LEVEL_COLUMNS + helpers
 
 type Role = 'root' | 'admin' | 'user';
 interface User { id: number; username: string; role: Role; areas: string[]; allowed_menus: string[] | null; created_at: string; }
@@ -115,6 +115,9 @@ export default function UserManagement({ theme }: Props) {
     borderBottom: `1px solid ${t.border}`, fontFamily: FONT_MONO, background: t.tableHead,
   };
 
+  // ★ BARU: apakah menu StockLevel sedang diizinkan untuk role/user yang sedang diedit
+  const stockLevelMenuAllowed = form.allowedMenus === null || form.allowedMenus.includes('StockLevel');
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
       {/* Toast */}
@@ -136,7 +139,7 @@ export default function UserManagement({ theme }: Props) {
             <div style={{ fontSize: 10, color: t.textMuted, fontFamily: FONT_MONO }}>{users.length} akun terdaftar</div>
           </div>
         </div>
-        <button onClick={openCreate} style={{ display: 'flex', alignItems: 'center', gap: 6, height: 32, padding: '0 14px', borderRadius: 8, fontSize: 12, fontWeight: 700, background: '#6366f1', color: '#fff', border: 'none', cursor: 'pointer', fontFamily: FONT_MONO, boxShadow: '0 2px 8px rgba(99,102,241,0.3)' }}>
+        <button onClick={openCreate} style={{ display: 'flex', alignItems: 'center', gap: 6, height: 32, padding: '0 14px', borderRadius: 8, fontSize: 12, fontWeight: 700, background: t.infoText, color: '#fff', border: 'none', cursor: 'pointer', fontFamily: FONT_MONO, boxShadow: '0 2px 8px rgba(99,102,241,0.3)' }}>
           <Plus size={13} /> Tambah User
         </button>
       </div>
@@ -149,7 +152,7 @@ export default function UserManagement({ theme }: Props) {
               <tr>
                 <th style={thS}>Username</th>
                 <th style={thS}>Role</th>
-                <th style={thS}>Area Akses</th>
+                {/* <th style={thS}>Area Akses</th> */}
                 <th style={thS}>Dibuat</th>
                 <th style={{ ...thS, textAlign: 'center' }}>Aksi</th>
               </tr>
@@ -181,9 +184,6 @@ export default function UserManagement({ theme }: Props) {
                     <td style={{ padding: '10px 12px' }}>
                       <span style={{ padding: '3px 9px', borderRadius: 10, fontSize: 10, fontWeight: 700, fontFamily: FONT_MONO, background: rc.bg, color: rc.color, border: `1px solid ${rc.border}` }}>{rc.label}</span>
                     </td>
-                    <td style={{ padding: '10px 12px', fontSize: 11, color: t.textSub, fontFamily: FONT_MONO }}>
-                      {(u.areas || []).length > 0 ? (u.areas || []).slice(0, 3).join(', ') + ((u.areas || []).length > 3 ? ` +${(u.areas || []).length - 3}` : '') : <span style={{ color: t.textFaint }}>Semua area</span>}
-                    </td>
                     <td style={{ padding: '10px 12px', fontSize: 11, color: t.textMuted, fontFamily: FONT_MONO, whiteSpace: 'nowrap' }}>
                       {new Date(u.created_at).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: '2-digit' })}
                     </td>
@@ -210,10 +210,10 @@ export default function UserManagement({ theme }: Props) {
       {/* Create/Edit Modal */}
       {(modal === 'create' || modal === 'edit') && (
         <div onClick={e => e.target === e.currentTarget && setModal(null)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.65)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20, backdropFilter: 'blur(4px)' }}>
-          <div style={{ background: t.cardbg, border: `1px solid ${t.borderCard}`, borderRadius: 16, padding: 24, width: '100%', maxWidth: 440, boxShadow: '0 16px 48px rgba(0,0,0,0.5)', animation: 'slideUp 0.2s ease' }}>
+          <div style={{ background: t.cardbg, border: `1px solid ${t.borderCard}`, borderRadius: 16, padding: 24, width: '100%', maxWidth: 440, maxHeight: '90vh', overflowY: 'auto', boxShadow: '0 16px 48px rgba(0,0,0,0.5)', animation: 'slideUp 0.2s ease' }}>
             <style>{`@keyframes slideUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}`}</style>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
-              <div style={{ fontSize: 14, fontWeight: 700, color: t.text }}>{modal === 'create' ? 'Tambah User Baru' : `Edit User — ${selected?.username}`}</div>
+              <div style={{ fontSize: 14, fontWeight: 700, color: t.text }}>{modal === 'create' ? 'Tambah User Baru' : `Edit User  ${selected?.username}`}</div>
               <button onClick={() => setModal(null)} style={{ width: 26, height: 26, borderRadius: 7, background: t.inputBg, border: `1px solid ${t.borderInput}`, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: t.textMuted }}><X size={12} /></button>
             </div>
 
@@ -251,61 +251,126 @@ export default function UserManagement({ theme }: Props) {
                   })}
                 </div>
               </div>
-
-              {/* Areas */}
-              <div>
-                <label style={{ display: 'block', fontSize: 10, fontWeight: 700, color: t.textMuted, marginBottom: 5, fontFamily: FONT_MONO, textTransform: 'uppercase', letterSpacing: '0.08em' }}>Akses Area <span style={{ fontWeight: 400, textTransform: 'none', letterSpacing: 0 }}>(pisahkan koma, kosong = semua)</span></label>
-                <input style={inp} type="text" value={form.areas} onChange={e => setForm(f => ({ ...f, areas: e.target.value }))} placeholder="Contoh: Jawa Timur, Jawa Tengah" />
-              </div>
             </div>
 
-             {form.role !== 'root' && (
-              <div>
-                <label style={{ display: 'block', fontSize: 10, fontWeight: 700, color: t.textMuted, marginBottom: 5, fontFamily: FONT_MONO, textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+            {/* Akses Menu dengan format Checklist */}
+            {form.role !== 'root' && (
+              <div style={{ marginTop: 14 }}>
+                <label style={{ display: 'block', fontSize: 10, fontWeight: 700, color: t.textMuted, marginBottom: 8, fontFamily: FONT_MONO, textTransform: 'uppercase', letterSpacing: '0.08em' }}>
                   Akses Menu <span style={{ fontWeight: 400, textTransform: 'none', letterSpacing: 0 }}>(kosong = semua menu sesuai role)</span>
                 </label>
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))', gap: 6 }}>
                   {ALL_MENUS.filter(m => m.roles.includes(form.role)).map(m => {
                     const checked = form.allowedMenus === null || form.allowedMenus.includes(m.id);
-                    const restricted = form.allowedMenus !== null;
                     return (
-                      <button
+                      <label
                         key={m.id}
-                        type="button"
-                        onClick={() => {
-                          setForm(f => {
-                            const current = f.allowedMenus === null
-                              ? ALL_MENUS.filter(mm => mm.roles.includes(f.role)).map(mm => mm.id)
-                              : [...f.allowedMenus];
-                            const next = current.includes(m.id) ? current.filter(id => id !== m.id) : [...current, m.id];
-                            return { ...f, allowedMenus: next };
-                          });
-                        }}
                         style={{
-                          padding: '5px 10px', borderRadius: 7, fontSize: 10, fontFamily: FONT_MONO,
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: 8,
+                          padding: '6px 10px',
+                          borderRadius: 7,
                           border: `1px solid ${checked ? t.infoBorder : t.borderInput}`,
                           background: checked ? t.infoBg : t.inputBg,
-                          color: checked ? t.infoText : t.textMuted,
                           cursor: 'pointer',
+                          transition: 'all 0.15s'
                         }}
                       >
-                        {m.label}
-                      </button>
+                        <input
+                          type="checkbox"
+                          checked={checked}
+                          onChange={() => {
+                            setForm(f => {
+                              // ★ BARU: allAvailable sekarang mencakup menu + kolom stock level,
+                              // supaya "next.length === allAvailable.length" tetap konsisten
+                              // ketika ada campuran col:* di dalam array yang sama.
+                              const allMenus = ALL_MENUS.filter(mm => mm.roles.includes(f.role)).map(mm => mm.id);
+                              const allCols  = STOCK_LEVEL_COLUMNS.filter(c => c.roles.includes(f.role)).map(c => stockColId(c.id));
+                              const allAvailable = [...allMenus, ...allCols];
+
+                              const current = f.allowedMenus === null ? allAvailable : [...f.allowedMenus];
+                              const next = current.includes(m.id) ? current.filter(id => id !== m.id) : [...current, m.id];
+
+                              return { ...f, allowedMenus: next.length === allAvailable.length ? null : next };
+                            });
+                          }}
+                          style={{ margin: 0, cursor: 'pointer', accentColor: '#6366f1' }}
+                        />
+                        <span style={{ fontSize: 11, fontFamily: FONT_MONO, color: checked ? t.infoText : t.textMuted, userSelect: 'none' }}>
+                          {m.label}
+                        </span>
+                      </label>
                     );
                   })}
                 </div>
-                {form.allowedMenus !== null && (
-                  <button type="button" onClick={() => setForm(f => ({ ...f, allowedMenus: null }))}
-                    style={{ marginTop: 6, fontSize: 9, color: t.textMuted, background: 'none', border: 'none', cursor: 'pointer', textDecoration: 'underline' }}>
-                    Reset ke akses penuh
-                  </button>
-                )}
               </div>
             )}
 
-            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, marginTop: 20 }}>
+            {/* ★ BARU: Akses Kolom Stock Level — muncul hanya kalau menu StockLevel diizinkan */}
+            {form.role !== 'root' && stockLevelMenuAllowed && (
+              <div style={{ marginTop: 14 }}>
+                <label style={{ display: 'block', fontSize: 10, fontWeight: 700, color: t.textMuted, marginBottom: 8, fontFamily: FONT_MONO, textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+                  Akses Kolom Stock Level <span style={{ fontWeight: 400, textTransform: 'none', letterSpacing: 0 }}>(kosong = semua kolom sesuai role)</span>
+                </label>
+
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: 6 }}>
+                  {STOCK_LEVEL_COLUMNS.filter(c => c.roles.includes(form.role)).map(c => {
+                    const id = stockColId(c.id);
+                    const checked = form.allowedMenus === null || form.allowedMenus.includes(id);
+                    return (
+                      <label
+                        key={c.id}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: 8,
+                          padding: '6px 10px',
+                          borderRadius: 7,
+                          border: `1px solid ${checked ? t.infoBorder : t.borderInput}`,
+                          background: checked ? t.infoBg : t.inputBg,
+                          cursor: 'pointer',
+                          transition: 'all 0.15s'
+                        }}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={checked}
+                          onChange={() => {
+                            setForm(f => {
+                              const allMenus = ALL_MENUS.filter(mm => mm.roles.includes(f.role)).map(mm => mm.id);
+                              const allCols  = STOCK_LEVEL_COLUMNS.filter(cc => cc.roles.includes(f.role)).map(cc => stockColId(cc.id));
+                              const allAvailable = [...allMenus, ...allCols];
+
+                              const current = f.allowedMenus === null ? allAvailable : [...f.allowedMenus];
+                              const next = current.includes(id) ? current.filter(i2 => i2 !== id) : [...current, id];
+
+                              return { ...f, allowedMenus: next.length === allAvailable.length ? null : next };
+                            });
+                          }}
+                          style={{ margin: 0, cursor: 'pointer', accentColor: '#6366f1' }}
+                        />
+                        <span style={{ fontSize: 11, fontFamily: FONT_MONO, color: checked ? t.infoText : t.textMuted, userSelect: 'none' }}>
+                          {c.label}
+                        </span>
+                      </label>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {form.role !== 'root' && form.allowedMenus !== null && (
+              <button type="button" onClick={() => setForm(f => ({ ...f, allowedMenus: null }))}
+                style={{ marginTop: 8, fontSize: 9, color: t.textMuted, background: 'none', border: 'none', cursor: 'pointer', textDecoration: 'underline' }}>
+                Reset ke akses penuh (menu &amp; kolom)
+              </button>
+            )}
+
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, marginTop: 24 }}>
               <button onClick={() => setModal(null)} style={{ padding: '8px 16px', borderRadius: 8, fontSize: 12, fontWeight: 600, background: t.inputBg, color: t.textSub, border: `1px solid ${t.borderInput}`, cursor: 'pointer' }}>Batal</button>
-              <button onClick={handleSave} disabled={saving} style={{ padding: '8px 20px', borderRadius: 8, fontSize: 12, fontWeight: 700, border: 'none', background: saving ? t.inputBg : '#6366f1', color: saving ? t.textMuted : '#fff', cursor: saving ? 'not-allowed' : 'pointer', boxShadow: saving ? 'none' : '0 2px 8px rgba(99,102,241,0.3)' }}>
+              <button onClick={handleSave} disabled={saving} style={{ padding: '8px 20px', borderRadius: 8, fontSize: 12, fontWeight: 700, border: 'none', background: saving ? t.inputBg : t.infoText, color: saving ? t.textMuted : '#fff', cursor: saving ? 'not-allowed' : 'pointer', boxShadow: saving ? 'none' : '0 2px 8px rgba(99,102,241,0.3)' }}>
                 {saving ? 'Menyimpan…' : modal === 'create' ? 'Buat User' : 'Simpan'}
               </button>
             </div>

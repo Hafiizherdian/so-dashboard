@@ -6,12 +6,9 @@ import {
   AlertCircle, Trash2, ClipboardCheck,
 } from 'lucide-react';
 import { Theme, tk, FONT_MONO, cardStyle, Tokens, cardHeaderStyle, iconBoxStyle, btnPrimaryStyle, btnDangerStyle, btnGhostStyle, } from '@/lib/theme';
-// import {
-//   cardStyle, cardHeaderStyle, iconBoxStyle, btnPrimaryStyle, btnDangerStyle, btnGhostStyle,
-// } from '@/lib/theme.additions';
 import { apiJson } from '@/lib/apiFetch';
 
-// ─── Types ────────────────────────────────────────────────────
+// Types
 interface Props { theme: Theme; }
 
 type MsgState = { type: 'ok' | 'err'; text: string } | null;
@@ -25,7 +22,7 @@ interface UploadRow {
   created_at:   string;
 }
 
-// ─── Helpers ──────────────────────────────────────────────────
+// Helpers
 function fmtDate(iso: string): string {
   if (!iso) return '—';
   const d = new Date(iso + 'T00:00:00');
@@ -41,13 +38,14 @@ const FORMAT_COLS = [
   'Output_Produk', 'Qty_Plan', 'Qty_Baik', 'Qty_Rusak', 'Unit',
 ];
 
-// ─── Sub-components ───────────────────────────────────────────
+// Sub-components
 
 function FormatGuide({ t }: { t: Tokens }) {
   return (
     <div style={{
+      flex:1,
       padding: '11px 14px', borderRadius: 10,
-      background: t.cardbg, border: `1px solid ${t.border}`,
+      background: t.inputBg, border: `1px solid ${t.border}`,
       fontSize: 11, color: t.text, fontFamily: FONT_MONO, lineHeight: 1.8,
     }}>
       <div style={{ fontWeight: 700, marginBottom: 4, color: '#818cf8' }}>Format kolom Excel:</div>
@@ -55,7 +53,7 @@ function FormatGuide({ t }: { t: Tokens }) {
         {FORMAT_COLS.map(col => (
           <span key={col} style={{
             padding: '1px 7px', borderRadius: 5,
-            background: t.inputBg, border: `1px solid ${t.borderInput}`,
+            background: t.cardbg, border: `1px solid ${t.borderInput}`,
             fontSize: 10, color: t.textSub
           }}>
             {col}
@@ -274,7 +272,7 @@ function UploadHistory({
                 </td>
                 <td style={{ padding: '9px 12px', color: t.textMuted, fontFamily: FONT_MONO, fontSize: 10, whiteSpace: 'nowrap' }}>
                   {new Date(row.created_at).toLocaleString('id-ID', {
-                    day: '2-digit', month: 'short',
+                    day: '2-digit', month: 'short', year: 'numeric',
                     hour: '2-digit', minute: '2-digit',
                   })}
                 </td>
@@ -301,7 +299,7 @@ function UploadHistory({
   );
 }
 
-// ─── Main Component ───────────────────────────────────────────
+// Main Component
 export default function UploadLhkpTab({ theme }: Props) {
   const t = tk[theme];
 
@@ -322,7 +320,7 @@ export default function UploadLhkpTab({ theme }: Props) {
       .catch(err => console.error('[UploadLhkpTab] load uploads:', err));
   }, []);
 
-  // ── Handlers ──
+  // Handlers
   function handleFile(f: File) {
     if (!ACCEPTED_EXTS.test(f.name)) {
       setMsg({ type: 'err', text: 'File harus berformat .xls atau .xlsx' });
@@ -393,78 +391,77 @@ export default function UploadLhkpTab({ theme }: Props) {
     }
   }
 
-  // ── Render ──
+  // Render
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16,  }}>
       <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
 
-      <FormatGuide t={t} />
-
-      <div style={cardStyle(t)}>
-        <div style={cardHeaderStyle(t)}>
-          {/* <div style={iconBoxStyle('#818cf8')}>
-            <ClipboardCheck size={12} color="#818cf8" />
-          </div> */}
-          <div>
-            <div style={{ fontSize: 12, fontWeight: 700, color: t.text }}>
-              Upload File LHKP
+            <div style={{ display: 'flex', gap: 16, alignItems: 'stretch' }}>
+        <div style={{ flex: 1, ...cardStyle(t) }}>
+          <div style={cardHeaderStyle(t)}>
+            <div>
+              <div style={{ fontSize: 12, fontWeight: 700, color: t.text }}>
+                Upload File LHKP
+              </div>
+              <div style={{ fontSize: 9, color: t.textMuted, fontFamily: FONT_MONO }}>
+                Data akan ditambahkan ke tabel LHKP
+              </div>
             </div>
-            <div style={{ fontSize: 9, color: t.textMuted, fontFamily: FONT_MONO }}>
-              Data akan ditambahkan ke tabel LHKP
+          </div>
+
+          <div style={{ padding: 16, display: 'flex', flexDirection: 'column', gap: 14 }}>
+            {msg && <AlertBar msg={msg} onClose={() => setMsg(null)} />}
+
+            <DropZone
+              file={file}
+              dragging={dragging}
+              onDragOver={e => { e.preventDefault(); setDragging(true); }}
+              onDragLeave={() => setDragging(false)}
+              onDrop={e => {
+                e.preventDefault();
+                setDragging(false);
+                const f = e.dataTransfer.files[0];
+                if (f) handleFile(f);
+              }}
+              onClick={() => inputRef.current?.click()}
+              onRemove={() => setFile(null)}
+              t={t}
+            />
+
+            <input
+              ref={inputRef}
+              type="file"
+              accept=".xlsx,.xls"
+              style={{ display: 'none' }}
+              onChange={e => { if (e.target.files?.[0]) handleFile(e.target.files[0]); }}
+            />
+
+            <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+              <button
+                onClick={handleUpload}
+                disabled={!file || uploading}
+                style={btnPrimaryStyle(!file || uploading)}
+              >
+                {uploading ? (
+                  <>
+                    <svg
+                      style={{ animation: 'spin 0.8s linear infinite', width: 13, height: 13 }}
+                      viewBox="0 0 24 24" fill="none"
+                    >
+                      <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" opacity="0.2" />
+                      <path d="M4 12a8 8 0 018-8" stroke="currentColor" strokeWidth="3" fill="none" strokeLinecap="round" />
+                    </svg>
+                    Mengupload…
+                  </>
+                ) : (
+                  <><Upload size={13} /> Upload LHKP</>
+                )}
+              </button>
             </div>
           </div>
         </div>
 
-        <div style={{ padding: 16, display: 'flex', flexDirection: 'column', gap: 14 }}>
-          {msg && <AlertBar msg={msg} onClose={() => setMsg(null)} />}
-
-          <DropZone
-            file={file}
-            dragging={dragging}
-            onDragOver={e => { e.preventDefault(); setDragging(true); }}
-            onDragLeave={() => setDragging(false)}
-            onDrop={e => {
-              e.preventDefault();
-              setDragging(false);
-              const f = e.dataTransfer.files[0];
-              if (f) handleFile(f);
-            }}
-            onClick={() => inputRef.current?.click()}
-            onRemove={() => setFile(null)}
-            t={t}
-          />
-
-          <input
-            ref={inputRef}
-            type="file"
-            accept=".xlsx,.xls"
-            style={{ display: 'none' }}
-            onChange={e => { if (e.target.files?.[0]) handleFile(e.target.files[0]); }}
-          />
-
-          <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-            <button
-              onClick={handleUpload}
-              disabled={!file || uploading}
-              style={btnPrimaryStyle(!file || uploading)}
-            >
-              {uploading ? (
-                <>
-                  <svg
-                    style={{ animation: 'spin 0.8s linear infinite', width: 13, height: 13 }}
-                    viewBox="0 0 24 24" fill="none"
-                  >
-                    <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" opacity="0.2" />
-                    <path d="M4 12a8 8 0 018-8" stroke="currentColor" strokeWidth="3" fill="none" strokeLinecap="round" />
-                  </svg>
-                  Mengupload…
-                </>
-              ) : (
-                <><Upload size={13} /> Upload LHKP</>
-              )}
-            </button>
-          </div>
-        </div>
+        <FormatGuide t={t} />
       </div>
 
       <UploadHistory uploads={uploads} onDelete={setDelTarget} t={t} />

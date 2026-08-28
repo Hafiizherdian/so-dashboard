@@ -44,55 +44,72 @@ export async function POST(req: NextRequest) {
     let count = 0;
     const BATCH = 200;
 
-    for (let i = 0; i < raw.length; i += BATCH) {
-      const batch = raw.slice(i, i + BATCH);
-      const vals: any[] = [];
+    // MULAI TRANSACTION DATABASE
+    await query('BEGIN');
 
-      const placeholders = batch.map((r, j) => {
-        const b            = j * 14;
-        const produk       = toStr(r['Produk']      || r['produk']);
-        const jenisKertas  = toStr(r['jenis kertas'] || r['jenis_kertas'] || r['Jenis Kertas']);
-        const gramasi      = toNum(r['Gramasi']      || r['gramasi']);
-        const merk         = toStr(r['Merk']         || r['merk']);
-        const lebar        = toNum(r['L']            || r['lebar']  || r['l']);
-        const panjang      = toNum(r['P']            || r['panjang'] || r['p']);
-        const unit         = toStr(r['Unit']         || r['unit']) || 'lbr';
-        const saldoAwal    = toNum(r['saldo awal']   || r['saldo_awal']  || r['Saldo Awal']);
-        const masuk        = toNum(r['Masuk']        || r['masuk']);
-        const keluar       = toNum(r['Keluar']       || r['keluar']);
-        const saldoAkhir   = toNum(r['saldo akhir']  || r['saldo_akhir'] || r['Saldo Akhir']);
-        const ukuranKertas = `${gramasi} x ${lebar} x ${panjang}`;
-        const keterangan   = toStr(r['Keterangan']  || r['keterangan']);
+    try {
+      // 1. Hapus data stok kertas yang memiliki periode sama (Replace mechanism)
+      await query(`DELETE FROM kertas_stok WHERE periode = $1`, [periode]);
 
-        vals.push(
-          produk, jenisKertas, gramasi, merk, ukuranKertas,
-          lebar, panjang, unit,
-          saldoAwal, masuk, keluar, saldoAkhir,
-          periode, keterangan
+      // 2. Masukkan data baru secara batch
+      for (let i = 0; i < raw.length; i += BATCH) {
+        const batch = raw.slice(i, i + BATCH);
+        const vals: any[] = [];
+
+        const placeholders = batch.map((r, j) => {
+          const b            = j * 14;
+          const produk       = toStr(r['Produk']      || r['produk']);
+          const jenisKertas  = toStr(r['jenis kertas'] || r['jenis_kertas'] || r['Jenis Kertas']);
+          const gramasi      = toNum(r['Gramasi']      || r['gramasi']);
+          const merk         = toStr(r['Merk']         || r['merk']);
+          const lebar        = toNum(r['L']            || r['lebar']  || r['l']);
+          const panjang      = toNum(r['P']            || r['panjang'] || r['p']);
+          const unit         = toStr(r['Unit']         || r['unit']) || 'lbr';
+          const saldoAwal    = toNum(r['saldo awal']   || r['saldo_awal']  || r['Saldo Awal']);
+          const masuk        = toNum(r['Masuk']        || r['masuk']);
+          const keluar       = toNum(r['Keluar']       || r['keluar']);
+          const saldoAkhir   = toNum(r['saldo akhir']  || r['saldo_akhir'] || r['Saldo Akhir']);
+          const ukuranKertas = `${gramasi} x ${lebar} x ${panjang}`;
+          const keterangan   = toStr(r['Keterangan']   || r['keterangan']);
+
+          vals.push(
+            produk, jenisKertas, gramasi, merk, ukuranKertas,
+            lebar, panjang, unit,
+            saldoAwal, masuk, keluar, saldoAkhir,
+            periode, keterangan
+          );
+
+          return `($${b+1},$${b+2},$${b+3},$${b+4},$${b+5},$${b+6},$${b+7},$${b+8},$${b+9},$${b+10},$${b+11},$${b+12},$${b+13},$${b+14})`;
+        });
+
+        await query(
+          `INSERT INTO kertas_stok
+             (produk, jenis_kertas, gramasi, merk, ukuran_kertas,
+              lebar, panjang, unit,
+              saldo_awal, masuk, keluar, saldo_akhir, periode, keterangan)
+           VALUES ${placeholders.join(',')}`,
+          vals
         );
 
-        return `($${b+1},$${b+2},$${b+3},$${b+4},$${b+5},$${b+6},$${b+7},$${b+8},$${b+9},$${b+10},$${b+11},$${b+12},$${b+13},$${b+14})`;
-      });
+        count += batch.length;
+      }
 
+      const uploadedBy = (payload as any).username ?? (payload as any).sub ?? null;
+
+      // Catat riwayat upload
       await query(
-        `INSERT INTO kertas_stok
-           (produk, jenis_kertas, gramasi, merk, ukuran_kertas,
-            lebar, panjang, unit,
-            saldo_awal, masuk, keluar, saldo_akhir, periode, keterangan)
-         VALUES ${placeholders.join(',')}`,
-        vals
+        `INSERT INTO kertas_uploads (filename, periode, record_count, uploaded_by)
+         VALUES ($1, $2, $3, $4)`,
+        [file.name, periode, count, uploadedBy]
       );
 
-      count += batch.length;
+      // COMMIT TRANSACTION JIKA BERHASIL SEMUA
+      await query('COMMIT');
+    } catch (innerErr) {
+      // ROLLBACK JIKA ADA ERROR DI TENGAH JALAN
+      await query('ROLLBACK');
+      throw innerErr;
     }
-
-    const uploadedBy = (payload as any).username ?? (payload as any).sub ?? null;
-
-    await query(
-      `INSERT INTO kertas_uploads (filename, periode, record_count, uploaded_by)
-       VALUES ($1, $2, $3, $4)`,
-      [file.name, periode, count, uploadedBy]
-    );
 
     return NextResponse.json({ success: true, count });
   } catch (e: any) {

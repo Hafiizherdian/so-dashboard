@@ -346,7 +346,7 @@ export default function KertasTab({ theme }: Props) {
 
   const selS: React.CSSProperties = {
     height: 28, padding: '0 8px', fontSize: 11, borderRadius: 6,
-    background: t.inputBg, border: `1px solid ${t.borderInput}`,
+    background: t.filterbg, border: `1px solid ${t.borderInput}`,
     color: t.text, outline: 'none', fontFamily: FONT_MONO, cursor: 'pointer',
   };
 
