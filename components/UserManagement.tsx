@@ -139,7 +139,7 @@ export default function UserManagement({ theme }: Props) {
             <div style={{ fontSize: 10, color: t.textMuted, fontFamily: FONT_MONO }}>{users.length} akun terdaftar</div>
           </div>
         </div>
-        <button onClick={openCreate} style={{ display: 'flex', alignItems: 'center', gap: 6, height: 32, padding: '0 14px', borderRadius: 8, fontSize: 12, fontWeight: 700, background: t.infoText, color: '#fff', border: 'none', cursor: 'pointer', fontFamily: FONT_MONO, boxShadow: '0 2px 8px rgba(99,102,241,0.3)' }}>
+        <button onClick={openCreate} style={{ display: 'flex', alignItems: 'center', gap: 6, height: 32, padding: '0 14px', borderRadius: 8, fontSize: 12, fontWeight: 700, background: '#6366f1', border: `1px solid ${t.infoBorder}`, color: '#fff', cursor: 'pointer', fontFamily: FONT_MONO, boxShadow: '0 2px 8px rgba(99,102,241,0.3)' }}>
           <Plus size={13} /> Tambah User
         </button>
       </div>
