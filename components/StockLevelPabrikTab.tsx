@@ -616,26 +616,26 @@ export default function StockLevelPabrikTab({ theme }: Props) {
             return (
               <tr key={row.id} className="hover-row" style={{ background: rowBg }}>
                 {/* body — per row, urutan sel HARUS sama dengan urutan header di atas */}
-                {showCol('produk') && <td className="sticky-col" style={{ ...tdS, ...getStickyTd('produk', stickyBg) }}>{row.nama_produk}</td>}
-                {showCol('jenis_etiket') && <td className="sticky-col" style={{ ...tdS, ...getStickyTd('etiket', stickyBg) }}>{row.jenis_etiket ?? '—'}</td>}
-                {showCol('tipe') && <td className="sticky-col" style={{ ...tdS, ...getStickyTd('tipe', stickyBg, true) }}>{row.tipe ?? '—'}</td>}
+                {showCol('produk') && <td className="sticky-col" style={{ ...tdS, ...getStickyTd('produk', stickyBg), color: t.text }}>{row.nama_produk}</td>}
+                {showCol('jenis_etiket') && <td className="sticky-col" style={{ ...tdS, ...getStickyTd('etiket', stickyBg), color: t.text }}>{row.jenis_etiket ?? '—'}</td>}
+                {showCol('tipe') && <td className="sticky-col" style={{ ...tdS, ...getStickyTd('tipe', stickyBg, true), color: t.text }}>{row.tipe ?? '—'}</td>}
                 {showCol('stok_pabrik') && <td style={{ ...tdS, textAlign: 'right', fontWeight: 700, color: t.infoText }}>{fmtNum(row.stok_pabrik)}</td>}
-                {showCol('pengiriman') && <td style={{ ...tdS, textAlign: 'right' }}>{fmtNum(row.pengiriman)}</td>}
-                {showCol('estimasi_kebutuhan') && <td style={{ ...tdS, textAlign: 'right' }}>{fmtNum(row.estimasi_kebutuhan)}</td>}
-                {showCol('estimasi_stok') && <td style={{ ...tdS, textAlign: 'right' }}>{fmtNum(row.estimasi_stok)}</td>}
+                {showCol('pengiriman') && <td style={{ ...tdS, textAlign: 'right', color: t.text }}>{fmtNum(row.pengiriman)}</td>}
+                {showCol('estimasi_kebutuhan') && <td style={{ ...tdS, textAlign: 'right', color: t.text }}>{fmtNum(row.estimasi_kebutuhan)}</td>}
+                {showCol('estimasi_stok') && <td style={{ ...tdS, textAlign: 'right', color: t.text }}>{fmtNum(row.estimasi_stok)}</td>}
                 {showCol('stok_aktual') && <td style={{ ...tdS, textAlign: 'right', fontWeight: 700, color: t.infoText }}>{fmtNum(row.stok_aktual)}</td>}
-                {!isTablet && showCol('pemakaian_bulan') && <td style={{ ...tdS, textAlign: 'right' }}>{fmtNum(row.pemakaian_per_bulan)}</td>}
-                {!isTablet && showCol('pemakaian_minggu') && <td style={{ ...tdS, textAlign: 'right' }}>{fmtNum(row.pemakaian_per_minggu, 1)}</td>}
-                {showCol('pemakaian_hari') && <td style={{ ...tdS, textAlign: 'right' }}>{fmtNum(row.pemakaian_per_hari, 2)}</td>}
+                {!isTablet && showCol('pemakaian_bulan') && <td style={{ ...tdS, textAlign: 'right', color: t.text }}>{fmtNum(row.pemakaian_per_bulan)}</td>}
+                {!isTablet && showCol('pemakaian_minggu') && <td style={{ ...tdS, textAlign: 'right', color: t.text }}>{fmtNum(row.pemakaian_per_minggu, 1)}</td>}
+                {showCol('pemakaian_hari') && <td style={{ ...tdS, textAlign: 'right', color: t.text }}>{fmtNum(row.pemakaian_per_hari, 2)}</td>}
                 {showCol('level_pabrik') && <td style={{ ...tdS, textAlign: 'right', fontWeight: 700, color: levelColor(row.stok_level_pabrik) }}>{fmtDay(row.stok_level_pabrik)}</td>}
                 {showCol('level_wip_bj') && <td style={{ ...tdS, textAlign: 'right', fontWeight: 700, color: levelColor(row.stok_level_pabrik_wip_bj) }}>{fmtDay(row.stok_level_pabrik_wip_bj)}</td>}
                 {!isTablet && showCol('level_wip_bj_plan') && <td style={{ ...tdS, textAlign: 'right', fontWeight: 700, color: levelColor(row.stok_level_pabrik_wip_bj_plan) }}>{fmtDay(row.stok_level_pabrik_wip_bj_plan)}</td>}
-                {showCol('up') && <td style={{ ...tdS, textAlign: 'right' }}>{row.up ?? '—'}</td>}
+                {showCol('up') && <td style={{ ...tdS, textAlign: 'right', color: t.text }}>{row.up ?? '—'}</td>}
                 {!isTablet && showCol('wip') && <td style={{ ...tdS, textAlign: 'right', color: infoColor(row.wip) }}>{fmtNum(row.wip)}</td>}
                 {!isTablet && showCol('bj') && <td style={{ ...tdS, textAlign: 'right', color: infoColor(row.bj) }}>{fmtNum(row.bj)}</td>}
                 {!isTablet && showCol('kiriman') && <td style={{ ...tdS, textAlign: 'right', color: infoColor(row.kiriman) }}>{fmtNum(row.kiriman)}</td>}
                 {!isTablet && showCol('plan_produksi') && <td style={{ ...tdS, textAlign: 'right', color: infoColor(row.plan_produksi) }}>{fmtNum(row.plan_produksi)}</td>}
-                {!isTablet && showCol('keterangan') && <td style={{ ...tdS, maxWidth: 160, overflow: 'hidden', textOverflow: 'ellipsis' }}>{row.keterangan || '—'}</td>}
+                {!isTablet && showCol('keterangan') && <td style={{ ...tdS, maxWidth: 160, overflow: 'hidden', textOverflow: 'ellipsis', color: t.text }}>{row.keterangan || '—'}</td>}
               </tr>
             );
           })}
