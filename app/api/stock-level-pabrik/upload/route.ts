@@ -19,7 +19,7 @@ export async function POST(req: NextRequest) {
     if (!payload || payload.role === 'user') {
       return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
     }
-    if (!hasMenuAccess(payload, 'StockLevel_upload')) {
+    if (!hasMenuAccess(payload, 'upload_stock')) {
       return NextResponse.json({ success: false, error: 'Forbidden' }, { status: 403 });
     }
     await initDb();
@@ -114,7 +114,7 @@ export async function GET(req: NextRequest) {
   try {
     const payload = await getTokenFromRequest(req);
     if (!payload) return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
-    if (!hasMenuAccess(payload, 'StockLevel_upload') && !hasMenuAccess(payload, 'StockLevel')) {
+    if (!hasMenuAccess(payload, 'upload_stock') && !hasMenuAccess(payload, 'StockLevel')) {
       return NextResponse.json({ success: false, error: 'Forbidden' }, { status: 403 });
     }
     await initDb();
@@ -149,7 +149,7 @@ export async function DELETE(req: NextRequest) {
     if (!payload || payload.role === 'user') {
       return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
     }
-    if (!hasMenuAccess(payload, 'StockLevel_upload')) {
+    if (!hasMenuAccess(payload, 'upload_stock')) {
       return NextResponse.json({ success: false, error: 'Forbidden' }, { status: 403 });
     }
     await initDb();
