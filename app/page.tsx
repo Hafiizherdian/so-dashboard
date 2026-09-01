@@ -3,7 +3,7 @@ import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import {
   TrendingUp, ShoppingCart, Receipt, AlertCircle, Upload, Layers,
   Sun, Moon, LogOut, ChevronLeft, NotepadTextDashed, Users, Settings, Package,
-  ClipboardList, Boxes,
+  ClipboardList, Boxes, Filter, ChevronUp, ChevronDown,
 } from 'lucide-react';
 import { AuthProvider, useAuth } from '@/lib/AuthContext';
 import { ALL_MENUS, MenuDef } from '@/lib/menu';
@@ -228,7 +228,7 @@ const FILTER_INIT: FilterState = {
   area: 'all', type_customer: 'all', kategori: 'all', jenis: 'all',
 };
 
-function FilterBar({ filters, setFilters, appliedFilters, opts, onApply, onReset, loading, theme }: {
+function FilterBar({ filters, setFilters, appliedFilters, opts, onApply, onReset, loading, theme, isMobile, isTablet }: {
   filters: FilterState;
   setFilters: React.Dispatch<React.SetStateAction<FilterState>>;
   appliedFilters: FilterState;
@@ -237,54 +237,121 @@ function FilterBar({ filters, setFilters, appliedFilters, opts, onApply, onReset
   onReset: () => void;
   loading: boolean;
   theme: Theme;
+  isMobile: boolean;
+  isTablet: boolean;
 }) {
   const t=tk[theme];
+  const [filterOpen, setFilterOpen] = useState(false);
 
   const dirty = (Object.keys(filters) as (keyof FilterState)[]).some(
     k => filters[k] !== appliedFilters[k]
   );
+  const activeCount = (Object.keys(appliedFilters) as (keyof FilterState)[]).filter(
+    k => appliedFilters[k] !== 'all'
+  ).length;
 
-  const MONTHS = [{ value: 'all', label: 'Semua Bulan' }, ...['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'].map((l,i) => ({ value: String(i+1), label: l }))];
+  const MONTHS = [{ value: 'all', label: 'Semua Bulan' }, ...['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'].map((l,i) => ({ value: String(i+1), label: l }))];
   const WEEKS=[{value:'all',label:'Semua Minggu'},...Array.from({length:52},(_,i)=>({value:String(i+1),label:`W${i+1}`}))];
   const YEARS=[{value:'all',label:'Semua Tahun'},...opts.years.map(y=>({value:String(y),label:String(y)}))];
   const TYPES=[{value:'all',label:'Semua Tipe'},...opts.typeCustomers.map(a=>({value:a,label:a}))];
   const KATS=[{value:'all',label:'Semua Kategori'},...opts.kategoris.map(a=>({value:a,label:a}))];
   const JENS=[{value:'all', label:'Semua Jenis'},...opts.jenis.map(a=>({value:a, label:a}))];
 
+  // Kumpulan select filter dipakai bareng di layout desktop (row scroll)
+  // maupun layout mobile/tablet (grid collapsible).
+  const selectDefs = [
+    { key: 'tahun',         value: filters.tahun,         onChange: (v:string)=>setFilters(f=>({...f,tahun:v})),         options: YEARS, minWidth: 86  },
+    { key: 'bulan',         value: filters.bulan,         onChange: (v:string)=>setFilters(f=>({...f,bulan:v})),         options: MONTHS, minWidth: 78 },
+    { key: 'minggu',        value: filters.minggu,        onChange: (v:string)=>setFilters(f=>({...f,minggu:v})),        options: WEEKS, minWidth: 70  },
+    { key: 'type_customer', value: filters.type_customer, onChange: (v:string)=>setFilters(f=>({...f,type_customer:v})), options: TYPES, minWidth: 90  },
+    { key: 'kategori',      value: filters.kategori,      onChange: (v:string)=>setFilters(f=>({...f,kategori:v})),      options: KATS, minWidth: 110 },
+    { key: 'jenis',         value: filters.jenis,         onChange: (v:string)=>setFilters(f=>({...f,jenis:v})),         options: JENS, minWidth: 90  },
+  ];
+
+  const actionButtons = (
+    <>
+      {loading&&<Spinner size={11} color="#818cf8"/>}
+      {dirty&&(
+        <span style={{fontSize:9,fontFamily:FONT_MONO,color:'#f59e0b',background:'rgba(245,158,11,0.1)',border:'1px solid rgba(245,158,11,0.25)',borderRadius:4,padding:'1px 6px',flexShrink:0,whiteSpace:'nowrap'}}>
+          belum diterapkan
+        </span>
+      )}
+      {(dirty || activeCount>0) && (
+        <button onClick={onReset} style={{height:isMobile||isTablet?26:22,padding:'0 8px',borderRadius:5,fontSize:10,fontFamily:FONT_MONO,background:'transparent',border:`1px solid ${t.borderInput}`,color:t.textMuted,cursor:'pointer',flexShrink:0}}>Reset</button>
+      )}
+      <button
+        onClick={onApply}
+        disabled={loading}
+        style={{
+          height:isMobile||isTablet?26:22,padding:'0 12px',borderRadius:5,fontSize:10,fontWeight:700,fontFamily:FONT_MONO,
+          background: dirty ? '#f59e0b' : '#6366f1',
+          border:'none',color:'#fff',cursor:loading?'not-allowed':'pointer',
+          opacity:loading?0.5:1,flexShrink:0,
+          boxShadow: dirty ? '0 1px 6px rgba(245,158,11,0.4)' : '0 1px 6px rgba(99,102,241,0.35)',
+          transition:'background 0.15s, box-shadow 0.15s',
+        }}
+      >
+        Terapkan
+      </button>
+    </>
+  );
+
+  // Mobile & tablet: header "Filter" bisa diklik untuk expand/collapse
+  // (pola sama seperti toolbar di StockLevelPabrikTab), grid select cuma
+  // dirender saat terbuka biar hemat tempat di layar kecil.
+  if (isMobile || isTablet) {
+    return (
+      <div style={{flexShrink:0,background:t.filterbg,borderBottom:`4px solid ${t.border}`}}>
+        <div
+          onClick={()=>setFilterOpen(o=>!o)}
+          style={{display:'flex',alignItems:'center',gap:8,padding:isMobile?'9px 10px':'9px 14px',cursor:'pointer'}}
+        >
+          <Filter size={12} color={t.textMuted}/>
+          <span style={{fontSize:11,color:t.text,fontFamily:FONT_MONO,fontWeight:600,flex:1}}>Filter</span>
+          {activeCount>0 && (
+            <span style={{fontSize:9,fontWeight:700,fontFamily:FONT_MONO,color:'#818cf8',background:'rgba(99,102,241,0.12)',border:'1px solid rgba(99,102,241,0.25)',borderRadius:10,padding:'1px 7px',flexShrink:0}}>
+              {activeCount}
+            </span>
+          )}
+          {dirty && !filterOpen && (
+            <span style={{fontSize:9,fontFamily:FONT_MONO,color:'#f59e0b',background:'rgba(245,158,11,0.1)',border:'1px solid rgba(245,158,11,0.25)',borderRadius:4,padding:'1px 6px',flexShrink:0,whiteSpace:'nowrap'}}>
+              belum diterapkan
+            </span>
+          )}
+          {loading&&<Spinner size={11} color="#818cf8"/>}
+          {filterOpen ? <ChevronUp size={13} color={t.textMuted}/> : <ChevronDown size={13} color={t.textMuted}/>}
+        </div>
+
+        {filterOpen && (
+          <div style={{padding:isMobile?'0 10px 10px':'0 14px 10px'}}>
+            <div style={{
+              display:'grid',
+              gridTemplateColumns: isMobile ? 'repeat(2, minmax(0,1fr))' : 'repeat(3, minmax(0,1fr))',
+              gap:6,
+            }}>
+              {selectDefs.map(s => (
+                <Sel key={s.key} value={s.value} onChange={s.onChange} options={s.options} theme={theme} style={{width:'100%',minWidth:0}}/>
+              ))}
+            </div>
+            <div style={{display:'flex',alignItems:'center',gap:6,marginTop:8,flexWrap:'wrap'}}>
+              {actionButtons}
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  // Desktop: satu baris, selalu terbuka, scroll horizontal kalau kepanjangan.
   return (
     <div style={{flexShrink:0,background:t.filterbg,borderBottom:`1px solid ${t.border}`}}>
       <div style={{display:'flex',alignItems:'center',padding:'0 14px',height:36,gap:5,overflowX:'auto',scrollbarWidth:'none'}}>
-        <Sel value={filters.tahun} onChange={v=>setFilters(f=>({...f,tahun:v}))} options={YEARS} theme={theme} style={{minWidth:86}}/>
-        <Sel value={filters.bulan} onChange={v=>setFilters(f=>({...f,bulan:v}))} options={MONTHS} theme={theme} style={{minWidth:78}}/>
-        <Sel value={filters.minggu} onChange={v=>setFilters(f=>({...f,minggu:v}))} options={WEEKS} theme={theme} style={{minWidth:70}}/>
+        {selectDefs.map(s => (
+          <Sel key={s.key} value={s.value} onChange={s.onChange} options={s.options} theme={theme} style={{minWidth:s.minWidth}}/>
+        ))}
         <div style={{width:1,height:12,background:t.border,flexShrink:0,margin:'0 1px'}}/>
-        <Sel value={filters.type_customer} onChange={v=>setFilters(f=>({...f,type_customer:v}))} options={TYPES} theme={theme} style={{minWidth:90}}/>
-        <Sel value={filters.kategori} onChange={v=>setFilters(f=>({...f,kategori:v}))} options={KATS} theme={theme} style={{minWidth:110}}/>
-        <Sel value={filters.jenis} onChange={v=>setFilters(f=>({...f,jenis:v}))} options={JENS} theme={theme} style={{minWidth:90}} />
         <div style={{flex:1}}/>
-        {loading&&<Spinner size={11} color="#818cf8"/>}
-        {dirty&&(
-          <span style={{fontSize:9,fontFamily:FONT_MONO,color:'#f59e0b',background:'rgba(245,158,11,0.1)',border:'1px solid rgba(245,158,11,0.25)',borderRadius:4,padding:'1px 6px',flexShrink:0}}>
-            belum diterapkan
-          </span>
-        )}
-        {(dirty || (Object.keys(appliedFilters) as (keyof FilterState)[]).some(k => appliedFilters[k] !== 'all')) && (
-          <button onClick={onReset} style={{height:22,padding:'0 8px',borderRadius:5,fontSize:10,fontFamily:FONT_MONO,background:'transparent',border:`1px solid ${t.borderInput}`,color:t.textMuted,cursor:'pointer',flexShrink:0}}>Reset</button>
-        )}
-        <button
-          onClick={onApply}
-          disabled={loading}
-          style={{
-            height:22,padding:'0 12px',borderRadius:5,fontSize:10,fontWeight:700,fontFamily:FONT_MONO,
-            background: dirty ? '#f59e0b' : '#6366f1',
-            border:'none',color:'#fff',cursor:loading?'not-allowed':'pointer',
-            opacity:loading?0.5:1,flexShrink:0,
-            boxShadow: dirty ? '0 1px 6px rgba(245,158,11,0.4)' : '0 1px 6px rgba(99,102,241,0.35)',
-            transition:'background 0.15s, box-shadow 0.15s',
-          }}
-        >
-          Terapkan
-        </button>
+        {actionButtons}
       </div>
     </div>
   );
@@ -490,6 +557,8 @@ function DashboardInner() {
             onReset={doReset}
             loading={loading}
             theme={theme}
+            isMobile={isMobile}
+            isTablet={isTablet}
           />
         )}
 
