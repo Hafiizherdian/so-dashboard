@@ -75,11 +75,15 @@ export function parsePlanExcel(buffer: Buffer): PlanParseResult {
 
   // 1. Nama mesin
   let namaMesin = 'MESIN';
+  outer:
   for (let r = 0; r < Math.min(6, aoa.length); r++) {
-    const cell = toStr(aoa[r]?.[0]);
-    if (cell.toUpperCase().includes('MESIN')) {
-      namaMesin = cell.toUpperCase().trim();
-      break;
+    const row = aoa[r] ?? [];
+    for (let c = 0; c < Math.min(5, row.length); c++) {
+      const cell = toStr(row[c]);
+      if (cell.toUpperCase().includes('MESIN')) {
+        namaMesin = cell.toUpperCase().trim();
+        break outer;
+      }
     }
   }
 
