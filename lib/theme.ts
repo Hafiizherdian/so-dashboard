@@ -29,6 +29,7 @@ export const tk = {
     card2bg: '#0a1a14', card2border: '#1a4030', card2text: '#6ee7b7', card2accent: '#10b981',
     card3bg: '#1a1108', card3border: '#3d2b08', card3text: '#fcd34d', card3accent: '#f59e0b',
     card4bg: '#1a080d', card4border: '#3d1220', card4text: '#fca5a5', card4accent: '#ef4444',
+    card5bg: '#062a2e', card5border: '#0e4a52', card5text: '#67e8f9', card5accent: '#06b6d4',
     // Status
     posBg: 'rgba(16,185,129,0.1)',   posText: '#6ee7b7', posBorder: 'rgba(16,185,129,0.25)',
     negBg: 'rgba(239,68,68,0.08)',   negText: '#fca5a5', negBorder: 'rgba(239,68,68,0.18)',
@@ -68,15 +69,19 @@ export const tk = {
     toggleBorder: 'rgba(0,0,0,0.09)',
     optionBg: '#ffffff',
     scrollbar: 'rgba(0,0,0,0.12)',
+    // KPI cards
     card1bg: '#eff0ff', card1border: '#c7d2fe', card1text: '#4f46e5', card1accent: '#6366f1',
     card2bg: '#f0fdf4', card2border: '#bbf7d0', card2text: '#15803d', card2accent: '#10b981',
     card3bg: '#fefce8', card3border: '#fde68a', card3text: '#92400e', card3accent: '#f59e0b',
     card4bg: '#fff1f2', card4border: '#fecdd3', card4text: '#be123c', card4accent: '#ef4444',
+    card5bg: '#ecfeff', card5border: '#a5f3fc', card5text: '#0e7490', card5accent: '#06b6d4',
+    // Status
     posBg: '#f0fdf4', posText: '#16a34a', posBorder: '#bbf7d0',
     negBg: '#fef2f2', negText: '#b91c1c', negBorder: '#fecaca',
     warnBg: '#fffbeb', warnText: '#d97706', warnBorder: '#fde68a',
     infoBg: 'rgba(99,102,241,0.08)', infoText: '#4f46e5', infoBorder: 'rgba(99,102,241,0.2)',
     red: { bg: '#fef2f2', text: '#b91c1c', border: '#fecaca' },
+    // Chart
     gridStroke: 'rgba(0,0,0,0.045)',
     tooltipBg: '#ffffff',
     tooltipBorder: 'rgba(0,0,0,0.1)',

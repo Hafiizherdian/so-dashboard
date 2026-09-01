@@ -5,7 +5,7 @@ import {
   ResponsiveContainer, Cell, BarChart, Bar,
   PieChart, Pie
 } from 'recharts';
-import { TrendingUp, ShoppingCart, Receipt, AlertCircle, Users, Package, Tag } from 'lucide-react';
+import { TrendingUp, ShoppingCart, Receipt, AlertCircle, Users, Package, Tag, ChartColumnBig, Layers } from 'lucide-react';
 import { Theme, tk, CC, PIE_COLORS, fmtRp, fmtRpFull, FONT_MONO } from '@/lib/theme';
 import { DashboardData } from '@/types/index';
 import { KpiCard, Card, ChartTooltip, ProgressBar } from '@/components/ui';
@@ -67,6 +67,7 @@ export default function OverviewTab({ data, theme, availH }: Props) {
 
   const summary = {
     total_penjualan:   Number(raw.summary?.total_penjualan   ?? 0),
+    total_terkirim:    Number(raw.summary?.total_terkirim    ?? 0),
     total_so:          Number(raw.summary?.total_so          ?? 0),
     total_outstanding: Number(raw.summary?.total_outstanding ?? 0),
     qty_penjualan:     Number(raw.summary?.qty_penjualan     ?? 0),
@@ -197,7 +198,7 @@ export default function OverviewTab({ data, theme, availH }: Props) {
     <Card
       theme={theme}
       title="Tren Bulanan"
-      icon={<TrendingUp size={10} color="#6366f1" />}
+      icon={<ChartColumnBig size={10} color="#6366f1" />}
       color="#6366f1" 
       accent="#6366f1"
       sub={
@@ -471,6 +472,11 @@ export default function OverviewTab({ data, theme, availH }: Props) {
             label="Total Penjualan" value={summary.total_penjualan.toLocaleString('id-ID')}
             sub={fmtRpFull(summary.total_penjualan)} icon={<Receipt size={18} />} theme={theme}
           />
+           <KpiCard
+            bg={t.card5bg} border={t.card5border} labelColor={t.card5text} accent={t.card5accent}
+            label="Total Terkirim" value={summary.total_terkirim.toLocaleString('id-ID')}
+            sub={`${summary.total_terkirim.toLocaleString('id-ID')} qty`} icon={<Layers size={14} />} theme={theme}
+          />
           <KpiCard
             bg={t.card2bg} border={t.card2border} labelColor={t.card2text} accent={t.card2accent}
             label="Sales Order" value={summary.total_so.toLocaleString('id-ID')}
@@ -502,11 +508,16 @@ export default function OverviewTab({ data, theme, availH }: Props) {
   if (isTablet) {
     return (
       <div style={{ display: 'flex', flexDirection: 'column', gap: GAP, overflowY: 'auto', paddingBottom: 16 }}>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: GAP }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5,1fr)', gap: GAP }}>
           <KpiCard
             bg={t.card1bg} border={t.card1border} labelColor={t.card1text} accent={t.card1accent}
             label="Total Penjualan" value={fmtRpFull(summary.total_penjualan)}
             sub={fmtRpFull(summary.total_penjualan)} icon={<Receipt size={14} />} theme={theme}
+          />
+           <KpiCard
+            bg={t.card5bg} border={t.card5border} labelColor={t.card5text} accent={t.card5accent}
+            label="Total Terkirim" value={summary.total_terkirim.toLocaleString('id-ID')}
+            sub={`${summary.total_terkirim.toLocaleString('id-ID')} qty`} icon={<Layers size={14} />} theme={theme}
           />
           <KpiCard
             bg={t.card2bg} border={t.card2border} labelColor={t.card2text} accent={t.card2accent}
@@ -542,11 +553,16 @@ export default function OverviewTab({ data, theme, availH }: Props) {
 
   return (
     <div style={{ height: availH, display: 'flex', flexDirection: 'column', gap: GAP, overflow: 'hidden' }}>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: GAP, height: KPI_H, flexShrink: 0 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5,1fr)', gap: GAP, height: KPI_H, flexShrink: 0 }}>
         <KpiCard
           bg={t.card1bg} border={t.card1border} labelColor={t.card1text} accent={t.card1accent}
           label="Total Penjualan" value={fmtRpFull(summary.total_penjualan)}
           sub={fmtRpFull(summary.total_penjualan)} icon={<Receipt size={14} />} theme={theme}
+        />
+        <KpiCard
+          bg={t.card5bg} border={t.card5border} labelColor={t.card5text} accent={t.card5accent}
+          label="Total Terkirim" value={summary.total_terkirim.toLocaleString('id-ID')}
+          sub={`${summary.total_terkirim.toLocaleString('id-ID')} qty`} icon={<Layers size={14} />} theme={theme}
         />
         <KpiCard
           bg={t.card2bg} border={t.card2border} labelColor={t.card2text} accent={t.card2accent}
