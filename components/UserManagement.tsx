@@ -4,15 +4,15 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Users, Plus, Pencil, Trash2, X, Check, Eye, EyeOff, ShieldAlert, ShieldCheck, Shield, AlertTriangle } from 'lucide-react';
 import { Theme, tk, FONT_MONO, FONT_SANS } from '@/lib/theme';
 import { useAuth } from '@/lib/AuthContext';
-import { ALL_MENUS, STOCK_LEVEL_COLUMNS, stockColId, isStockColId, stripStockColPrefix } from '@/lib/menu'; // ★ BARU: STOCK_LEVEL_COLUMNS + helpers
+import { ALL_MENUS, STOCK_LEVEL_COLUMNS, stockColId, isStockColId, stripStockColPrefix } from '@/lib/menu'; // BARU: STOCK_LEVEL_COLUMNS + helpers
 
 type Role = 'root' | 'admin' | 'user';
 interface User { id: number; username: string; role: Role; areas: string[]; allowed_menus: string[] | null; created_at: string; }
 
 const ROLE_CFG: Record<Role, { label: string; Icon: any; color: string; bg: string; border: string }> = {
-  root:  { label: 'Root',  Icon: ShieldAlert, color: '#a78bfa', bg: 'rgba(167,139,250,0.1)',  border: 'rgba(167,139,250,0.25)' },
-  admin: { label: 'Admin', Icon: ShieldCheck, color: '#60a5fa', bg: 'rgba(96,165,250,0.1)',   border: 'rgba(96,165,250,0.25)'  },
-  user:  { label: 'User',  Icon: Shield,      color: '#34d399', bg: 'rgba(52,211,153,0.1)',   border: 'rgba(52,211,153,0.25)'  },
+  root:  { label: 'Root',  Icon: ShieldAlert, color: '#8b5cf6', bg: 'rgba(167,139,250,0.1)',  border: 'rgba(167,139,250,0.25)' },
+  admin: { label: 'Admin', Icon: ShieldCheck, color: '#3b82f6', bg: 'rgba(96,165,250,0.1)',   border: 'rgba(96,165,250,0.25)'  },
+  user:  { label: 'User',  Icon: Shield,      color: '#10b981', bg: 'rgba(52,211,153,0.1)',   border: 'rgba(52,211,153,0.25)'  },
 };
 
 interface Props { theme: Theme; }
