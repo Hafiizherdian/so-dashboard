@@ -189,6 +189,7 @@ export async function GET(req: NextRequest) {
       kode_pabrik: string;
       kode_brand: string | null;
       brand: string;
+      area: string | null;
       purchase_order_weekly: WeeklyEntry[];
     }>(`
         WITH latest_per_brand AS (
@@ -206,6 +207,7 @@ export async function GET(req: NextRequest) {
             r.kode_pabrik,
             r.kode_brand,
             r.brand,
+            r.area,
             r.purchase_order_weekly
         FROM msmr_rows r
         JOIN msmr_reports rep
@@ -222,6 +224,7 @@ export async function GET(req: NextRequest) {
 
     const msmrMapEtiket = new Map<string, number>();
     const msmrMapDos = new Map<string, number>();
+    const areaMap = new Map<string, Set<string>>();
 
     msmrRows.forEach(r => {
       const brandSource = (r.kode_brand && r.kode_brand.trim()) ? r.kode_brand : r.brand;
@@ -240,6 +243,12 @@ export async function GET(req: NextRequest) {
       // --- DOS/Slop Dos: TANPA bks_per_slop ---
       const bungkusDos = dos * conv.slop * conv.bal;
       msmrMapDos.set(key, (msmrMapDos.get(key) || 0) + bungkusDos);
+
+        if (r.area && r.area.trim()) {
+        const set = areaMap.get(key) ?? new Set<string>();
+        set.add(r.area.trim());
+        areaMap.set(key, set);
+      }
 
       if (debugMatch(brandSource)) {
         console.log('[stock-level-pabrik][msmrMap] ---');
@@ -275,6 +284,9 @@ export async function GET(req: NextRequest) {
         ? (msmrMapDos.get(msmrKey) ?? 0)
         : (msmrMapEtiket.get(msmrKey) ?? 0);
 
+      const areaSet = areaMap.get(msmrKey);
+      const area = areaSet ? Array.from(areaSet).sort() : [];
+
       if (debugMatch(u.kode_brand)) {
         console.log('[stock-level-pabrik][rows.map] ---');
         console.log('  kode_brand (upload):', u.kode_brand, ' tipe:', u.tipe, ' -> productJenis:', productJenis);
@@ -290,6 +302,7 @@ export async function GET(req: NextRequest) {
         kode_brand:    u.kode_brand,
         kode_pabrik:   u.kode_pabrik,
         nama_produk:   u.nama_produk || product?.nama_brand || `${u.kode_pabrik} / ${u.kode_brand}`,
+        area,
         up:            product?.up ?? null,
         stok_pabrik:   Number(u.stok_pabrik) || 0,
         pengiriman:    Number(u.pengiriman) || 0,
@@ -317,6 +330,54 @@ export async function GET(req: NextRequest) {
     });
   } catch (e: any) {
     console.error('[stock-level-pabrik GET]', e);
+    return NextResponse.json({ success: false, error: e.message }, { status: 500 });
+  }
+}
+
+export async function PATCH(req: NextRequest) {
+  try {
+    const payload = await getTokenFromRequest(req);
+    if (!payload) return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
+    if (!hasMenuAccess(payload, 'StockLevel')) {
+      return NextResponse.json({ success: false, error: 'Forbidden' }, { status: 403 });
+    }
+    await initDb();
+
+    const body = await req.json();
+    const { kode_pabrik, kode_brand, jenis_etiket, tipe, keterangan } = body ?? {};
+
+    if (!kode_pabrik || !kode_brand || !tipe) {
+      return NextResponse.json({ success: false, error: 'Field identifier tidak lengkap' }, { status: 400 });
+    }
+
+    // Update ditujukan ke baris di upload TERBARU saja (sama seperti GET)
+    const uploadRows = await query<{ id: string }>(
+      `SELECT id FROM stock_level_uploads ORDER BY periode_akhir DESC, created_at DESC LIMIT 1`
+    );
+    const latestUpload = uploadRows[0] ?? null;
+    if (!latestUpload) {
+      return NextResponse.json({ success: false, error: 'Belum ada data upload' }, { status: 404 });
+    }
+
+    const result = await query<{ keterangan: string | null }>(
+      `UPDATE stock_level_rows
+       SET keterangan = $1
+       WHERE upload_id = $2
+         AND kode_pabrik = $3
+         AND kode_brand = $4
+         AND jenis_etiket IS NOT DISTINCT FROM $5
+         AND tipe = $6
+       RETURNING keterangan`,
+      [keterangan ?? null, latestUpload.id, kode_pabrik, kode_brand, jenis_etiket ?? null, tipe]
+    );
+
+    if (result.length === 0) {
+      return NextResponse.json({ success: false, error: 'Baris tidak ditemukan' }, { status: 404 });
+    }
+
+    return NextResponse.json({ success: true, data: { keterangan: result[0].keterangan } });
+  } catch (e: any) {
+    console.error('[stock-level-pabrik PATCH]', e);
     return NextResponse.json({ success: false, error: e.message }, { status: 500 });
   }
 }

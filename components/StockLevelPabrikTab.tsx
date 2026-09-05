@@ -30,6 +30,7 @@ export interface StockLevelRawRow {
   tipe:         string | null;          // Level 2: 'Etiket' | 'Inner' | 'Dos' | 'Slop Dos'
   kode_brand:   string;
   kode_pabrik:  string;
+  area:         string[];
   nama_produk:  string;          // nama produk / deskripsi etiket, PERSIS dari Excel Stock Level
   up:           number | null;          // dari products.up
 
@@ -172,11 +173,20 @@ export default function StockLevelPabrikTab({ theme }: Props) {
   const [jenisFilter, setJenisFilter] = useState<string>('ALL');
   const [jenisEtiketFilter, setJenisEtiketFilter] = useState<string>('ALL');
   const [tipeFilter, setTipeFilter] = useState<string>('ALL');
+  const [areaFilter, setAreaFilter] = useState<string>('ALL');
 
   const [sortKey, setSortKey] = useState<SortKey>('stok_level_pabrik');
   const [sortDir, setSortDir] = useState<SortDir>('asc');
   const [filterOpen, setFilterOpen] = useState(false);
   const [selectedRow, setSelectedRow] = useState<StockLevelComputedRow | null>(null);
+
+  // --- Editable Keterangan (desktop: inline cell edit) ---
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editingValue, setEditingValue] = useState('');
+  const [savingId, setSavingId] = useState<string | null>(null);
+
+  // --- Editable Keterangan (mobile: textarea di modal detail) ---
+  const [modalKeterangan, setModalKeterangan] = useState('');
 
   const { user } = useAuth();
 
@@ -224,6 +234,11 @@ export default function StockLevelPabrikTab({ theme }: Props) {
     loadData();
   }, [search]);
 
+  // Sinkronkan textarea modal setiap kali baris yang dipilih berubah
+  useEffect(() => {
+    setModalKeterangan(selectedRow?.keterangan ?? '');
+  }, [selectedRow?.id]);
+
   const computed = useMemo(() => rawRows.map(computeRow), [rawRows]);
 
   const JenisEtiketOptions = useMemo(() => {
@@ -244,6 +259,12 @@ export default function StockLevelPabrikTab({ theme }: Props) {
     return Array.from(set).sort();
   }, [rawRows]);
 
+  const AreaOptions = useMemo(() =>  {
+    const set = new Set<string>();
+    rawRows.forEach(r => r.area.forEach(a => set.add(a)));
+    return Array.from(set).sort()
+  }, [rawRows])
+
   const filtered = useMemo(() => {
     let result = computed;
     if (jenisFilter !== 'ALL') {
@@ -255,8 +276,11 @@ export default function StockLevelPabrikTab({ theme }: Props) {
     if (tipeFilter !== 'ALL') {
       result = result.filter(r => r.tipe === tipeFilter);
     }
+    if (areaFilter !== 'ALL') {
+      result = result.filter(r => r.area.includes(areaFilter));  
+    }
     return result;
-  }, [computed, jenisFilter, jenisEtiketFilter, tipeFilter]);
+  }, [computed, jenisFilter, jenisEtiketFilter, tipeFilter, areaFilter]);
 
   const sorted = useMemo(() => {
     return [...filtered].sort((a, b) => {
@@ -273,6 +297,48 @@ export default function StockLevelPabrikTab({ theme }: Props) {
   const toggleSort = (k: SortKey) => {
     if (k === sortKey) setSortDir(d => (d === 'asc' ? 'desc' : 'asc'));
     else { setSortKey(k); setSortDir('asc'); }
+  };
+
+  // --- Simpan keterangan ke server, lalu update state lokal ---
+  const saveKeterangan = async (row: StockLevelComputedRow, newValue: string) => {
+    const cleaned = newValue.trim();
+    if (cleaned === (row.keterangan ?? '')) return; // tidak ada perubahan
+
+    setSavingId(row.id);
+    try {
+      const res: { success: boolean; error?: string } = await apiJson('/api/stock-level-pabrik', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          kode_pabrik: row.kode_pabrik,
+          kode_brand: row.kode_brand,
+          jenis_etiket: row.jenis_etiket,
+          tipe: row.tipe,
+          keterangan: cleaned || null,
+        }),
+      });
+
+      if (res.success) {
+        setRawRows(prev => prev.map(r => (r.id === row.id ? { ...r, keterangan: cleaned || null } : r)));
+        setSelectedRow(prev => (prev && prev.id === row.id ? { ...prev, keterangan: cleaned || null } : prev));
+      } else {
+        console.error('Gagal update keterangan:', res.error);
+      }
+    } catch (e) {
+      console.error('Gagal update keterangan:', e);
+    } finally {
+      setSavingId(null);
+    }
+  };
+
+  const commitKeterangan = (row: StockLevelComputedRow) => {
+    const value = editingValue;
+    setEditingId(null);
+    saveKeterangan(row, value);
+  };
+
+  const commitModalKeterangan = (row: StockLevelComputedRow) => {
+    saveKeterangan(row, modalKeterangan);
   };
 
   // KPI
@@ -392,6 +458,31 @@ export default function StockLevelPabrikTab({ theme }: Props) {
   </select>
 );
 
+  // Filter area
+  const AreaFilter = (
+    <select
+      value={areaFilter}
+      onChange={e => setAreaFilter(e.target.value)}
+      style={{
+        height: 28,
+        padding: '0 28px 0 10px',
+        borderRadius: 6,
+        background: t.filterbg,
+        border: `1px solid ${t.borderInput}`,
+        color: t.text,
+        outline: 'none',
+        fontSize: 11,
+        fontFamily: FONT_MONO,
+        cursor: 'pointer',
+      }}
+    >
+      <option value='ALL'>Semua Area</option>
+      {AreaOptions.map(opt => (
+        <option key={opt} value={opt}>{opt}</option>
+      ))}
+    </select>
+  )
+
   // Filter Tipe (Level 2: Etiket / Inner / Dos / Slop Dos)
   const TipeFilter = (
   <select
@@ -434,6 +525,7 @@ export default function StockLevelPabrikTab({ theme }: Props) {
             {/* {JenisFilter} */}
             {JenisEtiketFilter}
             {TipeFilter}
+            {/* {AreaFilter} */}
           </div>
           <div style={{ display: 'flex', gap: 6 }}>
             {SearchBox}
@@ -457,6 +549,7 @@ export default function StockLevelPabrikTab({ theme }: Props) {
       {/* {JenisFilter} */}
       {JenisEtiketFilter}
       {TipeFilter}
+      {/* {AreaFilter} */}
       {SearchBox}
       <button onClick={() => setSearch(searchInput)} style={{ height: 28, padding: '0 10px', borderRadius: 6, fontSize: 11, fontWeight: 700, background: '#6366f1', border: 'none', color: '#fff', cursor: 'pointer', fontFamily: FONT_MONO }}>Cari</button>
       <button onClick={() => loadData()} style={{ height: 28, width: 28, borderRadius: 6, background: t.inputBg, border: `1px solid ${t.borderInput}`, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: t.textMuted }}>
@@ -635,7 +728,38 @@ export default function StockLevelPabrikTab({ theme }: Props) {
                 {!isTablet && showCol('bj') && <td style={{ ...tdS, textAlign: 'right', color: infoColor(row.bj) }}>{fmtNum(row.bj)}</td>}
                 {!isTablet && showCol('kiriman') && <td style={{ ...tdS, textAlign: 'right', color: infoColor(row.kiriman) }}>{fmtNum(row.kiriman)}</td>}
                 {!isTablet && showCol('plan_produksi') && <td style={{ ...tdS, textAlign: 'right', color: infoColor(row.plan_produksi) }}>{fmtNum(row.plan_produksi)}</td>}
-                {!isTablet && showCol('keterangan') && <td style={{ ...tdS, maxWidth: 160, overflow: 'hidden', textOverflow: 'ellipsis', color: t.text }}>{row.keterangan || '—'}</td>}
+                {!isTablet && showCol('keterangan') && (
+                  <td style={{ ...tdS, maxWidth: 160, padding: 0, whiteSpace: 'normal' }}>
+                    {editingId === row.id ? (
+                      <textarea
+                        autoFocus
+                        value={editingValue}
+                        onChange={e => setEditingValue(e.target.value)}
+                        onBlur={() => commitKeterangan(row)}
+                        onKeyDown={e => {
+                          if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); commitKeterangan(row); }
+                          if (e.key === 'Escape') { e.preventDefault(); setEditingId(null); }
+                        }}
+                        style={{
+                          width: 160, minHeight: 30, resize: 'vertical', fontFamily: FONT_MONO,
+                          fontSize: 11, padding: '6px 8px', border: '1px solid #6366f1', borderRadius: 0,
+                          outline: 'none', background: t.inputBg, color: t.text, boxSizing: 'border-box',
+                        }}
+                      />
+                    ) : (
+                      <div
+                        onClick={() => { setEditingId(row.id); setEditingValue(row.keterangan ?? ''); }}
+                        title="Klik untuk edit"
+                        style={{
+                          padding: '7px 10px', cursor: 'text', overflow: 'hidden', textOverflow: 'ellipsis',
+                          whiteSpace: 'nowrap', minHeight: 14, color: row.keterangan ? t.text : t.textFaint,
+                        }}
+                      >
+                        {savingId === row.id ? 'Menyimpan…' : (row.keterangan || '+ Tambah keterangan')}
+                      </div>
+                    )}
+                  </td>
+                )}
               </tr>
             );
           })}
@@ -767,7 +891,30 @@ export default function StockLevelPabrikTab({ theme }: Props) {
 
         <div style={{ paddingTop: 10, paddingBottom: 50 }}>
           <div style={{ fontSize: 10, color: t.textMuted, fontFamily: FONT_MONO, marginBottom: 3 }}>Keterangan</div>
-          <div style={{ fontSize: 11, color: t.text, fontFamily: FONT_MONO }}>{selectedRow.keterangan || '—'}</div>
+          <textarea
+            value={modalKeterangan}
+            onChange={e => setModalKeterangan(e.target.value)}
+            rows={3}
+            style={{
+              width: '100%', fontFamily: FONT_MONO, fontSize: 11, color: t.text,
+              background: t.inputBg, border: `1px solid ${t.borderInput}`, borderRadius: 6,
+              padding: '6px 8px', outline: 'none', resize: 'vertical', boxSizing: 'border-box',
+            }}
+          />
+          <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 6 }}>
+            <button
+              onClick={() => commitModalKeterangan(selectedRow)}
+              disabled={savingId === selectedRow.id}
+              style={{
+                height: 28, padding: '0 14px', borderRadius: 6, fontSize: 11, fontWeight: 700,
+                background: '#6366f1', border: 'none', color: '#fff',
+                cursor: savingId === selectedRow.id ? 'default' : 'pointer',
+                fontFamily: FONT_MONO, opacity: savingId === selectedRow.id ? 0.6 : 1,
+              }}
+            >
+              {savingId === selectedRow.id ? 'Menyimpan…' : 'Simpan'}
+            </button>
+          </div>
         </div>
       </div>
     </div>
