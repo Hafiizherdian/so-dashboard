@@ -139,7 +139,29 @@ function fmtDate(iso: string): string {
   return `${String(d.getDate()).padStart(2, '0')} ${['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'][d.getMonth()]}`;
 }
 
-type SortKey = 'kode_brand'| 'jenis' | 'jenis_etiket' | 'tipe' | 'nama_produk' | 'stok_aktual' | 'pemakaian_per_hari' | 'stok_level_pabrik' | 'stok_level_pabrik_wip_bj' | 'stok_level_pabrik_wip_bj_plan';
+type SortKey =
+  | 'kode_brand'
+  | 'jenis'
+  | 'jenis_etiket'
+  | 'tipe'
+  | 'nama_produk'
+  | 'stok_pabrik'
+  | 'pengiriman'
+  | 'estimasi_kebutuhan'
+  | 'estimasi_stok'
+  | 'stok_aktual'
+  | 'pemakaian_per_bulan'
+  | 'pemakaian_per_minggu'
+  | 'pemakaian_per_hari'
+  | 'stok_level_pabrik'
+  | 'stok_level_pabrik_wip_bj'
+  | 'stok_level_pabrik_wip_bj_plan'
+  | 'up'
+  | 'wip'
+  | 'bj'
+  | 'kiriman'
+  | 'plan_produksi'
+  | 'keterangan';
 type SortDir = 'asc' | 'desc';
 
 function useBreakpoint() {
@@ -299,6 +321,25 @@ export default function StockLevelPabrikTab({ theme }: Props) {
     else { setSortKey(k); setSortDir('asc'); }
   };
 
+  const totals = useMemo(() => {
+    const sum = (key: keyof StockLevelComputedRow) =>
+      sorted.reduce((s, r) => s + (Number(r[key]) || 0), 0);
+    return {
+      stok_pabrik: sum('stok_pabrik'),
+      pengiriman: sum('pengiriman'),
+      estimasi_kebutuhan: sum('estimasi_kebutuhan'),
+      estimasi_stok: sum('estimasi_stok'),
+      stok_aktual: sum('stok_aktual'),
+      pemakaian_per_bulan: sum('pemakaian_per_bulan'),
+      pemakaian_per_minggu: sum('pemakaian_per_minggu'),
+      pemakaian_per_hari: sum('pemakaian_per_hari'),
+      wip: sum('wip'),
+      bj: sum('bj'),
+      kiriman: sum('kiriman'),
+      plan_produksi: sum('plan_produksi'),
+    };
+  }, [sorted]);
+
   // --- Simpan keterangan ke server, lalu update state lokal ---
   const saveKeterangan = async (row: StockLevelComputedRow, newValue: string) => {
     const cleaned = newValue.trim();
@@ -381,6 +422,22 @@ export default function StockLevelPabrikTab({ theme }: Props) {
     padding: '7px 10px', fontFamily: FONT_MONO, fontSize: 11,
     borderBottom: `1px solid ${t.border}`, whiteSpace: 'nowrap',
   };
+  const tfS: React.CSSProperties = {
+    position: 'sticky', bottom: 0, zIndex: 2,
+    padding: '8px 10px', fontFamily: FONT_MONO, fontSize: 11, fontWeight: 800,
+    color: t.text, background: t.tableHead, borderTop: `2px solid ${t.borderInput}`,
+    whiteSpace: 'nowrap',
+  };
+  const getStickyTf = (key: keyof typeof STICKY, isLast = false): React.CSSProperties => ({
+    position: 'sticky',
+    left: STICKY[key].left,
+    bottom: 0,
+    minWidth: STICKY[key].width,
+    maxWidth: STICKY[key].width,
+    zIndex: 3,
+    background: t.tableHead,
+    borderRight: isLast ? `2px solid ${t.borderInput}` : undefined,
+  });
   const inputS: React.CSSProperties = {
     height: 28, paddingLeft: 26, paddingRight: 28, fontSize: 11, borderRadius: 6,
     background: t.inputBg, border: `1px solid ${t.borderInput}`, color: t.text,
@@ -623,7 +680,7 @@ export default function StockLevelPabrikTab({ theme }: Props) {
       <table style={{ borderCollapse: 'collapse', fontSize: 12, minWidth: '100%' }}>
         <thead>
           <tr>
-            {/* header */}
+            {/* header — semua kolom sekarang bisa diklik untuk sort */}
             {showCol('produk') && (
               <th style={{ ...thS, ...getStickyTh('produk') }} onClick={() => toggleSort('nama_produk')}>
                 <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3 }}>
@@ -646,12 +703,32 @@ export default function StockLevelPabrikTab({ theme }: Props) {
               </th>
             )}
             {showCol('stok_pabrik') && (
-              <th style={{ ...thS, textAlign: 'right' }}>Stok Pabrik{periodeAwal ? ` ${fmtDate(periodeAwal)}` : ''}</th>
+              <th style={{ ...thS, textAlign: 'right' }} onClick={() => toggleSort('stok_pabrik')}>
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3, float: 'right' }}>
+                  Stok Pabrik{periodeAwal ? ` ${fmtDate(periodeAwal)}` : ''} <SortIcon k="stok_pabrik" />
+                </span>
+              </th>
             )}
-            {showCol('pengiriman') && <th style={{ ...thS, textAlign: 'right' }}>Pengiriman SSS</th>}
-            {showCol('estimasi_kebutuhan') && <th style={{ ...thS, textAlign: 'right' }}>Estimasi Kebutuhan</th>}
+            {showCol('pengiriman') && (
+              <th style={{ ...thS, textAlign: 'right' }} onClick={() => toggleSort('pengiriman')}>
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3, float: 'right' }}>
+                  Pengiriman SSS <SortIcon k="pengiriman" />
+                </span>
+              </th>
+            )}
+            {showCol('estimasi_kebutuhan') && (
+              <th style={{ ...thS, textAlign: 'right' }} onClick={() => toggleSort('estimasi_kebutuhan')}>
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3, float: 'right' }}>
+                  Estimasi Kebutuhan <SortIcon k="estimasi_kebutuhan" />
+                </span>
+              </th>
+            )}
             {showCol('estimasi_stok') && (
-              <th style={{ ...thS, textAlign: 'right' }}>Estimasi Stok{periodeAkhir ? ` ${fmtDate(periodeAkhir)}` : ''}</th>
+              <th style={{ ...thS, textAlign: 'right' }} onClick={() => toggleSort('estimasi_stok')}>
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3, float: 'right' }}>
+                  Estimasi Stok{periodeAkhir ? ` ${fmtDate(periodeAkhir)}` : ''} <SortIcon k="estimasi_stok" />
+                </span>
+              </th>
             )}
             {showCol('stok_aktual') && (
               <th style={{ ...thS, textAlign: 'right' }} onClick={() => toggleSort('stok_aktual')}>
@@ -660,8 +737,20 @@ export default function StockLevelPabrikTab({ theme }: Props) {
                 </span>
               </th>
             )}
-            {!isTablet && showCol('pemakaian_bulan') && <th style={{ ...thS, textAlign: 'right' }}>Pemakaian/Bulan</th>}
-            {!isTablet && showCol('pemakaian_minggu') && <th style={{ ...thS, textAlign: 'right' }}>Pemakaian/Minggu</th>}
+            {!isTablet && showCol('pemakaian_bulan') && (
+              <th style={{ ...thS, textAlign: 'right' }} onClick={() => toggleSort('pemakaian_per_bulan')}>
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3, float: 'right' }}>
+                  Pemakaian/Bulan <SortIcon k="pemakaian_per_bulan" />
+                </span>
+              </th>
+            )}
+            {!isTablet && showCol('pemakaian_minggu') && (
+              <th style={{ ...thS, textAlign: 'right' }} onClick={() => toggleSort('pemakaian_per_minggu')}>
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3, float: 'right' }}>
+                  Pemakaian/Minggu <SortIcon k="pemakaian_per_minggu" />
+                </span>
+              </th>
+            )}
             {showCol('pemakaian_hari') && (
               <th style={{ ...thS, textAlign: 'right' }} onClick={() => toggleSort('pemakaian_per_hari')}>
                 <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3, float: 'right' }}>
@@ -690,12 +779,48 @@ export default function StockLevelPabrikTab({ theme }: Props) {
                 </span>
               </th>
             )}
-            {showCol('up') && <th style={{ ...thS, textAlign: 'right' }}>Up</th>}
-            {!isTablet && showCol('wip') && <th style={{ ...thS, textAlign: 'right' }}>WIP</th>}
-            {!isTablet && showCol('bj') && <th style={{ ...thS, textAlign: 'right' }}>BJ</th>}
-            {!isTablet && showCol('kiriman') && <th style={{ ...thS, textAlign: 'right' }}>Kiriman</th>}
-            {!isTablet && showCol('plan_produksi') && <th style={{ ...thS, textAlign: 'right' }}>Plan Produksi</th>}
-            {!isTablet && showCol('keterangan') && <th style={thS}>Keterangan</th>}
+            {showCol('up') && (
+              <th style={{ ...thS, textAlign: 'right' }} onClick={() => toggleSort('up')}>
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3, float: 'right' }}>
+                  Up <SortIcon k="up" />
+                </span>
+              </th>
+            )}
+            {!isTablet && showCol('wip') && (
+              <th style={{ ...thS, textAlign: 'right' }} onClick={() => toggleSort('wip')}>
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3, float: 'right' }}>
+                  WIP <SortIcon k="wip" />
+                </span>
+              </th>
+            )}
+            {!isTablet && showCol('bj') && (
+              <th style={{ ...thS, textAlign: 'right' }} onClick={() => toggleSort('bj')}>
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3, float: 'right' }}>
+                  BJ <SortIcon k="bj" />
+                </span>
+              </th>
+            )}
+            {!isTablet && showCol('kiriman') && (
+              <th style={{ ...thS, textAlign: 'right' }} onClick={() => toggleSort('kiriman')}>
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3, float: 'right' }}>
+                  Kiriman <SortIcon k="kiriman" />
+                </span>
+              </th>
+            )}
+            {!isTablet && showCol('plan_produksi') && (
+              <th style={{ ...thS, textAlign: 'right' }} onClick={() => toggleSort('plan_produksi')}>
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3, float: 'right' }}>
+                  Plan Produksi <SortIcon k="plan_produksi" />
+                </span>
+              </th>
+            )}
+            {!isTablet && showCol('keterangan') && (
+              <th style={thS} onClick={() => toggleSort('keterangan')}>
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3 }}>
+                  Keterangan <SortIcon k="keterangan" />
+                </span>
+              </th>
+            )}
           </tr>
         </thead>
         <tbody>
@@ -764,6 +889,34 @@ export default function StockLevelPabrikTab({ theme }: Props) {
             );
           })}
         </tbody>
+        <tfoot>
+          <tr>
+            {showCol('produk') && (
+              <td style={{ ...tfS, ...getStickyTf('produk') }}>TOTAL</td>
+            )}
+            {showCol('jenis_etiket') && <td style={{ ...tfS, ...getStickyTf('etiket') }} />}
+            {showCol('tipe') && (
+              <td style={{ ...tfS, ...getStickyTf('tipe', true), fontSize: 10 }}>{fmtNum(totalItem)} item</td>
+            )}
+            {showCol('stok_pabrik') && <td style={{ ...tfS, textAlign: 'right' }}>{fmtNum(totals.stok_pabrik)}</td>}
+            {showCol('pengiriman') && <td style={{ ...tfS, textAlign: 'right' }}>{fmtNum(totals.pengiriman)}</td>}
+            {showCol('estimasi_kebutuhan') && <td style={{ ...tfS, textAlign: 'right' }}>{fmtNum(totals.estimasi_kebutuhan)}</td>}
+            {showCol('estimasi_stok') && <td style={{ ...tfS, textAlign: 'right' }}>{fmtNum(totals.estimasi_stok)}</td>}
+            {showCol('stok_aktual') && <td style={{ ...tfS, textAlign: 'right' }}>{fmtNum(totals.stok_aktual)}</td>}
+            {!isTablet && showCol('pemakaian_bulan') && <td style={{ ...tfS, textAlign: 'right' }}>{fmtNum(totals.pemakaian_per_bulan)}</td>}
+            {!isTablet && showCol('pemakaian_minggu') && <td style={{ ...tfS, textAlign: 'right' }}>{fmtNum(totals.pemakaian_per_minggu, 1)}</td>}
+            {showCol('pemakaian_hari') && <td style={{ ...tfS, textAlign: 'right' }}>{fmtNum(totals.pemakaian_per_hari, 2)}</td>}
+            {showCol('level_pabrik') && <td style={{ ...tfS, textAlign: 'right', color: t.textMuted }}>—</td>}
+            {showCol('level_wip_bj') && <td style={{ ...tfS, textAlign: 'right', color: t.textMuted }}>—</td>}
+            {!isTablet && showCol('level_wip_bj_plan') && <td style={{ ...tfS, textAlign: 'right', color: t.textMuted }}>—</td>}
+            {showCol('up') && <td style={{ ...tfS, textAlign: 'right', color: t.textMuted }}>—</td>}
+            {!isTablet && showCol('wip') && <td style={{ ...tfS, textAlign: 'right' }}>{fmtNum(totals.wip)}</td>}
+            {!isTablet && showCol('bj') && <td style={{ ...tfS, textAlign: 'right' }}>{fmtNum(totals.bj)}</td>}
+            {!isTablet && showCol('kiriman') && <td style={{ ...tfS, textAlign: 'right' }}>{fmtNum(totals.kiriman)}</td>}
+            {!isTablet && showCol('plan_produksi') && <td style={{ ...tfS, textAlign: 'right' }}>{fmtNum(totals.plan_produksi)}</td>}
+            {!isTablet && showCol('keterangan') && <td style={tfS} />}
+          </tr>
+        </tfoot>
       </table>
     </>
   );
