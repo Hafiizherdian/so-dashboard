@@ -283,7 +283,7 @@ export default function PlanProduksiTab({ theme }: Props) {
           </div> */}
           <div>
             <div style={{ fontSize: 11, fontWeight: 700, color: t.text }}>{data.nama_mesin || 'Plan Produksi'}</div>
-            <div style={{ fontSize: 9, color: t.textMuted, fontFamily: FONT_MONO }}>
+            <div style={{ fontSize: 9, color: t.text, fontFamily: FONT_MONO }}>
               {data.minggu_awal && data.minggu_akhir
                 ? `${fmtDate(data.minggu_awal)} – ${fmtDate(data.minggu_akhir)} · ${data.jobs.length} JOP · ${data.dates.length} hari`
                 : 'Belum ada data — upload file Excel di tab Upload Plan Produksi'}
@@ -348,9 +348,9 @@ export default function PlanProduksiTab({ theme }: Props) {
                     >
                       <td style={{ ...tdS, textAlign: 'center', color: t.textMuted, borderRight: `1px solid ${t.border}`, fontSize: 10 }}>{job.no_urut}</td>
                       <td style={{ ...tdS, color: t.text, fontWeight: 600, borderRight: `1px solid ${t.border}`, fontSize: 10 }}>{job.nomor_jop}</td>
-                      <td style={{ ...tdS, color: t.textSub, borderRight: `1px solid ${t.border}` }}>{job.nama_produk}</td>
-                      <td style={{ ...tdS, color: t.textMuted, fontSize: 10, borderRight: `1px solid ${t.border}` }}>{job.ukuran_kertas}</td>
-                      <td style={{ ...tdS, textAlign: 'right', color: t.textMuted, borderRight: `1px solid ${t.border}` }}>{job.up}</td>
+                      <td style={{ ...tdS, color: t.text, borderRight: `1px solid ${t.border}` }}>{job.nama_produk}</td>
+                      <td style={{ ...tdS, color: t.text, fontSize: 10, borderRight: `1px solid ${t.border}` }}>{job.ukuran_kertas}</td>
+                      <td style={{ ...tdS, textAlign: 'right', color: t.text, borderRight: `1px solid ${t.border}` }}>{job.up}</td>
                       <td style={{ ...tdS, textAlign: 'right', color: t.text, fontWeight: 600, borderRight: `1px solid ${t.border}` }}>{qtyJop.toLocaleString('id-ID')}</td>
                       <td style={{ ...tdS, textAlign: 'right', borderRight: `1px solid ${t.border}` }}>
                         <span style={{ color: isDone ? '#10b981' : isLow ? t.negText : t.text, fontWeight: 700 }}>
