@@ -16,6 +16,7 @@ export const ALL_MENUS: MenuDef[] = [
   { id: 'Plan',          label: 'Plan Produksi',        shortLabel: 'Plan',       roles: ['root', 'admin', 'user'] },
   { id: 'lhkp',          label: 'LHKP',                 shortLabel: 'LHKP',       roles: ['root', 'admin', 'user'] },
   { id: 'StockLevel',    label: 'Stock Level',          shortLabel: 'SL',         roles: ['root', 'admin', 'user'] },
+  { id: 'WIP',           label: 'WIP',                  shortLabel: 'WIP',        roles: ['root', 'admin', 'user']},
   { id: 'upload',        label: 'Upload Data',          shortLabel: 'Upload',     roles: ['root', 'admin'] },
   { id: 'kertas_upload', label: 'Upload Stock Kertas',  shortLabel: 'Up. Kertas', roles: ['root', 'admin'] },
   { id: 'Plan_upload',   label: 'Upload Plan Produksi', shortLabel: 'Up. Plan',   roles: ['root', 'admin'] },
@@ -23,6 +24,7 @@ export const ALL_MENUS: MenuDef[] = [
   { id: 'produk_upload', label: 'Upload MSMR',          shortLabel: 'Up. MSMR',   roles: ['root', 'admin'] },
   { id: 'upload_stock',  label: 'Upload Stock Level',   shortLabel: 'Up. Stock',  roles: ['root', 'admin'] },
   { id: 'master_produk', label: 'Master Produk',        shortLabel: 'Maspro',     roles: ['root', 'admin'] },
+  { id: 'upload_wip',    label: 'Upload WIP',           shortLabel: 'Up. WIP',    roles: ['root', 'admin'] },
   { id: 'users',         label: 'Manajemen User',       shortLabel: 'User',       roles: ['root'] },
 ];
 

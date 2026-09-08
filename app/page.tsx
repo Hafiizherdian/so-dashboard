@@ -3,7 +3,7 @@ import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import {
   TrendingUp, ShoppingCart, Receipt, AlertCircle, Upload, Layers,
   Sun, Moon, LogOut, ChevronLeft, NotepadTextDashed, Users, Settings, Package,
-  ClipboardList, Boxes, Filter, ChevronUp, ChevronDown,
+  ClipboardList, Boxes, Filter, ChevronUp, ChevronDown, Combine,
 } from 'lucide-react';
 import { AuthProvider, useAuth } from '@/lib/AuthContext';
 import { ALL_MENUS, MenuDef } from '@/lib/menu';
@@ -20,14 +20,16 @@ import SettingsTab from '@/components/SettingsTab';
 import { apiJson } from '@/lib/apiFetch';
 import KertasTab from '@/components/KertasTab';
 import UploadKertasTab from '@/components/UploadKertasTab';
-import WipTab from '@/components/PlanproduksiTab';
-import UploadWIPTab from '@/components/UploadPlanTab';
+import PlanTab from '@/components/PlanproduksiTab';
+import UploadPlanTab from '@/components/UploadPlanTab';
 import LhkpTab from '@/components/LhkpTab';
 import UploadLhkpTab from '@/components/UploadLhkpTab';
 import UploadProdukTab from '@/components/UploadProdukTab';
 import StockLevelPabrikTab from '@/components/StockLevelPabrikTab';
 import UploadStockLevelTab from '@/components/UploadStockLevelTab';
 import MasterProdukTab from '@/components/MasterProdukTab';
+import UploadWipTab from '@/components/UploadWipTab';
+import WipTab from '@/components/WipTab';
 
 
 // Icon di-map terpisah dari data menu (ALL_MENUS ada di lib/menu.ts, dipakai juga oleh UserManagement)
@@ -40,6 +42,7 @@ const MENU_ICONS: Record<string, any> = {
   Plan:          ClipboardList,
   lhkp:          ClipboardList,
   StockLevel: Boxes,
+  WIP: Combine,
   upload:        Upload,
   kertas_upload: Package,
   Plan_upload:   Package,
@@ -48,6 +51,7 @@ const MENU_ICONS: Record<string, any> = {
   produk_upload: Package,
   upload_stock: Package,
   master_produk: Package,
+  upload_wip: Package,
 };
 
 const ALL_TABS = ALL_MENUS.map(m => ({ ...m, Icon: MENU_ICONS[m.id] || TrendingUp }));
@@ -257,8 +261,7 @@ function FilterBar({ filters, setFilters, appliedFilters, opts, onApply, onReset
   const KATS=[{value:'all',label:'Semua Kategori'},...opts.kategoris.map(a=>({value:a,label:a}))];
   const JENS=[{value:'all', label:'Semua Jenis'},...opts.jenis.map(a=>({value:a, label:a}))];
 
-  // Kumpulan select filter dipakai bareng di layout desktop (row scroll)
-  // maupun layout mobile/tablet (grid collapsible).
+  // Kumpulan select filter dipakai bareng di layout desktop (row scroll) maupun layout mobile/tablet (grid collapsible).
   const selectDefs = [
     { key: 'tahun',         value: filters.tahun,         onChange: (v:string)=>setFilters(f=>({...f,tahun:v})),         options: YEARS, minWidth: 86  },
     { key: 'bulan',         value: filters.bulan,         onChange: (v:string)=>setFilters(f=>({...f,bulan:v})),         options: MONTHS, minWidth: 78 },
@@ -297,8 +300,7 @@ function FilterBar({ filters, setFilters, appliedFilters, opts, onApply, onReset
   );
 
   // Mobile & tablet: header "Filter" bisa diklik untuk expand/collapse
-  // (pola sama seperti toolbar di StockLevelPabrikTab), grid select cuma
-  // dirender saat terbuka biar hemat tempat di layar kecil.
+  // (pola sama seperti toolbar di StockLevelPabrikTab), grid select cuma dirender saat terbuka biar hemat tempat di layar kecil.
   if (isMobile || isTablet) {
     return (
       <div style={{flexShrink:0,background:t.filterbg,borderBottom:`4px solid ${t.border}`}}>
@@ -502,19 +504,22 @@ function DashboardInner() {
       case 'penjualan':          return <PenjualanTab data={data} theme={theme}/>;
       case 'so':                 return <SalesOrderTab data={data} theme={theme} tahun={appliedFilters.tahun}/>;
       case 'outstanding':        return <OutstandingTab data={data} theme={theme} tahun={appliedFilters.tahun} />;
-      case 'lhkp':                return <LhkpTab theme={theme}/>;
-      case 'lhkp_upload':         return userRole!=='user'?<UploadLhkpTab theme={theme}/>:null;
-      case 'StockLevel':          return <StockLevelPabrikTab theme={theme}/>;
-      case 'upload':              return userRole!=='user'?<UploadTabComp theme={theme}/>:null;
-      case 'kertas_upload':       return userRole!=='user'?<UploadKertasTab theme={theme}/>:null;
-      case 'Plan_upload':         return userRole!=='user'?<UploadWIPTab theme={theme}/>:null;
-      case 'users':                return userRole==='root'?<UserManagement theme={theme}/>:null;
-      case 'produk_upload':        return userRole!=='user'?<UploadProdukTab theme={theme}/>:null;
-      case 'upload_stock':         return userRole!=='user'?<UploadStockLevelTab theme={theme}/>:null;
-      case 'master_produk':         return userRole!=='user'?<MasterProdukTab theme={theme}/>:null
-      case 'kertas':                return <KertasTab theme={theme}/>;
-      case 'Plan':                   return <WipTab theme={theme}/>;
-      default:                        return <OverviewTab data={data} theme={theme} availH={availH}/>;
+      case 'lhkp':               return <LhkpTab theme={theme}/>;
+      case 'kertas':             return <KertasTab theme={theme}/>;
+      case 'Plan':               return <PlanTab theme={theme}/>;
+      case 'WIP':                return <WipTab theme={theme}/>;
+      case 'StockLevel':         return <StockLevelPabrikTab theme={theme}/>;
+      case 'lhkp_upload':        return userRole!=='user'?<UploadLhkpTab theme={theme}/>:null;
+      case 'upload':             return userRole!=='user'?<UploadTabComp theme={theme}/>:null;
+      case 'kertas_upload':      return userRole!=='user'?<UploadKertasTab theme={theme}/>:null;
+      case 'Plan_upload':        return userRole!=='user'?<UploadPlanTab theme={theme}/>:null;
+      case 'users':              return userRole==='root'?<UserManagement theme={theme}/>:null;
+      case 'produk_upload':      return userRole!=='user'?<UploadProdukTab theme={theme}/>:null;
+      case 'upload_stock':       return userRole!=='user'?<UploadStockLevelTab theme={theme}/>:null;
+      case 'master_produk':      return userRole!=='user'?<MasterProdukTab theme={theme}/>:null
+      case 'upload_wip':         return userRole!=='user'?<UploadWipTab theme={theme}/>:null;
+      
+      default:                   return <OverviewTab data={data} theme={theme} availH={availH}/>;
     }
   };
 
