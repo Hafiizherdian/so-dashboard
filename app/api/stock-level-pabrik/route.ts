@@ -251,15 +251,15 @@ export async function GET(req: NextRequest) {
       }
 
       if (debugMatch(brandSource)) {
-        console.log('[stock-level-pabrik][msmrMap] ---');
-        console.log('  kode_pabrik      :', r.kode_pabrik);
-        console.log('  kode_brand (raw) :', brandSource);
-        console.log('  base_brand_code  :', base, ' key:', key);
-        console.log('  dos (sum 6 weeks):', dos);
-        console.log('  conv source:', conv.source, 'matched:', conv.matched?.kode_brand ?? '-',
-          'bks:', conv.bks, 'slop:', conv.slop, 'bal:', conv.bal);
-        console.log('  bungkusEtiket:', bungkusEtiket, ' bungkusDos (tanpa bks):', bungkusDos);
-        console.log('  msmrMapEtiket[key] ->', msmrMapEtiket.get(key), ' | msmrMapDos[key] ->', msmrMapDos.get(key));
+        // console.log('[stock-level-pabrik][msmrMap] ---');
+        // console.log('  kode_pabrik      :', r.kode_pabrik);
+        // console.log('  kode_brand (raw) :', brandSource);
+        // console.log('  base_brand_code  :', base, ' key:', key);
+        // console.log('  dos (sum 6 weeks):', dos);
+        // console.log('  conv source:', conv.source, 'matched:', conv.matched?.kode_brand ?? '-',
+        //   'bks:', conv.bks, 'slop:', conv.slop, 'bal:', conv.bal);
+        // console.log('  bungkusEtiket:', bungkusEtiket, ' bungkusDos (tanpa bks):', bungkusDos);
+        // console.log('  msmrMapEtiket[key] ->', msmrMapEtiket.get(key), ' | msmrMapDos[key] ->', msmrMapDos.get(key));
       }
     });
 
@@ -289,9 +289,9 @@ export async function GET(req: NextRequest) {
 
       if (debugMatch(u.kode_brand)) {
         console.log('[stock-level-pabrik][rows.map] ---');
-        console.log('  kode_brand (upload):', u.kode_brand, ' tipe:', u.tipe, ' -> productJenis:', productJenis);
-        console.log('  msmrKey:', msmrKey, ' pemakaian_per_bulan:', pemakaian,
-          `(dari ${productJenis === 'DOS' ? 'msmrMapDos' : 'msmrMapEtiket'})`);
+        // console.log('  kode_brand (upload):', u.kode_brand, ' tipe:', u.tipe, ' -> productJenis:', productJenis);
+        // console.log('  msmrKey:', msmrKey, ' pemakaian_per_bulan:', pemakaian,
+        //   `(dari ${productJenis === 'DOS' ? 'msmrMapDos' : 'msmrMapEtiket'})`);
       }
 
       return {
