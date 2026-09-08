@@ -56,9 +56,20 @@ export interface WipApiResponse {
 }
 
 // HELPERS
-function fmtNum(n: number | null | undefined, decimals = 0): string {
-  if (n === null || n === undefined || isNaN(n)) return '—';
-  return n.toLocaleString('id-ID', { minimumFractionDigits: decimals, maximumFractionDigits: decimals });
+// HELPERS
+function fmtNum(n: string | number | null | undefined): string {
+  if (n === null || n === undefined || n === '') return '—';
+  
+  // Paksa konversi ke tipe Number (jika aslinya terbaca sebagai string dari API)
+  const num = Number(n);
+  
+  if (isNaN(num)) return '—';
+  
+  // Format ke standar Indonesia (titik untuk ribuan) dan buang desimal
+  return num.toLocaleString('id-ID', { 
+    minimumFractionDigits: 0, 
+    maximumFractionDigits: 0 
+  });
 }
 function fmtDate(iso: string | null | undefined): string {
   if (!iso) return '—';
