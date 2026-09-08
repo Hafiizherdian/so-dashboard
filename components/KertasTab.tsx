@@ -1,5 +1,5 @@
 'use client';
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
   ResponsiveContainer, Cell,
@@ -58,6 +58,21 @@ function getJenisColor(jenis: string): string {
   return JENIS_COLORS[jenis] || CC[Object.keys(JENIS_COLORS).length % CC.length];
 }
 
+// ── Breakpoint hook ──
+function useBreakpoint() {
+  const [bp, setBp] = useState<'mobile' | 'tablet' | 'desktop'>('desktop');
+  useEffect(() => {
+    const check = () => {
+      const w = window.innerWidth;
+      setBp(w < 640 ? 'mobile' : w < 1024 ? 'tablet' : 'desktop');
+    };
+    check();
+    window.addEventListener('resize', check);
+    return () => window.removeEventListener('resize', check);
+  }, []);
+  return bp;
+}
+
 // ── Form Modal ────────────────────────────────────────────────────────────────
 interface FormData {
   produk: string; jenis_kertas: string; gramasi: string; merk: string;
@@ -101,6 +116,7 @@ function FormModal({
     width: '100%', padding: '8px 10px', fontSize: 12, borderRadius: 7,
     background: t.inputBg, border: `1px solid ${t.borderInput}`,
     color: t.text, outline: 'none', fontFamily: FONT_MONO,
+    boxSizing: 'border-box',
   };
   const sel: React.CSSProperties = { ...inp, cursor: 'pointer' };
   const lbl: React.CSSProperties = {
@@ -139,7 +155,7 @@ function FormModal({
 
   return (
     <div onClick={e => e.target === e.currentTarget && onClose()} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.65)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16, backdropFilter: 'blur(4px)' }}>
-      <div style={{ background: t.cardbg, border: `1px solid ${t.borderCard}`, borderRadius: 16, padding: 22, width: '100%', maxWidth: 560, maxHeight: '90vh', overflowY: 'auto', boxShadow: '0 16px 48px rgba(0,0,0,0.5)' }}>
+      <div style={{ background: t.cardbg, border: `1px solid ${t.borderCard}`, borderRadius: 16, padding: 22, width: '100%', maxWidth: 560, maxHeight: '90vh', overflowY: 'auto' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 18 }}>
           <div style={{ fontSize: 13, fontWeight: 700, color: t.text, fontFamily: FONT_MONO }}>
             {mode === 'create' ? '+ Tambah Stok Kertas' : `Edit — ${initial?.produk?.slice(0, 30)}…`}
@@ -232,7 +248,7 @@ function FormModal({
 
         <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, marginTop: 18 }}>
           <button onClick={onClose} style={{ padding: '8px 16px', borderRadius: 8, fontSize: 12, fontWeight: 600, background: t.inputBg, color: t.textSub, border: `1px solid ${t.borderInput}`, cursor: 'pointer' }}>Batal</button>
-          <button onClick={handleSave} disabled={saving} style={{ padding: '8px 20px', borderRadius: 8, fontSize: 12, fontWeight: 700, border: 'none', background: saving ? t.inputBg : '#6366f1', color: saving ? t.textMuted : '#fff', cursor: saving ? 'not-allowed' : 'pointer', boxShadow: saving ? 'none' : '0 2px 8px rgba(99,102,241,0.3)', display: 'flex', alignItems: 'center', gap: 6 }}>
+          <button onClick={handleSave} disabled={saving} style={{ padding: '8px 20px', borderRadius: 8, fontSize: 12, fontWeight: 700, border: 'none', background: saving ? t.inputBg : '#6366f1', color: saving ? t.textMuted : '#fff', cursor: saving ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', gap: 6 }}>
             {saving ? 'Menyimpan…' : <><Check size={12} />Simpan</>}
           </button>
         </div>
@@ -244,6 +260,8 @@ function FormModal({
 // ── Main Component ────────────────────────────────────────────────────────────
 export default function KertasTab({ theme }: Props) {
   const t = tk[theme];
+  const bp = useBreakpoint();
+  const isMobile = bp === 'mobile';
 
   const [rows, setRows]       = useState<KertasRow[]>([]);
   const [summary, setSummary] = useState<KertasSummary>({ total_produk: 0, total_masuk: 0, total_keluar: 0, total_saldo: 0, jenis_list: [], merk_list: [] });
@@ -319,16 +337,16 @@ export default function KertasTab({ theme }: Props) {
     return {
       jenis,
       saldo:  items.reduce((s, r) => s + Number(r.saldo_akhir || 0), 0),
-      masuk:  items.reduce((s, r) => s + Number(r.masuk      || 0), 0),
-      keluar: items.reduce((s, r) => s + Number(r.keluar     || 0), 0),
+      masuk:  items.reduce((s, r) => s + Number(r.masuk       || 0), 0),
+      keluar: items.reduce((s, r) => s + Number(r.keluar      || 0), 0),
       color:  getJenisColor(jenis),
     };
   });
 
   const summaryLocal = {
     total_produk: filtered.length,
-    total_masuk:  filtered.reduce((s, r) => s + Number(r.masuk      || 0), 0),
-    total_keluar: filtered.reduce((s, r) => s + Number(r.keluar     || 0), 0),
+    total_masuk:  filtered.reduce((s, r) => s + Number(r.masuk       || 0), 0),
+    total_keluar: filtered.reduce((s, r) => s + Number(r.keluar      || 0), 0),
     total_saldo:  filtered.reduce((s, r) => s + Number(r.saldo_akhir || 0), 0),
   };
 
@@ -352,6 +370,27 @@ export default function KertasTab({ theme }: Props) {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+      {/* CSS Sticky Kolom untuk Mobile */}
+      <style>{`
+        @media (max-width: 768px) {
+          .sticky-col-merk {
+            position: sticky !important;
+            left: 0 !important;
+            z-index: 2 !important;
+            background-color: var(--bg-color) !important;
+            box-shadow: 3px 0 5px -2px rgba(0,0,0,0.1);
+          }
+          th.sticky-col-merk {
+            z-index: 3 !important;
+          }
+          tr:hover td.sticky-col-merk,
+          tr:active td.sticky-col-merk {
+            background-color: var(--bg-color) !important;
+            background-image: linear-gradient(var(--hover-bg), var(--hover-bg)) !important;
+          }
+        }
+      `}</style>
+
       {/* Toast */}
       {toast && (
         <div style={{ position: 'fixed', top: 16, right: 16, zIndex: 9999, display: 'flex', alignItems: 'center', gap: 8, padding: '10px 14px', borderRadius: 10, background: t.cardbg, border: `1px solid ${toast.type === 'ok' ? t.posBorder : t.negBorder}`, color: toast.type === 'ok' ? t.posText : t.negText, fontSize: 12, fontFamily: FONT_MONO, boxShadow: '0 8px 24px rgba(0,0,0,0.3)' }}>
@@ -360,19 +399,19 @@ export default function KertasTab({ theme }: Props) {
       )}
 
       {/* KPI Cards */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(4, 1fr)', gap: 12 }}>
         {[
           { label: 'Total Produk Kertas', value: summaryLocal.total_produk.toLocaleString('id-ID'), sub: `${jenisSet.length} jenis`, color: t.card1text, bg: t.card1bg, border: t.card1border, icon: <Package size={14} /> },
-          { label: 'Total Saldo Stok',    value: summaryLocal.total_saldo.toLocaleString('id-ID'),  sub: 'lembar/unit',             color: t.card2text, bg: t.card2bg, border: t.card2border, icon: <Layers size={14} /> },
-          { label: 'Total Masuk',         value: summaryLocal.total_masuk.toLocaleString('id-ID'),  sub: 'unit diterima',           color: '#10b981',   bg: t.card2bg, border: t.card2border, icon: <TrendingUp size={14} /> },
-          { label: 'Total Keluar',        value: summaryLocal.total_keluar.toLocaleString('id-ID'), sub: 'unit digunakan',          color: t.card4text, bg: t.card4bg, border: t.card4border, icon: <TrendingDown size={14} /> },
+          { label: 'Total Saldo Stok',    value: summaryLocal.total_saldo.toLocaleString('id-ID'),  sub: 'lembar/unit',               color: t.card2text, bg: t.card2bg, border: t.card2border, icon: <Layers size={14} /> },
+          { label: 'Total Masuk',         value: summaryLocal.total_masuk.toLocaleString('id-ID'),  sub: 'unit diterima',          color: '#10b981',   bg: t.card2bg, border: t.card2border, icon: <TrendingUp size={14} /> },
+          { label: 'Total Keluar',        value: summaryLocal.total_keluar.toLocaleString('id-ID'), sub: 'unit digunakan',         color: t.card4text, bg: t.card4bg, border: t.card4border, icon: <TrendingDown size={14} /> },
         ].map(card => (
           <div key={card.label} style={{ borderRadius: 13, padding: '14px 16px', background: card.bg, border: `1px solid ${card.border}` }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
               <span style={{ fontSize: 9, fontFamily: FONT_MONO, textTransform: 'uppercase', letterSpacing: '0.1em', color: card.color, fontWeight: 700 }}>{card.label}</span>
               <span style={{ color: card.color, opacity: 0.6 }}>{card.icon}</span>
             </div>
-            <div style={{ fontSize: 22, fontWeight: 800, color: t.text, fontFamily: FONT_MONO, letterSpacing: '-0.04em', lineHeight: 1 }}>{card.value}</div>
+            <div style={{ fontSize: isMobile ? 18 : 22, fontWeight: 800, color: t.text, fontFamily: FONT_MONO, letterSpacing: '-0.04em', lineHeight: 1 }}>{card.value}</div>
             <div style={{ fontSize: 9.5, color: t.textMuted, fontFamily: FONT_MONO, marginTop: 5 }}>{card.sub}</div>
           </div>
         ))}
@@ -380,12 +419,12 @@ export default function KertasTab({ theme }: Props) {
 
       {/* Chart */}
       {chartData.length > 0 && (
-        <div style={{ background: t.cardbg, border: `1px solid ${t.borderCard}`, borderRadius: 13, padding: '12px 14px', boxShadow: t.shadowCard }}>
+        <div style={{ background: t.cardbg, border: `1px solid ${t.borderCard}`, borderRadius: 13, padding: '12px 14px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: 10 }}>
             <div style={{ width: 22, height: 22, borderRadius: 6, background: 'rgba(99,102,241,0.1)', border: '1px solid rgba(99,102,241,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Layers size={11} color="#818cf8" /></div>
             <span style={{ fontSize: 11, fontWeight: 700, color: t.text }}>Saldo Stok per Jenis Kertas</span>
           </div>
-          <ResponsiveContainer width="100%" height={140}>
+          <ResponsiveContainer width="100%" height={isMobile ? 120 : 140}>
             <BarChart data={chartData} margin={{ top: 2, right: 4, left: 0, bottom: 0 }}>
               <CartesianGrid strokeDasharray="3 3" stroke={t.gridStroke} vertical={false} />
               <XAxis dataKey="jenis" tick={{ fontSize: 9, fill: t.textMuted, fontFamily: FONT_MONO }} axisLine={false} tickLine={false} />
@@ -405,8 +444,8 @@ export default function KertasTab({ theme }: Props) {
       )}
 
       {/* Table card */}
-      <div style={{ background: t.cardbg, border: `1px solid ${t.borderCard}`, borderRadius: 13, overflow: 'hidden', boxShadow: t.shadowCard }}>
-        {/* Toolbar — tanpa tombol Upload */}
+      <div style={{ background: t.cardbg, border: `1px solid ${t.borderCard}`, borderRadius: 13, overflow: 'hidden' }}>
+        {/* Toolbar */}
         <div style={{ padding: '10px 14px', borderBottom: `1px solid ${t.border}`, display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 7, flex: '0 0 auto' }}>
             <div style={{ width: 24, height: 24, borderRadius: 7, background: 'rgba(99,102,241,0.1)', border: '1px solid rgba(99,102,241,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Layers size={12} color="#818cf8" /></div>
@@ -446,7 +485,7 @@ export default function KertasTab({ theme }: Props) {
           {/* Tambah manual */}
           <button
             onClick={() => { setSelected(null); setModal('create'); }}
-            style={{ height: 28, padding: '0 12px', borderRadius: 7, fontSize: 11, fontWeight: 700, background: '#6366f1', border: 'none', color: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 5, fontFamily: FONT_MONO, boxShadow: '0 2px 8px rgba(99,102,241,0.3)', flex: '0 0 auto' }}
+            style={{ height: 28, padding: '0 12px', borderRadius: 7, fontSize: 11, fontWeight: 700, background: '#6366f1', border: 'none', color: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 5, fontFamily: FONT_MONO, flex: '0 0 auto' }}
           >
             + Tambah
           </button>
@@ -457,7 +496,7 @@ export default function KertasTab({ theme }: Props) {
           <table style={{ minWidth: 860, width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
             <thead>
               <tr>
-                <th style={thS}>Merk</th>
+                <th className="sticky-col-merk" style={{ ...thS, '--bg-color': t.tableHead } as React.CSSProperties}>Merk</th>
                 <th style={thS}>Jenis</th>
                 <th style={{ ...thS, cursor: 'pointer', textAlign: 'right' }} onClick={() => toggleSort('gramasi')}>
                   <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3, float: 'right' }}>Gramasi <SortIcon k="gramasi" /></span>
@@ -485,13 +524,18 @@ export default function KertasTab({ theme }: Props) {
               ) : filtered.map((row, i) => {
                 const jenisColor = getJenisColor(row.jenis_kertas);
                 const isLow = row.saldo_akhir < row.saldo_awal * 0.2 && row.saldo_awal > 0;
+                const isAlt = i % 2 === 1;
+                const stickyBg = isAlt ? t.tableAlt : t.cardbg;
+
                 return (
                   <tr key={row.id}
-                    style={{ background: i % 2 === 1 ? t.tableAlt : 'transparent' }}
+                    style={{ background: isAlt ? t.tableAlt : 'transparent', '--hover-bg': t.rowHover } as React.CSSProperties}
                     onMouseEnter={e => (e.currentTarget.style.background = t.rowHover)}
-                    onMouseLeave={e => (e.currentTarget.style.background = i % 2 === 1 ? t.tableAlt : 'transparent')}
+                    onMouseLeave={e => (e.currentTarget.style.background = isAlt ? t.tableAlt : 'transparent')}
                   >
-                    <td style={{ padding: '8px 10px', color: t.textSub, fontFamily: FONT_MONO, fontSize: 11 }}>{row.merk}</td>
+                    <td className="sticky-col-merk" style={{ padding: '8px 10px', color: t.textSub, fontFamily: FONT_MONO, fontSize: 11, '--bg-color': stickyBg } as React.CSSProperties}>
+                      {row.merk}
+                    </td>
                     <td style={{ padding: '8px 10px' }}>
                       <span style={{ padding: '2px 7px', borderRadius: 8, fontSize: 9, fontWeight: 600, fontFamily: FONT_MONO, background: jenisColor + '18', color: jenisColor, border: `1px solid ${jenisColor}30` }}>
                         {row.jenis_kertas}
@@ -543,7 +587,7 @@ export default function KertasTab({ theme }: Props) {
 
       {modal === 'delete' && selected && (
         <div onClick={e => e.target === e.currentTarget && setModal(null)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.65)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20, backdropFilter: 'blur(4px)' }}>
-          <div style={{ background: t.cardbg, border: `1px solid ${t.borderCard}`, borderRadius: 16, padding: 22, width: '100%', maxWidth: 380, boxShadow: '0 16px 48px rgba(0,0,0,0.5)' }}>
+          <div style={{ background: t.cardbg, border: `1px solid ${t.borderCard}`, borderRadius: 16, padding: 22, width: '100%', maxWidth: 380 }}>
             <div style={{ display: 'flex', gap: 12, marginBottom: 18 }}>
               <div style={{ width: 38, height: 38, borderRadius: 10, background: t.negBg, border: `1px solid ${t.negBorder}`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><Trash2 size={16} color={t.negText} /></div>
               <div>
