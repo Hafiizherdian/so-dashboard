@@ -74,6 +74,7 @@ export default function LhkpTab({ theme }: Props) {
   const [byWeek,         setByWeek]         = useState<ByGroup[]>([]);
   const [detail,         setDetail]         = useState<DetailRow[]>([]);
   const [loading,        setLoading]        = useState(true);
+  const [selectedRow, setSelectedRow] = useState<DetailRow | null>(null);
 
   const [selectedUpload, setSelectedUpload] = useState('');
   const [filterWeek,     setFilterWeek]     = useState('all');
@@ -170,12 +171,12 @@ export default function LhkpTab({ theme }: Props) {
     ? (sortDir === 'asc' ? <ChevronUp size={9} color="#6366f1"/> : <ChevronDown size={9} color="#6366f1"/>)
     : <ChevronUp size={9} color={t.textFaint}/>;
 
-  // ── Active filter count (for mobile badge) ──
+  // Active filter count (for mobile badge)
   const activeFilters = [filterWeek, filterBulan, filterMesin, filterProses].filter(f => f !== 'all').length
     + (selectedUpload ? 1 : 0)
     + (search ? 1 : 0);
 
-  // ── KPI cards data ──
+  // KPI cards data
   const kpiCards = [
     { label: 'Total Plan',  value: fmtNum(summary.total_plan),         sub: 'qty direncanakan', color: t.card2text, bg: t.card2bg, border: t.card2border },
     { label: 'Qty Baik',    value: fmtNum(summary.total_baik),         sub: 'output good',      color: '#10b981',  bg: t.card2bg, border: t.card2border },
@@ -183,12 +184,12 @@ export default function LhkpTab({ theme }: Props) {
     { label: 'Yield Rate',  value: `${summary.yield_pct.toFixed(2)}%`, sub: 'baik / (baik+rusak)', color: yieldColor, bg: t.card1bg, border: t.card1border },
   ];
 
-  // ══════════════════════════════════════════════════════════
+  //
   // TOOLBAR — desktop vs mobile/tablet differ
-  // ══════════════════════════════════════════════════════════
+  // 
 
   const ToolbarDesktop = (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', background: t.cardbg, border: `1px solid ${t.borderCard}`, borderRadius: 12, padding: '10px 14px' }}>
+    <div style={{ position: 'sticky', top: 0, zIndex: 10, display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', background: t.cardbg, border: `2px solid ${t.borderCard}`, borderRadius: 12, padding: '10px 14px' }}>
       <Filter size={11} color={t.textMuted}/>
       <span style={{ fontSize: 10, color: t.textMuted, fontFamily: FONT_MONO }}>Filter</span>
 
@@ -243,7 +244,7 @@ export default function LhkpTab({ theme }: Props) {
 
   // Mobile/tablet toolbar: collapsed by default, toggle to expand
   const ToolbarMobile = (
-    <div style={{ background: t.cardbg, border: `1px solid ${t.borderCard}`, borderRadius: 12, overflow: 'hidden' }}>
+    <div style={{ position: 'sticky', top: 0, zIndex: 10, background: t.cardbg, border: `2px solid ${t.borderCard}`, borderRadius: 12, overflow: 'hidden' }}>
       {/* Toggle row */}
       <div
         style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 14px', cursor: 'pointer' }}
@@ -320,7 +321,7 @@ export default function LhkpTab({ theme }: Props) {
     </div>
   );
 
-  // ── KPI Row ──
+  // KPI Row
   const KpiRow = (
     <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr 1fr' : 'repeat(4,1fr)', gap: isMobile ? 8 : 12 }}>
       {kpiCards.map(card => (
@@ -333,7 +334,7 @@ export default function LhkpTab({ theme }: Props) {
     </div>
   );
 
-  // ── Chart ──
+  // Chart
   const ChartNode = (
     <div style={{ background: t.cardbg, border: `1px solid ${t.borderCard}`, borderRadius: 13, padding: '12px 14px' }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10, flexWrap: 'wrap', gap: 6 }}>
@@ -372,7 +373,7 @@ export default function LhkpTab({ theme }: Props) {
     </div>
   );
 
-  // ── Detail Table ──
+  // Detail Table
   // Mobile: hanya tampilkan kolom penting — Tanggal, Proses, Output Produk, Qty Baik, Rusak
   // Tablet: tampilkan semua kecuali No LHKP
   const DetailTable = (
@@ -392,13 +393,13 @@ export default function LhkpTab({ theme }: Props) {
         ) : sortedDetail.length === 0 ? (
           <div style={{ padding: 48, textAlign: 'center', color: t.textMuted, fontFamily: FONT_MONO, fontSize: 12 }}>Tidak ada data</div>
         ) : isMobile ? (
-          // ── Mobile: card list instead of wide table ──
+          // Mobile: card list instead of wide table
           <div style={{ padding: '4px 0' }}>
             {sortedDetail.map((row, i) => {
               const isFinish = row.proses === '-- FINISH --';
               const hasRusak = row.qty_rusak > 0;
               return (
-                <div key={row.id} style={{ padding: '8px 14px', borderBottom: `1px solid ${t.border}`, background: i % 2 === 1 ? t.tableAlt : 'transparent' }}>
+                <div key={row.id} onClick={() => setSelectedRow(row)} style={{ padding: '8px 14px', borderBottom: `1px solid ${t.border}`, background: i % 2 === 1 ? t.tableAlt : 'transparent' }}>
                   {/* Row 1: tanggal + week + proses badge */}
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
@@ -438,7 +439,7 @@ export default function LhkpTab({ theme }: Props) {
             })}
           </div>
         ) : (
-          // ── Tablet/Desktop: table ──
+          // Tablet/Desktop: table
           <table style={{ borderCollapse: 'collapse', fontSize: 12, minWidth: '100%' }}>
             <thead>
               <tr>
@@ -493,12 +494,86 @@ export default function LhkpTab({ theme }: Props) {
     </div>
   );
 
+  // Helper untuk membuat baris detail di dalam modal
+  const detailRow = (label: string, value: React.ReactNode, color?: string) => (
+    <div style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', borderBottom: `1px dashed ${t.border}` }}>
+      <span style={{ fontSize: 10, color: t.text, fontFamily: FONT_MONO }}>{label}</span>
+      <span style={{ fontSize: 11, fontWeight: 700, color: color ?? t.text, fontFamily: FONT_MONO, textAlign: 'right' }}>{value}</span>
+    </div>
+  );
+
+  // Komponen Modal Detail LHKP
+  const DetailModal = selectedRow && (
+    <div
+      onClick={() => setSelectedRow(null)}
+      style={{
+        position: 'fixed', inset: 0, background: 'rgba(0, 0, 0, 0.3)', 
+        backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(2px)',
+        display: 'flex', alignItems: 'flex-end', justifyContent: 'center',
+        zIndex: 1000,
+      }}
+    >
+      <div
+        onClick={e => e.stopPropagation()}
+        style={{
+          background: t.cardbg, border: `1px solid ${t.borderCard}`, borderRadius: '16px 16px 0 0',
+          width: '100%', maxWidth: 480, maxHeight: '85vh', overflowY: 'auto',
+          padding: '14px 16px 102px',
+        }}
+      >
+        {/* Header Modal */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 12 }}>
+          <div style={{ flex: 1, paddingRight: 10 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4 }}>
+              <span style={{ fontSize: 10, color: t.textSub, fontFamily: FONT_MONO }}>{fmtDate(selectedRow.tanggal)}</span>
+              <span style={{ fontSize: 9, background: t.inputBg, border: `1px solid ${t.borderInput}`, padding: '2px 6px', borderRadius: 4, color: t.text, fontFamily: FONT_MONO }}>
+                Minggu: {selectedRow.week}
+              </span>
+            </div>
+            <div style={{ fontSize: 13, fontWeight: 800, color: t.text, fontFamily: FONT_MONO, lineHeight: 1.3 }}>{selectedRow.output_produk}</div>
+          </div>
+          <button
+            onClick={() => setSelectedRow(null)}
+            style={{ background: t.inputBg, border: `1px solid ${t.borderInput}`, borderRadius: 6, width: 26, height: 26, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: t.textMuted, flexShrink: 0 }}
+          >
+            <X size={13} />
+          </button>
+        </div>
+
+        {/* Highlight Level Qty (Plan, Baik, Rusak) */}
+        <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
+          <div style={{ flex: 1, padding: '8px 10px', borderRadius: 8, background: t.inputBg, textAlign: 'center' }}>
+            <div style={{ fontSize: 9, color: t.textMuted, fontFamily: FONT_MONO, marginBottom: 2 }}>QTY PLAN</div>
+            <div style={{ fontSize: 15, fontWeight: 800, color: t.text, fontFamily: FONT_MONO }}>{selectedRow.qty_plan > 0 ? selectedRow.qty_plan.toLocaleString('id-ID') : '—'}</div>
+          </div>
+          <div style={{ flex: 1, padding: '8px 10px', borderRadius: 8, background: t.inputBg, textAlign: 'center' }}>
+            <div style={{ fontSize: 9, color: t.textMuted, fontFamily: FONT_MONO, marginBottom: 2 }}>QTY BAIK</div>
+            <div style={{ fontSize: 15, fontWeight: 800, color: '#10b981', fontFamily: FONT_MONO }}>{selectedRow.qty_baik > 0 ? selectedRow.qty_baik.toLocaleString('id-ID') : '—'}</div>
+          </div>
+          <div style={{ flex: 1, padding: '8px 10px', borderRadius: 8, background: t.inputBg, textAlign: 'center' }}>
+            <div style={{ fontSize: 9, color: t.textMuted, fontFamily: FONT_MONO, marginBottom: 2 }}>QTY RUSAK</div>
+            <div style={{ fontSize: 15, fontWeight: 800, color: selectedRow.qty_rusak > 0 ? '#ef4444' : t.textMuted, fontFamily: FONT_MONO }}>{selectedRow.qty_rusak > 0 ? selectedRow.qty_rusak.toLocaleString('id-ID') : '—'}</div>
+          </div>
+        </div>
+
+        {/* Detail List Lengkap */}
+        {detailRow('Proses', selectedRow.proses, selectedRow.proses === '-- FINISH --' ? '#10b981' : t.infoText)}
+        {detailRow('Mesin', selectedRow.mesin)}
+        {detailRow('No Job Order (JOP)', selectedRow.no_job_order)}
+        {detailRow('No LHKP', selectedRow.no_lhkp)}
+        {detailRow('Satuan (Unit)', selectedRow.unit)}
+
+      </div>
+    </div>
+  );
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: isMobile ? 10 : 12 }}>
       {isMobile || isTablet ? ToolbarMobile : ToolbarDesktop}
       {KpiRow}
       {ChartNode}
       {DetailTable}
+      {DetailModal}
     </div>
   );
 }
