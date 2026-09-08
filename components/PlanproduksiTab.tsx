@@ -136,7 +136,7 @@ export default function PlanProduksiTab({ theme }: Props) {
     } finally { setDeleting(false); }
   };
 
-  // ── DETEKSI SHIFT SECARA DINAMIS ──────────────────────────────────────────
+  // DETEKSI SHIFT SECARA DINAMIS
   // Menghitung daftar shift unik yang ada di dalam data.shifts (misal [1, 2] atau [1, 2, 3])
   // Jika data kosong, default ke [1, 2] agar struktur tabel tidak rusak.
   const activeShifts = useMemo(() => {
@@ -150,7 +150,7 @@ export default function PlanProduksiTab({ theme }: Props) {
     return sortedShifts.length > 0 ? sortedShifts : [1, 2];
   }, [data.shifts]);
 
-  // ── shiftIndex: key = "jobId_tanggal_shift" ──────────────────────────────
+  // shiftIndex: key = "jobId_tanggal_shift"
   const shiftIndex = useMemo(() => {
     const idx: Record<string, number> = {};
     data.shifts.forEach(s => {
@@ -178,7 +178,7 @@ export default function PlanProduksiTab({ theme }: Props) {
     ? uploads
     : uploads.filter(u => u.nama_mesin === filterMesin);
 
-  // ── Styles ─────────────────────────────────────────────────────────────────
+  // Styles 
   const thS: React.CSSProperties = {
     padding: '7px 10px', fontSize: 9, fontWeight: 700, textTransform: 'uppercase',
     letterSpacing: '0.07em', color: t.textMuted, borderBottom: `1px solid ${t.border}`,
@@ -201,6 +201,28 @@ export default function PlanProduksiTab({ theme }: Props) {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+      {/* CSS untuk Sticky Kolom di Mobile */}
+      <style>{`
+        @media (max-width: 768px) {
+          .sticky-col-mobile {
+            position: sticky !important;
+            left: 0 !important;
+            z-index: 2 !important;
+            background-color: var(--bg-color) !important;
+            /* Tambahan shadow agar terlihat jelas batasnya saat menimpa kolom lain */
+            box-shadow: 3px 0 5px -2px rgba(0,0,0,0.1); 
+          }
+          th.sticky-col-mobile {
+            z-index: 3 !important;
+          }
+          /* Menangani background saat baris di-hover atau ditekan agar TIDAK tembus pandang */
+          tr:hover td.sticky-col-mobile,
+          tr:active td.sticky-col-mobile {
+            background-color: var(--bg-color) !important;
+            background-image: linear-gradient(var(--hover-bg), var(--hover-bg)) !important;
+          }
+        }
+      `}</style>
       {/* Toast */}
       {toast && (
         <div style={{ position: 'fixed', top: 16, right: 16, zIndex: 9999, display: 'flex', alignItems: 'center', gap: 8, padding: '10px 14px', borderRadius: 10, background: t.cardbg, border: `1px solid ${toast.type === 'ok' ? t.posBorder : t.negBorder}`, color: toast.type === 'ok' ? t.posText : t.negText, fontSize: 12, fontFamily: FONT_MONO, boxShadow: '0 8px 24px rgba(0,0,0,0.3)' }}>
@@ -208,7 +230,7 @@ export default function PlanProduksiTab({ theme }: Props) {
         </div>
       )}
 
-      {/* ── Toolbar ── */}
+      {/* Toolbar */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', background: t.cardbg, border: `1px solid ${t.borderCard}`, borderRadius: 12, padding: '10px 14px' }}>
         <Filter size={11} color={t.textMuted} />
         <span style={{ fontSize: 10, color: t.textMuted, fontFamily: FONT_MONO }}>Filter</span>
@@ -247,7 +269,7 @@ export default function PlanProduksiTab({ theme }: Props) {
         )}
       </div>
 
-      {/* ── KPI Cards ── */}
+      {/* KPI Cards */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 12 }}>
         {[
           { label: 'Total JOP',        value: String(data.jobs.length),              sub: data.nama_mesin || '—',               color: t.card1text, bg: t.card1bg, border: t.card1border },
@@ -262,7 +284,7 @@ export default function PlanProduksiTab({ theme }: Props) {
         ))}
       </div>
 
-      {/* ── Progress bar ── */}
+      {/* Progress bar */}
       {totalQtyJop > 0 && (
         <div style={{ background: t.cardbg, border: `1px solid ${t.borderCard}`, borderRadius: 10, padding: '10px 14px' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 5 }}>
@@ -275,7 +297,7 @@ export default function PlanProduksiTab({ theme }: Props) {
         </div>
       )}
 
-      {/* ── Tabel pivot ── */}
+      {/* Tabel pivot */}
       <div style={{ background: t.cardbg, border: `1px solid ${t.borderCard}`, borderRadius: 13, overflow: 'hidden', boxShadow: t.shadowCard }}>
         <div style={{ padding: '10px 14px', borderBottom: `1px solid ${t.border}`, display: 'flex', alignItems: 'center', gap: 8 }}>
           {/* <div style={{ width: 24, height: 24, borderRadius: 7, background: 'rgba(99,102,241,0.1)', border: '1px solid rgba(99,102,241,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -305,7 +327,7 @@ export default function PlanProduksiTab({ theme }: Props) {
                 <tr>
                   <th rowSpan={2} style={{ ...thS, textAlign: 'center', borderRight: `1px solid ${t.border}` }}>No</th>
                   <th rowSpan={2} style={{ ...thS, minWidth: 120, borderRight: `1px solid ${t.border}` }}>Nomor JOP</th>
-                  <th rowSpan={2} style={{ ...thS, minWidth: 180, borderRight: `1px solid ${t.border}` }}>Nama Produk</th>
+                  <th rowSpan={2} className="sticky-col-mobile" style={{ ...thS, minWidth: 180, borderRight: `1px solid ${t.border}`, '--bg-color': t.tableHead } as React.CSSProperties}>Nama Produk</th>
                   <th rowSpan={2} style={{ ...thS, minWidth: 160, borderRight: `1px solid ${t.border}` }}>Ukuran Kertas</th>
                   <th rowSpan={2} style={{ ...thS, textAlign: 'right', borderRight: `1px solid ${t.border}` }}>UP</th>
                   <th rowSpan={2} style={{ ...thS, textAlign: 'right', borderRight: `1px solid ${t.border}` }}>Qty JOP</th>
@@ -342,13 +364,13 @@ export default function PlanProduksiTab({ theme }: Props) {
                   return (
                     <tr
                       key={job.job_id}
-                      style={{ background: i % 2 === 1 ? t.tableAlt : 'transparent' }}
+                      style={{ background: i % 2 === 1 ? t.tableAlt : 'transparent', '--hover-bg': t.rowHover } as React.CSSProperties}
                       onMouseEnter={e => (e.currentTarget.style.background = t.rowHover)}
                       onMouseLeave={e => (e.currentTarget.style.background = i % 2 === 1 ? t.tableAlt : 'transparent')}
                     >
                       <td style={{ ...tdS, textAlign: 'center', color: t.textMuted, borderRight: `1px solid ${t.border}`, fontSize: 10 }}>{job.no_urut}</td>
                       <td style={{ ...tdS, color: t.text, fontWeight: 600, borderRight: `1px solid ${t.border}`, fontSize: 10 }}>{job.nomor_jop}</td>
-                      <td style={{ ...tdS, color: t.text, borderRight: `1px solid ${t.border}` }}>{job.nama_produk}</td>
+                      <td className="sticky-col-mobile" style={{ ...tdS, color: t.text, borderRight: `1px solid ${t.border}`, '--bg-color': i % 2 === 1 ? t.tableAlt : t.cardbg } as React.CSSProperties}>{job.nama_produk}</td>
                       <td style={{ ...tdS, color: t.text, fontSize: 10, borderRight: `1px solid ${t.border}` }}>{job.ukuran_kertas}</td>
                       <td style={{ ...tdS, textAlign: 'right', color: t.text, borderRight: `1px solid ${t.border}` }}>{job.up}</td>
                       <td style={{ ...tdS, textAlign: 'right', color: t.text, fontWeight: 600, borderRight: `1px solid ${t.border}` }}>{qtyJop.toLocaleString('id-ID')}</td>
@@ -380,7 +402,8 @@ export default function PlanProduksiTab({ theme }: Props) {
                 {/* TOTAL row */}
                 <tr style={{ background: t.tableHead, borderTop: `2px solid ${t.border}` }}>
                   <td style={{ ...tdS, borderRight: `1px solid ${t.border}` }} />
-                  <td colSpan={2} style={{ ...tdS, fontWeight: 800, color: t.text, fontSize: 10, borderRight: `1px solid ${t.border}` }}>TOTAL</td>
+                  <td style={{ ...tdS, borderRight: `1px solid ${t.border}` }} />
+                  <td className="sticky-col-mobile" style={{ ...tdS, fontWeight: 800, color: t.text, fontSize: 10, borderRight: `1px solid ${t.border}`, '--bg-color': t.tableHead } as React.CSSProperties}>TOTAL</td>
                   <td style={{ ...tdS, borderRight: `1px solid ${t.border}` }} />
                   <td style={{ ...tdS, borderRight: `1px solid ${t.border}` }} />
                   <td style={{ ...tdS, textAlign: 'right', fontWeight: 800, color: t.text, borderRight: `1px solid ${t.border}` }}>{totalQtyJop.toLocaleString('id-ID')}</td>
@@ -404,7 +427,7 @@ export default function PlanProduksiTab({ theme }: Props) {
         </div>
       </div>
 
-      {/* ── Delete confirm ── */}
+      {/* Delete confirm */}
       {delTarget && (
         <div onClick={e => e.target === e.currentTarget && setDelTarget(null)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.65)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20, backdropFilter: 'blur(4px)' }}>
           <div style={{ background: t.cardbg, border: `1px solid ${t.borderCard}`, borderRadius: 16, padding: 22, width: '100%', maxWidth: 400, boxShadow: '0 16px 48px rgba(0,0,0,0.5)' }}>
