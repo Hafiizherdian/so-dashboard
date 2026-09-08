@@ -154,9 +154,27 @@ export default function WipTab({ theme }: Props) {
   useEffect(() => { loadData(); }, []);
 
   const filtered = useMemo(() => {
-    if (!search) return jobs;
+    // 1. Buang baris yang semua nilai kolom prosesnya kosong/0
+    const nonEmptyJobs = jobs.filter(j => {
+        const totalValue = 
+        (Number(j.cetak_lbr) || 0) + 
+        (Number(j.embos_lbr) || 0) + 
+        (Number(j.plong_lbr) || 0) + 
+        (Number(j.pretel_pcs) || 0) + 
+        (Number(j.wip_glue) || 0) + 
+        (Number(j.wip_total) || 0) + 
+        (Number(j.bj_pcs) || 0);
+
+        return totalValue > 0
+    })
+
+    // 2. Lanjutkan dengan filter pencarian jika ada
+    if (!search) return nonEmptyJobs;
     const q = search.toLowerCase();
-    return jobs.filter(j => j.deskripsi.toLowerCase().includes(q) || j.nomor_jop.toLowerCase().includes(q));
+    return nonEmptyJobs.filter(j => 
+      j.deskripsi.toLowerCase().includes(q) || 
+      j.nomor_jop.toLowerCase().includes(q)
+    );
   }, [jobs, search]);
 
   const sorted = useMemo(() => {
