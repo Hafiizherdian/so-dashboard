@@ -97,7 +97,7 @@ export default function OverviewTab({ data, theme, availH }: Props) {
     </div>
   );
 
-  // ── PERBAIKAN 1: Kalkulasi Tinggi Bar Chart yang Dipendekkan ──
+  // Kalkulasi Tinggi Bar Chart yang Dipendekkan
   const KPI_H = 106;
   const bodyH = availH - KPI_H - GAP * 4;
   const rowH  = Math.max(100, Math.floor((bodyH - GAP) / 2));
@@ -193,7 +193,7 @@ export default function OverviewTab({ data, theme, availH }: Props) {
 
   const qtyTerkirimSO = summary.qty_so - summary.total_outstanding;
 
-  // ── PERBAIKAN 2: Optimalisasi Area ChartNode ──
+  // Optimalisasi Area ChartNode
   const ChartNode = (
     <Card
       theme={theme}

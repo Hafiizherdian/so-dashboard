@@ -11,7 +11,7 @@ import { Card, ChartTooltip, mkTick, ProgressBar } from '@/components/ui';
 
 interface Props { data: DashboardData; theme: Theme; tahun?: string; }
 
-// ── Breakpoint hook ──
+// Breakpoint hook
 function useBreakpoint() {
   const [bp, setBp] = useState<'mobile' | 'tablet' | 'desktop'>('desktop');
   useEffect(() => {
@@ -63,7 +63,7 @@ export default function OutstandingTab({ data, theme, tahun }: Props) {
   const maxSisa = Math.max(...topOutstanding.map(r => Number(r.qty_sisa ?? 0)), 1);
   const maxKet  = Math.max(...keteranganBreakdown.map(k => Number(k.penjualan ?? 0)), 1);
 
-  // ── Summary cards ──
+  // Summary cards
   const summaryCards = [
     {
       label: 'Total SO (Qty)',
@@ -111,7 +111,7 @@ export default function OutstandingTab({ data, theme, tahun }: Props) {
     </div>
   );
 
-  // ── Monthly outstanding chart ──
+  // Monthly outstanding chart
   const monthlyChartH = isMobile ? 150 : 180;
   const MonthlyChart = (
     <Card
@@ -144,7 +144,7 @@ export default function OutstandingTab({ data, theme, tahun }: Props) {
     </Card>
   );
 
-  // ── Pie komposisi SO ──
+  // Pie komposisi SO
   // Mobile: ukuran pie lebih kecil, layout horizontal
   const PieSize    = isMobile ? 100 : 120;
   const PieInner   = isMobile ? 28  : 34;
@@ -198,7 +198,7 @@ export default function OutstandingTab({ data, theme, tahun }: Props) {
     </Card>
   );
 
-// ── Top SO Outstanding (table) ──
+// Top SO Outstanding (table)
   const TopSONode = (
     <Card
       theme={theme}
@@ -269,7 +269,7 @@ export default function OutstandingTab({ data, theme, tahun }: Props) {
     </Card>
   );
 
-  // ── Sort state untuk tabel Outstanding per Produk ──
+  // Sort state untuk tabel Outstanding per Produk
   type ProdukSortKey = 'keterangan' | 'nomor_so' | 'tanggal' | 'penjualan';
   const [produkSortKey, setProdukSortKey] = useState<ProdukSortKey>('penjualan');
   const [produkSortDir, setProdukSortDir] = useState<'asc' | 'desc'>('desc');
@@ -310,7 +310,7 @@ export default function OutstandingTab({ data, theme, tahun }: Props) {
       {active ? (dir === 'asc' ? '▲' : '▼') : '⇅'}
     </span>
   );
-  // ── Produk Outstanding (table) ──
+  // Produk Outstanding (table)
   const ProdukNode = (
     <Card
       theme={theme}
@@ -423,9 +423,7 @@ export default function OutstandingTab({ data, theme, tahun }: Props) {
     </Card>
   );
   
-  // ══════════════════════════════════════════
   // MOBILE  (< 640px) — full stack vertikal
-  // ══════════════════════════════════════════
   if (isMobile) {
     return (
       <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
@@ -441,9 +439,7 @@ export default function OutstandingTab({ data, theme, tahun }: Props) {
     );
   }
 
-  // ══════════════════════════════════════════
   // TABLET  (640–1023px)
-  // ══════════════════════════════════════════
   if (isTablet) {
     return (
       <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
@@ -462,9 +458,7 @@ export default function OutstandingTab({ data, theme, tahun }: Props) {
     );
   }
 
-  // ══════════════════════════════════════════
   // DESKTOP  (≥ 1024px) — layout asli
-  // ══════════════════════════════════════════
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
       {SummaryRow}

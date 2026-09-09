@@ -12,7 +12,7 @@ import { Card, ChartTooltip, mkTick, ProgressBar } from '@/components/ui';
 
 interface Props { data: DashboardData; theme: Theme; tahun?: string; }
 
-// ── Breakpoint hook ──
+// Breakpoint hook
 function useBreakpoint() {
   const [bp, setBp] = useState<'mobile' | 'tablet' | 'desktop'>('desktop');
   useEffect(() => {
@@ -66,14 +66,14 @@ export default function SalesOrderTab({ data, theme, tahun }: Props) {
   const maxCustVal  = Math.max(...topCustomers.map(c => Number(c.total_penjualan ?? 0)), 1);
   const totalCatVal = categories.reduce((s, c) => s + Number(c.total_penjualan ?? 0), 0) || 1;
 
-  // ── Responsive sizes ──
+  // Responsive sizes
   const ratioChartH  = isMobile ? 160 : 200;
   const weeklyChartH = isMobile ? 130 : 260;
   const weeklyInterval = isMobile
     ? Math.max(0, Math.floor(weeklyData.length / 6))
     : Math.max(0, Math.floor(weeklyData.length / 10));
 
-  // ── SO vs Delivered chart ──
+  // SO vs Delivered chart
   const SOBulananNode = (
     <Card
       theme={theme}
@@ -125,7 +125,7 @@ export default function SalesOrderTab({ data, theme, tahun }: Props) {
     </Card>
   );
 
-  // ── Weekly SO chart ──
+  // Weekly SO chart
   const SOMingguan = (
     <Card
       theme={theme}
@@ -171,7 +171,7 @@ export default function SalesOrderTab({ data, theme, tahun }: Props) {
     </Card>
   );
 
-  // ── Top Pelanggan ──
+  // Top Pelanggan
   const TopPelangganNode = (
     <Card
       theme={theme}
@@ -206,7 +206,7 @@ export default function SalesOrderTab({ data, theme, tahun }: Props) {
     </Card>
   );
 
-  // ── Tabel Kategori ──
+  // Tabel Kategori
   const KategoriTable = (
     <div style={{ background: t.cardbg, border: `1px solid ${t.borderCard}`, borderRadius: 13, overflow: 'hidden', boxShadow: t.shadowCard }}>
       <div style={{ padding: '10px 14px', borderBottom: `1px solid ${t.border}`, display: 'flex', alignItems: 'center', gap: 7 }}>
@@ -287,9 +287,7 @@ export default function SalesOrderTab({ data, theme, tahun }: Props) {
     </div>
   );
 
-  // ══════════════════════════════════════════
   // MOBILE  (< 640px)
-  // ══════════════════════════════════════════
   if (isMobile) {
     return (
       <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
@@ -301,9 +299,7 @@ export default function SalesOrderTab({ data, theme, tahun }: Props) {
     );
   }
 
-  // ══════════════════════════════════════════
   // TABLET  (640–1023px)
-  // ══════════════════════════════════════════
   if (isTablet) {
     return (
       <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
@@ -318,9 +314,7 @@ export default function SalesOrderTab({ data, theme, tahun }: Props) {
     );
   }
 
-  // ══════════════════════════════════════════
   // DESKTOP  (≥ 1024px) — layout asli
-  // ══════════════════════════════════════════
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
       {SOBulananNode}

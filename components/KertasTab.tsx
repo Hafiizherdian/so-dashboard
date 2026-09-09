@@ -58,7 +58,7 @@ function getJenisColor(jenis: string): string {
   return JENIS_COLORS[jenis] || CC[Object.keys(JENIS_COLORS).length % CC.length];
 }
 
-// ── Breakpoint hook ──
+// Breakpoint hook
 function useBreakpoint() {
   const [bp, setBp] = useState<'mobile' | 'tablet' | 'desktop'>('desktop');
   useEffect(() => {
@@ -73,7 +73,7 @@ function useBreakpoint() {
   return bp;
 }
 
-// ── Form Modal ────────────────────────────────────────────────────────────────
+// Form Modal
 interface FormData {
   produk: string; jenis_kertas: string; gramasi: string; merk: string;
   lebar: string; panjang: string; unit: string;
@@ -257,7 +257,7 @@ function FormModal({
   );
 }
 
-// ── Main Component ────────────────────────────────────────────────────────────
+// Main Component
 export default function KertasTab({ theme }: Props) {
   const t = tk[theme];
   const bp = useBreakpoint();

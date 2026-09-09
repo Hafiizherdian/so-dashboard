@@ -115,7 +115,7 @@ export default function UserManagement({ theme }: Props) {
     borderBottom: `1px solid ${t.border}`, fontFamily: FONT_MONO, background: t.tableHead,
   };
 
-  // ★ BARU: apakah menu StockLevel sedang diizinkan untuk role/user yang sedang diedit
+  // apakah menu StockLevel sedang diizinkan untuk role/user yang sedang diedit
   const stockLevelMenuAllowed = form.allowedMenus === null || form.allowedMenus.includes('StockLevel');
 
   return (
@@ -283,7 +283,7 @@ export default function UserManagement({ theme }: Props) {
                           checked={checked}
                           onChange={() => {
                             setForm(f => {
-                              // ★ BARU: allAvailable sekarang mencakup menu + kolom stock level,
+                              // allAvailable sekarang mencakup menu + kolom stock level,
                               // supaya "next.length === allAvailable.length" tetap konsisten
                               // ketika ada campuran col:* di dalam array yang sama.
                               const allMenus = ALL_MENUS.filter(mm => mm.roles.includes(f.role)).map(mm => mm.id);
@@ -308,7 +308,7 @@ export default function UserManagement({ theme }: Props) {
               </div>
             )}
 
-            {/* ★ BARU: Akses Kolom Stock Level — muncul hanya kalau menu StockLevel diizinkan */}
+            {/* Akses Kolom Stock Level muncul hanya kalau menu StockLevel diizinkan */}
             {form.role !== 'root' && stockLevelMenuAllowed && (
               <div style={{ marginTop: 14 }}>
                 <label style={{ display: 'block', fontSize: 10, fontWeight: 700, color: t.textMuted, marginBottom: 8, fontFamily: FONT_MONO, textTransform: 'uppercase', letterSpacing: '0.08em' }}>

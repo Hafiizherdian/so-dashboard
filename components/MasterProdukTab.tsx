@@ -5,7 +5,7 @@ import { List, Trash2 } from 'lucide-react';
 import { Theme, tk, FONT_MONO, Tokens } from '@/lib/theme';
 import { apiJson } from '@/lib/apiFetch';
 
-// --- Types ---
+// Types
 interface Props { theme: Theme; }
 type MsgState = { type: 'ok' | 'err'; text: string } | null;
 
@@ -17,7 +17,7 @@ interface ProductRow {
   qty_lembar: number | null; qty_rim: number | null; qty_ton: number | null;
 }
 
-// --- MAIN EXPORT COMPONENT ---
+// MAIN EXPORT COMPONENT
 export default function MasterProdukTab({ theme }: Props) {
   const t = tk[theme];
 
@@ -65,7 +65,7 @@ export default function MasterProdukTab({ theme }: Props) {
   const thS: React.CSSProperties = { padding: '8px 12px', textAlign: 'left', fontSize: 10, fontWeight: 700, color: t.textSub, border: `1px solid ${t.border}`, fontFamily: FONT_MONO, background: t.tableHead, whiteSpace: 'nowrap' };
   const tdStr: React.CSSProperties = { padding: '7px 10px', color: t.text, fontFamily: FONT_MONO, fontSize: 11, border: `1px solid ${t.border}`, whiteSpace: 'nowrap' };
 
-  // --- Konfigurasi Lebar & Posisi Kiri untuk 3 kolom pertama ---
+  // Konfigurasi Lebar & Posisi Kiri untuk 3 kolom pertama
   const STICKY = {
     brand:     { left: 0,   width: 180 }, // mulai dari 0
     kodeBrand: { left: 180, width: 120 }, // 0 + 180

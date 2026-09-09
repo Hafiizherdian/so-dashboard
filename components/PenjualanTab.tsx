@@ -11,7 +11,7 @@ import { Card, ChartTooltip, mkTick } from '@/components/ui';
 
 interface Props { data: DashboardData; theme: Theme; }
 
-// ── Breakpoint hook ──
+// Breakpoint hook
 function useBreakpoint() {
   const [bp, setBp] = useState<'mobile' | 'tablet' | 'desktop'>('desktop');
   useEffect(() => {
@@ -49,7 +49,7 @@ export default function PenjualanTab({ data, theme }: Props) {
   const jenisBreakdown        = Array.isArray((data as any).jenisBreakdown) ? (data as any).jenisBreakdown : [];
   const topProducts           = Array.isArray((data as any).topProducts)  ? (data as any).topProducts  : [];
 
-  // ── Top 10 produk by qty (sudah urut DESC dari API, jaga-jaga di-sort ulang) ──
+  // Top 10 produk by qty (sudah urut DESC dari API, jaga-jaga di-sort ulang)
   const top10ByQty = [...topProducts]
     .sort((a, b) => Number((b as any).qty_terkirim ?? 0) - Number((a as any).qty_terkirim ?? 0))
     // .slice(0, 20);
@@ -63,12 +63,12 @@ export default function PenjualanTab({ data, theme }: Props) {
     background: t.tableHead,
   };
 
-  // ── Weekly interval: lebih rapat di mobile ──
+  // Weekly interval: lebih rapat di mobile
   const weeklyInterval = isMobile
     ? Math.max(0, Math.floor(weekly.length / 6))
     : Math.max(0, Math.floor(weekly.length / 12));
 
-  // ── Chart heights ──
+  // Chart heights
   const weeklyChartH    = isMobile ? 140 : 180;
   const categoryChartH  = isMobile ? 140 : 160;
 
@@ -112,7 +112,7 @@ export default function PenjualanTab({ data, theme }: Props) {
   </Card>
 );
 
-  // ── Kategori node ──
+  // Kategori node
   const KategoriNode = (
     <Card
       theme={theme} title="Penjualan per Kategori"
@@ -139,7 +139,7 @@ export default function PenjualanTab({ data, theme }: Props) {
     </Card>
   );
 
-  // ── Top 10 Customer table (by qty) ──
+  // Top 10 Customer table (by qty)
   const CustomerTable = (
     <div style={{
       background: t.cardbg, border: `1px solid ${t.borderCard}`,
@@ -262,9 +262,7 @@ export default function PenjualanTab({ data, theme }: Props) {
     </div>
   );
 
-  // ══════════════════════════════════════════
   // MOBILE  (< 640px)
-  // ══════════════════════════════════════════
   if (isMobile) {
     return (
       <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
@@ -308,9 +306,7 @@ export default function PenjualanTab({ data, theme }: Props) {
     );
   }
 
-  // ══════════════════════════════════════════
   // TABLET  (640–1023px)
-  // ══════════════════════════════════════════
   if (isTablet) {
     return (
       <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
@@ -354,9 +350,7 @@ export default function PenjualanTab({ data, theme }: Props) {
     );
   }
 
-  // ══════════════════════════════════════════
   // DESKTOP  (≥ 1024px) — layout asli
-  // ══════════════════════════════════════════
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
       <Card
