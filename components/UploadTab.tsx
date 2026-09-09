@@ -1,6 +1,6 @@
 'use client';
-import React, { useState, useRef, useEffect } from 'react';
-import { Upload, FileSpreadsheet, X, CheckCircle, AlertCircle, Trash2 } from 'lucide-react';
+import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
+import { Upload, FileSpreadsheet, X, CheckCircle, AlertCircle, Trash2, Eye } from 'lucide-react';
 import { Theme, tk, FONT_MONO, Tokens } from '@/lib/theme';
 import { apiFetch, apiJson } from '@/lib/apiFetch';
 
@@ -88,6 +88,187 @@ function FormatGuide({ t }: { t: Tokens }) {
   );
 }
 
+// PreviewPanel
+const PreviewPanel = React.memo(function PreviewPanel({ fileId, fileName, t }: {
+  fileId: string; fileName: string; t: Tokens;
+}) {
+  const [data,       setData]       = useState<Record<string, unknown>[]>([]);
+  const [loading,    setLoading]    = useState(true);
+  const [error,      setError]      = useState('');
+  const [allCols,    setAllCols]    = useState<string[]>([]);
+  const [activeCols, setActiveCols] = useState<Set<string>>(new Set());
+
+  useEffect(() => {
+    setLoading(true); setError(''); setData([]); setAllCols([]); setActiveCols(new Set());
+    apiJson(`/api/files/${fileId}/preview`)
+      .then(r => {
+        if (r.success && r.data?.length) {
+          const cols = Object.keys(r.data[0]);
+          setAllCols(cols);
+          setActiveCols(new Set(cols));
+          setData(r.data);
+        } else { setError(r.error || 'Tidak ada data'); }
+      })
+      .catch(() => setError('Gagal memuat preview'))
+      .finally(() => setLoading(false));
+  }, [fileId]);
+
+  const numericCols = useMemo(() => allCols.filter(c => data.every(row => {
+    const v = row[c]; return v !== '' && v !== null && v !== undefined && !isNaN(Number(v));
+  })), [data, allCols]);
+
+  const isNumericCell = (col: string, val: unknown) =>
+    numericCols.includes(col) && val !== '' && val !== null && !isNaN(Number(val));
+
+  const isDateCell = (col: string, val: unknown): boolean => {
+    if (typeof val !== 'string') return false;
+    if (!/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/.test(val)) return false;
+    return /tanggal|date|created_at|updated_at/i.test(col);
+  };
+
+  const fmtCell = (col: string, val: unknown): string => {
+    if (val === null || val === undefined || val === '') return '—';
+    if (isDateCell(col, val)) {
+      return new Date(val as string).toLocaleDateString('id-ID', {
+        day: '2-digit', month: 'short', year: 'numeric',
+      });
+    }
+    if (isNumericCell(col, val)) {
+      if (/harga|bruto|sub.?total|pajak|diskon/i.test(col)) return `Rp ${Number(val).toLocaleString('id-ID')}`;
+      return Number(val).toLocaleString('id-ID');
+    }
+    return String(val);
+  };
+
+  const toggleCol = useCallback((col: string) => {
+    setActiveCols(prev => {
+      const next = new Set(prev);
+      if (next.has(col)) { if (next.size > 2) next.delete(col); }
+      else next.add(col);
+      return next;
+    });
+  }, []);
+
+  const visibleCols = allCols.filter(c => activeCols.has(c));
+
+  if (loading) return (
+    <div style={{ padding: '14px 16px', display: 'flex', alignItems: 'center', gap: 10, color: t.textMuted, fontSize: 12, fontFamily: FONT_MONO }}>
+      Memuat preview…
+    </div>
+  );
+  if (error) return (
+    <div style={{ padding: '10px 13px', borderRadius: 8, background: t.negBg, border: `1px solid ${t.negBorder}`, color: t.negText, fontSize: 12, display: 'flex', alignItems: 'center', gap: 7 }}>
+      <AlertCircle size={12} style={{ flexShrink: 0 }} />{error}
+    </div>
+  );
+  if (!data.length) return (
+    <div style={{ padding: 28, textAlign: 'center', color: t.textMuted, fontSize: 12, fontFamily: FONT_MONO }}>Tidak ada data.</div>
+  );
+
+  return (
+    <div style={{ borderRadius: 12, overflow: 'hidden', border: `1px solid ${t.border}`, background: t.cardbg }}>
+      {/* Header */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 14px', background: t.tableHead, borderBottom: `1px solid ${t.border}`, flexWrap: 'wrap', gap: 8 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0, flex: 1 }}>
+          <div style={{ width: 26, height: 26, borderRadius: 6, background: t.posBg, border: `1px solid ${t.posBorder}`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+            <FileSpreadsheet size={12} color={t.posText} />
+          </div>
+          <div style={{ minWidth: 0 }}>
+            <div style={{ fontSize: 12, fontWeight: 600, color: t.text, fontFamily: FONT_MONO, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 380 }}>{fileName}</div>
+            <div style={{ fontSize: 10, color: t.textMuted, fontFamily: FONT_MONO, marginTop: 1 }}>{data.length} baris · {allCols.length} kolom</div>
+          </div>
+        </div>
+        <span style={{ fontSize: 10, color: t.textMuted, fontFamily: FONT_MONO, flexShrink: 0 }}>preview 10 baris</span>
+      </div>
+
+      {/* Column toggles */}
+      <div style={{ display: 'flex', gap: 5, flexWrap: 'wrap', padding: '8px 12px', borderBottom: `1px solid ${t.border}`, background: t.tableHead }}>
+        {allCols.map(col => {
+          const on = activeCols.has(col);
+          return (
+            <button key={col} onClick={() => toggleCol(col)}
+              style={{ fontSize: 10, fontFamily: FONT_MONO, padding: '2px 9px', borderRadius: 12, border: `1px solid ${on ? '#6366f1' : t.border}`, background: on ? 'rgba(99,102,241,0.1)' : t.inputBg, color: on ? '#818cf8' : t.textMuted, cursor: 'pointer', outline: 'none', whiteSpace: 'nowrap' }}>
+              {col}
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Table */}
+      <div style={{ overflowX: 'auto', maxHeight: 360, overflowY: 'auto' }}>
+        <table style={{ minWidth: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
+          <thead>
+            <tr>
+              {visibleCols.map(col => (
+                <th key={col} style={{ position: 'sticky', top: 0, zIndex: 2, padding: '7px 12px', textAlign: numericCols.includes(col) ? 'right' : 'left', fontSize: 9, fontWeight: 700, fontFamily: FONT_MONO, textTransform: 'uppercase', letterSpacing: '0.09em', color: t.textMuted, borderBottom: `1px solid ${t.border}`, background: t.tableHead, whiteSpace: 'nowrap' }}>
+                  {col}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {data.map((row, i) => (
+              <tr key={i} style={{ background: i % 2 === 1 ? t.tableAlt : 'transparent' }}>
+                {visibleCols.map(col => {
+                  const numeric = isNumericCell(col, row[col]);
+                  return (
+                    <td key={col} style={{ padding: '6px 12px', color: numeric ? t.text : t.textSub, fontFamily: FONT_MONO, borderBottom: i < data.length - 1 ? `1px solid ${t.border}` : 'none', whiteSpace: 'nowrap', fontWeight: numeric ? 600 : 400, textAlign: numeric ? 'right' : 'left', fontSize: 12 }}>
+                      {fmtCell(col, row[col])}
+                    </td>
+                  );
+                })}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      <div style={{ padding: '7px 14px', borderTop: `1px solid ${t.border}`, display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: t.tableHead, flexWrap: 'wrap', gap: 6 }}>
+        <span style={{ fontSize: 10, color: t.textMuted, fontFamily: FONT_MONO }}>{visibleCols.length} / {allCols.length} kolom</span>
+        <span style={{ fontSize: 10, color: t.textMuted, fontFamily: FONT_MONO }}>klik label kolom untuk toggle</span>
+      </div>
+    </div>
+  );
+});
+
+// PreviewModal
+function PreviewModal({ file, onClose, t }: { file: FileRow; onClose: () => void; t: Tokens }) {
+  useEffect(() => {
+    const h = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
+    window.addEventListener('keydown', h);
+    return () => window.removeEventListener('keydown', h);
+  }, [onClose]);
+  useEffect(() => { document.body.style.overflow = 'hidden'; return () => { document.body.style.overflow = ''; }; }, []);
+
+  return (
+    <div onClick={e => { if (e.target === e.currentTarget) onClose(); }}
+      style={{ position: 'fixed', inset: 0, zIndex: 1100, background: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20, backdropFilter: 'blur(4px)' }}>
+      <div style={{ background: t.cardbg, border: `1px solid ${t.borderCard}`, borderRadius: 16, width: '100%', maxWidth: 1000, maxHeight: '85vh', display: 'flex', flexDirection: 'column', overflow: 'hidden', boxShadow: t.shadowCard }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 18px', borderBottom: `1px solid ${t.border}`, background: t.tableHead, flexShrink: 0, gap: 12 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0, flex: 1 }}>
+            <div style={{ width: 34, height: 34, borderRadius: 9, background: '#6366f115', border: '1px solid #6366f128', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+              <Eye size={15} color="#6366f1" />
+            </div>
+            <div style={{ minWidth: 0 }}>
+              <div style={{ fontSize: 14, fontWeight: 700, color: t.text }}>Preview Data</div>
+              <div style={{ fontSize: 11, color: t.textMuted, fontFamily: FONT_MONO, marginTop: 3, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 480 }}>{file.original_name}</div>
+            </div>
+          </div>
+          <button onClick={onClose} style={{ width: 32, height: 32, borderRadius: 8, background: t.negBg, border: `1px solid ${t.negBorder}`, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0 }}>
+            <X size={14} color={t.negText} />
+          </button>
+        </div>
+        <div style={{ flex: 1, overflowY: 'auto', padding: '16px 20px' }}>
+          <PreviewPanel fileId={file.id} fileName={file.original_name} t={t} />
+        </div>
+        <div style={{ padding: '10px 18px', borderTop: `1px solid ${t.border}`, background: t.tableHead, display: 'flex', justifyContent: 'flex-end', flexShrink: 0 }}>
+          <button onClick={onClose} style={{ padding: '7px 20px', borderRadius: 9, fontSize: 13, fontWeight: 600, background: t.inputBg, color: t.textSub, border: `1px solid ${t.borderInput}`, cursor: 'pointer' }}>Tutup</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function UploadTab({ theme }: Props) {
   const t = tk[theme];
   const [file, setFile] = useState<File | null>(null);
@@ -97,6 +278,7 @@ export default function UploadTab({ theme }: Props) {
   const [files, setFiles] = useState<FileRow[]>([]);
   const [delTarget, setDelTarget] = useState<FileRow | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const [previewFile, setPreviewFile] = useState<FileRow | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
   const loadFiles = async () => {
@@ -141,6 +323,8 @@ export default function UploadTab({ theme }: Props) {
 
   return (
     <div style={{ display:'flex', flexDirection:'column', gap:16, width:'100%' }}>
+      {previewFile && <PreviewModal file={previewFile} onClose={() => setPreviewFile(null)} t={t} />}
+
       <div style={{ display:'flex', gap:16, alignItems:'stretch', width:'100%' }}>
         {/* Upload - kiri */}
         <div style={{ flex:1, background:t.cardbg, border:`1px solid ${t.borderCard}`, overflow:'hidden', boxShadow:t.shadowCard }}>
@@ -218,7 +402,10 @@ export default function UploadTab({ theme }: Props) {
                   </td>
                   <td style={{ padding:'9px 12px', color:t.textSub, fontFamily:FONT_MONO, fontSize:10, whiteSpace:'nowrap' }}>{new Date(f.created_at).toLocaleDateString('id-ID',{day: '2-digit', month: 'short',year: 'numeric',hour: '2-digit', minute: '2-digit',})}</td>
                   <td style={{ padding:'9px 12px', textAlign:'center' }}>
-                    <button onClick={()=>setDelTarget(f)} style={{ width:26, height:26, borderRadius:6, background:t.negBg, border:`1px solid ${t.negBorder}`, display:'inline-flex', alignItems:'center', justifyContent:'center', cursor:'pointer' }}><Trash2 size={11} color={t.negText}/></button>
+                    <div style={{ display:'flex', justifyContent:'center', gap:5 }}>
+                      <button onClick={()=>setPreviewFile(f)} disabled={f.status!=='completed'} style={{ width:26, height:26, borderRadius:6, background:'#6366f115', border:'1px solid #6366f128', display:'inline-flex', alignItems:'center', justifyContent:'center', cursor:f.status==='completed'?'pointer':'not-allowed', opacity:f.status==='completed'?1:0.4 }} title="Preview"><Eye size={11} color="#6366f1"/></button>
+                      <button onClick={()=>setDelTarget(f)} style={{ width:26, height:26, borderRadius:6, background:t.negBg, border:`1px solid ${t.negBorder}`, display:'inline-flex', alignItems:'center', justifyContent:'center', cursor:'pointer' }} title="Hapus"><Trash2 size={11} color={t.negText}/></button>
+                    </div>
                   </td>
                 </tr>
               ))}
