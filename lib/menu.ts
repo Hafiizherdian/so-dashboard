@@ -1,31 +1,37 @@
 export type Role = 'root' | 'admin' | 'user';
 
+// 'main'   -> tampil di baris utama bottom nav (mobile)
+// 'upload' -> masuk ke popup "Upload" (dibuka lewat tombol +)
+// Default (kalau field ini gak diisi) dianggap 'main'.
+export type MenuGroup = 'main' | 'upload';
+
 export interface MenuDef {
   id: string;
   label: string;
   shortLabel: string;
   roles: Role[];
+  group?: MenuGroup;
 }
 
 export const ALL_MENUS: MenuDef[] = [
-  { id: 'overview',      label: 'Ringkasan',            shortLabel: 'Ringkasan',  roles: ['root', 'admin', 'user'] },
-  { id: 'penjualan',     label: 'Penjualan',            shortLabel: 'Jual',       roles: ['root', 'admin', 'user'] },
-  { id: 'so',            label: 'Sales Order',          shortLabel: 'SO',         roles: ['root', 'admin', 'user'] },
-  { id: 'outstanding',   label: 'Outstanding',          shortLabel: 'Out.',       roles: ['root', 'admin', 'user'] },
-  { id: 'kertas',        label: 'Stock Kertas',         shortLabel: 'Kertas',     roles: ['root', 'admin', 'user'] },
-  { id: 'Plan',          label: 'Plan Produksi',        shortLabel: 'Plan',       roles: ['root', 'admin', 'user'] },
-  { id: 'lhkp',          label: 'LHKP',                 shortLabel: 'LHKP',       roles: ['root', 'admin', 'user'] },
-  { id: 'StockLevel',    label: 'Stock Level',          shortLabel: 'SL',         roles: ['root', 'admin', 'user'] },
-  { id: 'WIP',           label: 'WIP',                  shortLabel: 'WIP',        roles: ['root', 'admin', 'user']},
-  { id: 'upload',        label: 'Upload Data',          shortLabel: 'Upload',     roles: ['root', 'admin'] },
-  { id: 'kertas_upload', label: 'Upload Stock Kertas',  shortLabel: 'Up. Kertas', roles: ['root', 'admin'] },
-  { id: 'Plan_upload',   label: 'Upload Plan Produksi', shortLabel: 'Up. Plan',   roles: ['root', 'admin'] },
-  { id: 'lhkp_upload',   label: 'Upload LHKP',          shortLabel: 'Up. LHKP',   roles: ['root', 'admin'] },
-  { id: 'produk_upload', label: 'Upload MSMR',          shortLabel: 'Up. MSMR',   roles: ['root', 'admin'] },
-  { id: 'upload_stock',  label: 'Upload Stock Level',   shortLabel: 'Up. Stock',  roles: ['root', 'admin'] },
-  { id: 'master_produk', label: 'Master Produk',        shortLabel: 'Maspro',     roles: ['root', 'admin'] },
-  { id: 'upload_wip',    label: 'Upload WIP',           shortLabel: 'Up. WIP',    roles: ['root', 'admin'] },
-  { id: 'users',         label: 'Manajemen User',       shortLabel: 'User',       roles: ['root'] },
+  { id: 'overview',      label: 'Ringkasan',            shortLabel: 'Ringkasan',  roles: ['root', 'admin', 'user'], group: 'main' },
+  { id: 'penjualan',     label: 'Penjualan',            shortLabel: 'Jual',       roles: ['root', 'admin', 'user'], group: 'main' },
+  { id: 'so',            label: 'Sales Order',          shortLabel: 'SO',         roles: ['root', 'admin', 'user'], group: 'main' },
+  { id: 'outstanding',   label: 'Outstanding',          shortLabel: 'Out.',       roles: ['root', 'admin', 'user'], group: 'main' },
+  { id: 'kertas',        label: 'Stock Kertas',         shortLabel: 'Kertas',     roles: ['root', 'admin', 'user'], group: 'main' },
+  { id: 'Plan',          label: 'Plan Produksi',        shortLabel: 'Plan',       roles: ['root', 'admin', 'user'], group: 'main' },
+  { id: 'lhkp',          label: 'LHKP',                 shortLabel: 'LHKP',       roles: ['root', 'admin', 'user'], group: 'main' },
+  { id: 'StockLevel',    label: 'Stock Level',          shortLabel: 'SL',         roles: ['root', 'admin', 'user'], group: 'main' },
+  { id: 'WIP',           label: 'WIP',                  shortLabel: 'WIP',        roles: ['root', 'admin', 'user'], group: 'main' },
+  { id: 'upload',        label: 'Upload Data',          shortLabel: 'Upload',     roles: ['root', 'admin'],         group: 'upload' },
+  { id: 'kertas_upload', label: 'Upload Stock Kertas',  shortLabel: 'Up. Kertas', roles: ['root', 'admin'],         group: 'upload' },
+  { id: 'Plan_upload',   label: 'Upload Plan Produksi', shortLabel: 'Up. Plan',   roles: ['root', 'admin'],         group: 'upload' },
+  { id: 'lhkp_upload',   label: 'Upload LHKP',          shortLabel: 'Up. LHKP',   roles: ['root', 'admin'],         group: 'upload' },
+  { id: 'produk_upload', label: 'Upload MSMR',          shortLabel: 'Up. MSMR',   roles: ['root', 'admin'],         group: 'upload' },
+  { id: 'upload_stock',  label: 'Upload Stock Level',   shortLabel: 'Up. Stock',  roles: ['root', 'admin'],         group: 'upload' },
+  { id: 'master_produk', label: 'Master Produk',        shortLabel: 'Maspro',     roles: ['root', 'admin'],         group: 'upload' },
+  { id: 'upload_wip',    label: 'Upload WIP',           shortLabel: 'Up. WIP',    roles: ['root', 'admin'],         group: 'upload' },
+  { id: 'users',         label: 'Manajemen User',       shortLabel: 'User',       roles: ['root'],                  group: 'upload' },
 ];
 
 // ══════════════════════════════════════════════════════════
