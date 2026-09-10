@@ -3,7 +3,7 @@ import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import {
   TrendingUp, ShoppingCart, Receipt, AlertCircle, Upload, Layers,
   Sun, Moon, LogOut, ChevronLeft, NotepadTextDashed, Users, Settings, Package,
-  ClipboardList, Boxes, Filter, ChevronUp, ChevronDown, Combine,
+  ClipboardList, Boxes, Filter, ChevronUp, ChevronDown, Combine, Plus,
 } from 'lucide-react';
 import { AuthProvider, useAuth } from '@/lib/AuthContext';
 import { ALL_MENUS, MenuDef } from '@/lib/menu';
@@ -57,6 +57,10 @@ const MENU_ICONS: Record<string, any> = {
 const ALL_TABS = ALL_MENUS.map(m => ({ ...m, Icon: MENU_ICONS[m.id] || TrendingUp }));
 type TabId = string;
 type TabDef = typeof ALL_TABS[number];
+
+// Menu yang dianggap "upload/admin" — dipisah dari menu utama di bottom nav mobile,
+// dibuka lewat tombol "+" biar baris utama gak penuh sesak.
+const isUploadOrAdmin = (tab: TabDef) => tab.group === 'upload';
 
 const EMPTY: DashboardData = {
   summary: {
@@ -207,21 +211,116 @@ function MobileHeader({ theme, setTheme }: { theme:Theme; setTheme:(t:Theme)=>vo
   );
 }
 
+// Sheet berisi menu Upload/Admin saja, dibuka lewat tombol "+" di bottom nav.
+function UploadMenuSheet({ tabs, activeTab, setActiveTab, onClose, theme }: {
+  tabs: TabDef[]; activeTab: TabId; setActiveTab: (id: TabId) => void; onClose: () => void; theme: Theme;
+}) {
+  const t = tk[theme];
+  return (
+    <div onClick={onClose} style={{ position: 'fixed', inset: 0, zIndex: 10000, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'flex-end' }}>
+      <div
+        onClick={e => e.stopPropagation()}
+        style={{
+          width: '100%', maxHeight: '70vh', overflowY: 'auto', background: t.sidebarbg,
+          borderTopLeftRadius: 16, borderTopRightRadius: 16,
+          padding: '14px 12px calc(16px + env(safe-area-inset-bottom,0px))',
+        }}
+      >
+        <div style={{ width: 36, height: 4, borderRadius: 2, background: t.border, margin: '0 auto 12px' }} />
+        <div style={{ fontSize: 11, fontFamily: FONT_MONO, fontWeight: 700, color: t.text, marginBottom: 10 }}>
+          Menu Upload
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 10 }}>
+          {tabs.map(({ id, shortLabel, Icon }) => {
+            const active = activeTab === id;
+            return (
+              <button
+                key={id}
+                onClick={() => { setActiveTab(id); onClose(); }}
+                style={{
+                  display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 5,
+                  padding: '10px 4px', borderRadius: 10, cursor: 'pointer',
+                  border: `1px solid ${active ? t.navActiveBg : t.borderInput}`,
+                  background: active ? t.navActiveBg : t.inputBg,
+                }}
+              >
+                <Icon size={17} color={active ? t.navActiveText : t.text} />
+                <span style={{ fontSize: 9, fontFamily: FONT_SANS, color: active ? t.navActiveText : t.text, textAlign: 'center', lineHeight: 1.2 }}>
+                  {shortLabel}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function MobileBottomNav({ activeTab, setActiveTab, theme, tabs }: { activeTab:TabId; setActiveTab:(id:TabId)=>void; theme:Theme; tabs: TabDef[] }) {
   const t=tk[theme];
+  const [uploadOpen, setUploadOpen] = useState(false);
+
+  const mainTabs = tabs.filter(tb => !isUploadOrAdmin(tb));
+  const uploadTabs = tabs.filter(tb => isUploadOrAdmin(tb));
+  const activeInUpload = uploadTabs.some(tb => tb.id === activeTab);
+
+  // Bagi rata jadi 2 baris — kolom dihitung dari setengah jumlah tab (dibulatkan ke atas)
+  const cols = Math.max(1, Math.ceil(mainTabs.length / 1));
+
   return (
-    <nav style={{position:'fixed',bottom:0,left:0,right:0,zIndex:9999,background:t.bottombarbg,backdropFilter:'blur(16px)',borderTop:`1px solid ${t.border}`,display:'flex',paddingBottom:'env(safe-area-inset-bottom,0px)'}}>
-      {tabs.map(({id,shortLabel,Icon}) => {
-        const active=activeTab===id;
-        return (
-          <button key={id} onClick={()=>setActiveTab(id)} style={{flex:1,display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',padding:'7px 1px',border:'none',background:'transparent',cursor:'pointer',minHeight:50,gap:2,color:active?t.navActiveText:t.textMuted,position:'relative'}}>
-            <Icon size={16} color={active?t.navActiveText:t.textMuted}/>
-            <span style={{fontSize:8,fontWeight:active?700:400,fontFamily:FONT_SANS,lineHeight:1}}>{shortLabel}</span>
-            {active&&<span style={{position:'absolute',top:0,width:18,height:2.5,background:t.navActiveText,borderRadius:'0 0 2px 2px'}}/>}
+    <>
+      <nav style={{
+        position:'fixed',bottom:8,left:0,right:0,zIndex:9999,
+        background:t.bottombarbg,backdropFilter:'blur(16px)',borderTop:`1px solid ${t.border}`,
+        display:'flex',alignItems:'stretch',
+        paddingBottom:'env(safe-area-inset-bottom,0px)',
+      }}>
+        <div style={{
+          flex:1, display:'grid',
+          gridTemplateColumns:`repeat(${cols}, minmax(0,1fr))`,
+          gridAutoFlow:'row',
+        }}>
+          {mainTabs.map(({id,shortLabel,Icon}) => {
+            const active=activeTab===id;
+            return (
+              <button
+                key={id}
+                onClick={()=>setActiveTab(id)}
+                style={{
+                  display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',
+                  padding:'5px 1px',border:'none',background:'transparent',cursor:'pointer',minHeight:52,gap:1,
+                  color:active?t.navActiveText:t.textMuted,position:'relative',minWidth:0,
+                }}
+              >
+                <Icon size={14} color={active?t.navActiveText:t.textMuted}/>
+                <span style={{fontSize:7,fontWeight:active?700:400,fontFamily:FONT_SANS,lineHeight:1,whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis',maxWidth:'100%'}}>{shortLabel}</span>
+                {active&&<span style={{position:'absolute',top:0,width:14,height:2,background:t.navActiveText,borderRadius:'0 0 2px 2px'}}/>}
+              </button>
+            );
+          })}
+        </div>
+
+        {uploadTabs.length > 0 && (
+          <button
+            onClick={()=>setUploadOpen(true)}
+            style={{
+              flexShrink:0,display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',
+              width:44,border:'none',borderLeft:`1px solid ${t.border}`,
+              background:activeInUpload?t.navActiveBg:t.inputBg,cursor:'pointer',gap:2,
+              color:activeInUpload?t.navActiveText:t.textMuted,
+            }}
+          >
+            <Plus size={16}/>
+            <span style={{fontSize:7,fontWeight:activeInUpload?700:400,fontFamily:FONT_SANS,lineHeight:1}}>Upload</span>
           </button>
-        );
-      })}
-    </nav>
+        )}
+      </nav>
+
+      {uploadOpen && (
+        <UploadMenuSheet tabs={uploadTabs} activeTab={activeTab} setActiveTab={setActiveTab} onClose={()=>setUploadOpen(false)} theme={theme}/>
+      )}
+    </>
   );
 }
 
