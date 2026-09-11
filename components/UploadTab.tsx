@@ -281,6 +281,16 @@ export default function UploadTab({ theme }: Props) {
   const [previewFile, setPreviewFile] = useState<FileRow | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
+  // Layout mobile: Format Guide di atas, dropzone di bawahnya (ditukar lewat CSS order),
+  // baris file terupload tetap section terpisah paling bawah.
+  const [isMobile, setIsMobile] = useState(false);
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < 768);
+    check();
+    window.addEventListener('resize', check);
+    return () => window.removeEventListener('resize', check);
+  }, []);
+
   const loadFiles = async () => {
     const r = await apiJson('/api/files');
     if (r.success) setFiles(r.data);
@@ -325,9 +335,9 @@ export default function UploadTab({ theme }: Props) {
     <div style={{ display:'flex', flexDirection:'column', gap:16, width:'100%' }}>
       {previewFile && <PreviewModal file={previewFile} onClose={() => setPreviewFile(null)} t={t} />}
 
-      <div style={{ display:'flex', gap:16, alignItems:'stretch', width:'100%' }}>
-        {/* Upload - kiri */}
-        <div style={{ flex:1, background:t.cardbg, border:`1px solid ${t.borderCard}`, overflow:'hidden', boxShadow:t.shadowCard }}>
+      <div style={{ display:'flex', flexDirection: isMobile ? 'column' : 'row', gap:16, alignItems:'stretch', width:'100%' }}>
+        {/* Upload - kiri di desktop, urutan ke-2 di mobile */}
+        <div style={{ flex: isMobile ? 'none' : 1, width: isMobile ? '100%' : undefined, order: isMobile ? 2 : 1, background:t.cardbg, border:`1px solid ${t.borderCard}`, overflow:'hidden', boxShadow:t.shadowCard }}>
           <div style={{ padding:'12px 16px', borderBottom:`1px solid ${t.border}`, display:'flex', alignItems:'center', gap:8 }}>
             <div style={{ width:24, height:24, borderRadius:7, background:'#6366f115', border:'1px solid #6366f128', display:'flex', alignItems:'center', justifyContent:'center' }}><Upload size={12} color="#6366f1"/></div>
             <div style={{ fontSize:12, fontWeight:700, color:t.text }}>Upload File Baru</div>
@@ -371,8 +381,8 @@ export default function UploadTab({ theme }: Props) {
           </div>
         </div>
 
-        {/* Format Guide - kanan */}
-        <div style={{ flex:1, overflow:'hidden', display:'flex' }}>
+        {/* Format Guide - kanan di desktop, urutan ke-1 (paling atas) di mobile */}
+        <div style={{ flex: isMobile ? 'none' : 1, width: isMobile ? '100%' : undefined, order: isMobile ? 1 : 2, overflow:'hidden', display:'flex' }}>
           <FormatGuide t={t}/>
         </div>
       </div>

@@ -69,7 +69,7 @@ export default function MasterProdukTab({ theme }: Props) {
   const STICKY = {
     brand:     { left: 0,   width: 180 }, // mulai dari 0
     kodeBrand: { left: 180, width: 120 }, // 0 + 180
-    pabrik:    { left: 300, width: 220 }, // 180 + 120
+    pabrik:    { left: 300, width: 60 }, // 180 + 120
   };
 
   const getStickyTh = (key: keyof typeof STICKY, isLast = false): React.CSSProperties => ({
@@ -143,7 +143,7 @@ export default function MasterProdukTab({ theme }: Props) {
                       {/* Gunakan getStickyTd pada 3 kolom pertama */}
                       <td style={{ ...tdStr, ...getStickyTd('brand', rowBg) }}>{r.nama_brand || '-'}</td>
                       <td style={{ ...tdStr, ...getStickyTd('kodeBrand', rowBg) }}>{r.kode_brand || '-'}</td>
-                      <td style={{ ...tdStr, ...getStickyTd('pabrik', rowBg, true) }}>{r.pabrik || r.kode_pabrik}</td>
+                      <td style={{ ...tdStr, ...getStickyTd('pabrik', rowBg, true) }}>{r.kode_pabrik || r.kode_pabrik}</td>
                       
                       {/* Sisa kolom normal */}
                       <td style={tdStr}>{r.jenis || '-'}</td>
