@@ -208,7 +208,7 @@ export default function WipTab({ theme }: Props) {
   const totalJob = filtered.length;
   const kpiCards = [
     { label: 'Cetak Lembar',     value: fmtNum(totals.cetak_lbr),  sub: 'lembar dalam proses',  color: t.card2text, bg: t.card2bg, border: t.card2border },
-    { label: 'Embos Lembar',     value: fmtNum(totals.embos_lbr),  sub: 'lembar dalam proses',  color: '#f59e0b', bg: t.card1bg, border: t.card1border },
+    { label: 'Embos Lembar',     value: fmtNum(totals.embos_lbr),  sub: 'lembar dalam proses',  color: t.card2text, bg: t.card2bg, border: t.card1border },
     { label: 'Plong Lembar',     value: fmtNum(totals.plong_lbr),  sub: 'lembar dalam proses',  color: t.card2text, bg: t.card2bg, border: t.card2border },
     { label: 'Pretel Pieces',    value: fmtNum(totals.pretel_pcs), sub: 'pieces dalam proses',  color: t.card2text, bg: t.card2bg, border: t.card2border },
     { label: 'WIP Glue',         value: fmtNum(totals.wip_glue),   sub: 'WIP dalam proses',     color: t.card2text, bg: t.card2bg, border: t.card2border},
