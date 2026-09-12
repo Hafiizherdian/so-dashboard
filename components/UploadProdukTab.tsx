@@ -83,23 +83,28 @@ const PreviewPanel = React.memo(function PreviewPanel({ fileId, fileType, fileNa
   const [activeCols, setActiveCols] = useState<Set<string>>(new Set());
 
   useEffect(() => {
-    setLoading(true); setError(''); setData([]); setAllCols([]); setActiveCols(new Set());
-    
-    // Endpoint dinamis berdasarkan tipe file
-    const endpoint = `/api/${fileType}/${fileId}/preview`;
-    
-    apiJson(endpoint)
-      .then(r => {
-        if (r.success && r.data?.length) {
-          const cols = Object.keys(r.data[0]);
-          setAllCols(cols);
-          setActiveCols(new Set(cols));
-          setData(r.data);
-        } else { setError(r.error || 'Tidak ada data preview'); }
-      })
-      .catch(() => setError('Gagal memuat preview'))
-      .finally(() => setLoading(false));
-  }, [fileId, fileType]);
+  setLoading(true); setError(''); setData([]); setAllCols([]); setActiveCols(new Set());
+
+  if (!fileId || fileId === 'undefined') {
+    setError('ID file tidak valid — coba refresh halaman upload');
+    setLoading(false);
+    return;
+  }
+
+  const endpoint = `/api/${fileType}/${fileId}/preview`;
+
+  apiJson(endpoint)
+    .then(r => {
+      if (r.success && r.data?.length) {
+        const cols = Object.keys(r.data[0]);
+        setAllCols(cols);
+        setActiveCols(new Set(cols));
+        setData(r.data);
+      } else { setError(r.error || 'Tidak ada data preview'); }
+    })
+    .catch(() => setError('Gagal memuat preview'))
+    .finally(() => setLoading(false));
+}, [fileId, fileType]);
 
   const numericCols = useMemo(() => allCols.filter(c => data.every(row => {
     const v = row[c]; return v !== '' && v !== null && v !== undefined && !isNaN(Number(v));
@@ -312,11 +317,21 @@ export default function UploadProdukTab({ theme }: Props) {
   const handleDelete = async () => {
     if (!delTarget) return;
     setDeleting(true);
-    const endpoint = delTarget.type === 'produk' ? `/api/produk/uploads?id=${delTarget.id}` : `/api/msmr/uploads?id=${delTarget.id}`;
+    // FIX: route delete yang benar adalah /api/produk dan /api/msmr (bukan /uploads)
+    const endpoint = delTarget.type === 'produk' ? `/api/produk?id=${delTarget.id}` : `/api/msmr?id=${delTarget.id}`;
 
-    await apiJson(endpoint, { method: 'DELETE' });
-    setDeleting(false); setDelTarget(null);
-    await loadHistories();
+    try {
+      const r = await apiJson(endpoint, { method: 'DELETE' });
+      if (!r.success) {
+        setMsg({ type: 'err', text: r.error ?? 'Gagal menghapus riwayat' });
+      }
+    } catch (e: any) {
+      setMsg({ type: 'err', text: e.message || 'Koneksi gagal saat menghapus' });
+    } finally {
+      setDeleting(false);
+      setDelTarget(null);
+      await loadHistories();
+    }
   };
 
   return (
