@@ -3,11 +3,8 @@ import { randomUUID } from 'crypto';
 import { initDb, pool, query } from '@/lib/db';
 import { parseProdukWorkbookBuffer } from '@/lib/parseProduk';
 import { insertProdukWorkbook } from '@/lib/insertProduk';
-import { hasAnyMenuAccess } from '@/lib/auth';
 import { getTokenFromRequest, hasMenuAccess } from '@/lib/auth';
-// lalu ganti `uploadedBy = null` di bawah jadi id user yang login.
 
-// xlsx butuh Node APIs (Buffer dkk), jadi route ini harus jalan di Node runtime
 export const runtime = 'nodejs';
 
 const ACCEPTED_EXTS = /\.xlsx?$/i;
@@ -44,7 +41,6 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // const authUser = await getAuthUser(req); // TODO
     const uploadedBy: number | null = null;
 
     const { inserted, updated } = await insertProdukWorkbook(pool, parsed.rows);
@@ -77,17 +73,21 @@ export async function POST(req: NextRequest) {
 
 export async function GET(req: NextRequest) {
   try {
-    const payload = await getTokenFromRequest(req)
-    if (!payload) return NextResponse.json({success: false, error: 'Unauthorized'}, {status: 401})
+    const payload = await getTokenFromRequest(req);
+    if (!payload) return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
     if (!hasMenuAccess(payload, 'upload')) {
-      return NextResponse.json({ success: false, error: 'Forbidden'}, { status: 403})
+      return NextResponse.json({ success: false, error: 'Forbidden' }, { status: 403 });
     }
-    await initDb()
+    await initDb();
+
     const rows = await query(
-      'SELECT file_name, total_rows, uploaded_by, created_at from produk_uploads'
-    )
-    return NextResponse.json({success: true, data: rows})
+      `SELECT id, file_name, total_rows, inserted_count, updated_count, uploaded_by, created_at
+       FROM produk_uploads
+       ORDER BY created_at DESC`
+    );
+    return NextResponse.json({ success: true, data: rows });
   } catch (e: any) {
-    return
+    console.error('[api/produk/upload] GET error:', e);
+    return NextResponse.json({ success: false, error: e.message ?? 'Gagal mengambil riwayat' }, { status: 500 });
   }
 }
